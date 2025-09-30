@@ -1,0 +1,27 @@
+[
+  {
+    "code": "ARG",
+    "name": "Argentina",
+    "group": "A",
+    "flag": "https://flagcdn.com/w40/ar.png",
+    "blurb": "Defending champions with flair and grit.",
+    "description": "A powerhouse known for creativity and resilience.",
+    "players": ["Lionel Messi", "Ángel Di María", "Emiliano Martínez"],
+    "links": [{"label": "FA", "url": "https://www.afa.com.ar/"}]
+  },
+  {
+    "code": "FRA",
+    "name": "France",
+    "group": "B",
+    "flag": "https://flagcdn.com/w40/fr.png",
+    "blurb": "Depth in every position and electric in attack.",
+    "players": ["Kylian Mbappé", "Antoine Griezmann", "Mike Maignan"]
+  },
+  {
+    "code": "BRA",
+    "name": "Brazil",
+    "group": "C",
+    "flag": "https://flagcdn.com/w40/br.png",
+    "blurb": "Samba football heritage and fearless talent."
+  }
+]

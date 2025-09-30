@@ -1,0 +1,24 @@
+:root { --max: 900px; --gap: 1rem; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.5; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 1rem; }
+header, footer { background: #f7f7f7; border-bottom: 1px solid #eee; }
+h1, h2, h3 { margin: 0.4em 0; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--gap);
+  margin-top: 1rem;
+}
+.card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+}
+.card a { text-decoration: none; color: inherit; }
+.tag { display: inline-block; font-size: 0.85rem; padding: 0.2rem 0.5rem; border-radius: 999px; background: #eef; }
+.back { display: inline-block; margin: 0.5rem 0; }
+nav a { margin-right: 1rem; }
+img.flag { width: 36px; height: 24px; object-fit: cover; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle; }
+.search { width: 100%; padding: 0.7rem; border-radius: 12px; border: 1px solid #ddd; }
