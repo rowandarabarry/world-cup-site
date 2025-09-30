@@ -7,14 +7,18 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="wrap">
-    <h1>World Cup Teams</h1>
-    <nav>
-      <a href="./">Home</a>
-      <a href="./?about=1">About</a>
-    </nav>
-  </header>
+  <header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="./">⚽ World Cup</a>
 
+    <nav class="tabs" aria-label="Primary">
+      <a class="tab" href="./">Home</a>
+      <a class="tab" href="./">Teams</a>
+      <a class="tab" href="./?fixtures=1">Fixtures</a>
+      <a class="tab" href="./?about=1">About</a>
+    </nav>
+  </div>
+</header>
   <main class="wrap" id="app">
     <!-- Content injected by app.js -->
     <noscript>Please enable JavaScript to view the site.</noscript>
