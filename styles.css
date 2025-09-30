@@ -22,3 +22,41 @@ h1, h2, h3 { margin: 0.4em 0; }
 nav a { margin-right: 1rem; }
 img.flag { width: 36px; height: 24px; object-fit: cover; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle; }
 .search { width: 100%; padding: 0.7rem; border-radius: 12px; border: 1px solid #ddd; }
+
+/* --- Header / Tabs --- */
+.site-header {
+  position: sticky; top: 0; z-index: 1000;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.86));
+  border-bottom: 1px solid #eaeaea;
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; }
+.brand {
+  font-weight: 800; font-size: 1.25rem; text-decoration: none; color: #0f172a;
+}
+.tabs { display: flex; gap: 0.25rem; }
+.tab {
+  --pad: .6rem;
+  position: relative;
+  display: inline-block;
+  padding: var(--pad) .9rem;
+  border-radius: 12px;
+  color: #0f172a; text-decoration: none; font-weight: 600;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.tab:hover { background: #f3f4f6; transform: translateY(-1px); }
+
+/* Underline “ink” effect */
+.tab::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 8px;
+  height: 3px; border-radius: 999px; background: transparent; transition: background .2s,width .2s;
+}
+.tab.active { background: #eef2ff; }
+.tab.active::after { background: #4f46e5; }
+
+/* Small screens */
+@media (max-width: 640px) {
+  .tabs { gap: .15rem; }
+  .tab { padding: .5rem .65rem; font-weight: 700; }
+  .tab::after { left: 8px; right: 8px; bottom: 6px; }
+}
