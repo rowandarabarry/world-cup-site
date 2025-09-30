@@ -93,3 +93,35 @@ function renderAbout() {
     byId("app").innerHTML = `<p>Oops: ${e.message}</p>`;
   }
 })();
+
+/* ---- Header tab activation + scroll shadow ---- */
+(function () {
+  const params = new URLSearchParams(location.search);
+  const tabs = document.querySelectorAll('.tabs .tab');
+
+  function applyActive() {
+    const isAbout = params.has('about');
+    const isFixtures = params.has('fixtures');
+    const isTeam = params.has('team');
+
+    tabs.forEach(t => t.classList.remove('active'));
+    // Order matches the header: Home, Teams, Fixtures, About
+    if (isAbout) tabs[3].classList.add('active');
+    else if (isFixtures) tabs[2].classList.add('active');
+    else if (isTeam) tabs[1].classList.add('active');     // Teams when viewing a team
+    else tabs[0].classList.add('active');                 // Home
+  }
+
+  applyActive();
+
+  // Update on history changes (if you add navigation without reload later)
+  window.addEventListener('popstate', applyActive);
+
+  // Scroll shadow
+  const header = document.querySelector('.site-header');
+  const onScroll = () => {
+    header.style.boxShadow = window.scrollY > 6 ? '0 6px 24px rgba(0,0,0,0.06)' : 'none';
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
