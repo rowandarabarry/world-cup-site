@@ -82,17 +82,52 @@ function renderAbout() {
 
 (async function init() {
   try {
-    const teams = await loadTeams();
-    if (showAbout) return renderAbout();
-    if (teamCode) {
-      const team = teams.find(t => t.code.toLowerCase() === teamCode.toLowerCase());
-      if (team) return renderTeam(team, teams);
+    // Detect which section is requested
+    const showFixtures = new URLSearchParams(location.search).has('fixtures');
+
+    // --- ABOUT PAGE ---
+    if (showAbout) {
+      renderAbout();
+      return;
     }
-    renderList(teams);
+
+    // --- FIXTURES PAGE (placeholder until you add content) ---
+    if (showFixtures) {
+      byId("app").innerHTML = `
+        <a class="back" href="./">← Back</a>
+        <article class="card">
+          <h2>Fixtures</h2>
+          <p>Fixture list coming soon...</p>
+        </article>`;
+      return;
+    }
+
+    // --- TEAMS or TEAM DETAIL ---
+    if (teamCode || location.search.includes('team') || location.search.includes('teams')) {
+      const teams = await loadTeams();
+
+      if (teamCode) {
+        const team = teams.find(t => t.code.toLowerCase() === teamCode.toLowerCase());
+        if (team) {
+          renderTeam(team, teams);
+          return;
+        }
+      }
+      renderList(teams); // Show all teams
+      return;
+    }
+
+    // --- HOME PAGE ---
+    byId("app").innerHTML = `
+      <article class="card">
+        <h2>Welcome to the World Cup site!</h2>
+        <p>Click <strong>Teams</strong> above to explore the nations, or check <strong>Fixtures</strong> and <strong>About</strong>.</p>
+      </article>`;
   } catch (e) {
     byId("app").innerHTML = `<p>Oops: ${e.message}</p>`;
   }
 })();
+
 
 /* ---- Header tab activation + scroll shadow ---- */
 (function () {
