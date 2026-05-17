@@ -3,31 +3,44 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>World Cup Teams</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>FIFA World Cup 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
-  <header class="site-header">
-  <div class="wrap header-inner">
-    <a class="brand" href="./">⚽ World Cup</a>
 
-    <nav class="tabs" aria-label="Primary">
-      <a class="tab" href="./">Home</a>
-      <a class="tab" href="./">Teams</a>
-      <a class="tab" href="./?fixtures=1">Fixtures</a>
-      <a class="tab" href="./?about=1">About</a>
-    </nav>
-  </div>
-</header>
-  <main class="wrap" id="app">
-    <!-- Content injected by app.js -->
-    <noscript>Please enable JavaScript to view the site.</noscript>
+  <header class="site-header">
+    <div class="header-inner wrap">
+      <a class="brand" href="./">
+        <span class="brand-icon">⚽</span>
+        <span class="brand-text">WORLD CUP <em>2026</em></span>
+      </a>
+      <nav class="tabs" aria-label="Primary navigation">
+        <a class="tab" href="./" data-page="home">Home</a>
+        <a class="tab" href="./?teams=1" data-page="teams">Teams</a>
+        <a class="tab" href="./?fixtures=1" data-page="fixtures">Fixtures</a>
+        <a class="tab" href="./?groups=1" data-page="groups">Groups</a>
+        <a class="tab" href="./?about=1" data-page="about">About</a>
+      </nav>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="app">
+    <noscript>Please enable JavaScript to view this site.</noscript>
   </main>
 
-  <footer class="wrap">
-    <small>© <span id="year"></span> Your Family Site</small>
+  <footer>
+    <div class="wrap footer-inner">
+      <span class="footer-brand">⚽ World Cup 2026</span>
+      <small>Made with ❤️ by our family · © <span id="year"></span></small>
+    </div>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
