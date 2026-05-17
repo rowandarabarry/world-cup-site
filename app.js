@@ -28,14 +28,13 @@ async function loadTeams() {
    ============================================================ */
 function renderHome() {
   app().innerHTML = `
-    <section class="hero animate-in">
-      <div class="hero-content">
-        <span class="hero-eyebrow">FIFA World Cup</span>
-        <h1 class="hero-title">
-          THE WORLD<span>CUP 2026</span>
-        </h1>
-        <p class="hero-sub">USA · Canada · Mexico — the biggest tournament in football history</p>
-        <div class="hero-stats">
+    <section class="hero hero-image animate-in">
+      <div class="hero-image-wrap">
+        <img class="hero-bg" src="images/banner.png" alt="FIFA World Cup 2026 banner">
+        <div class="hero-image-overlay"></div>
+      </div>
+      <div class="hero-content hero-content-image">
+        <div class="hero-stats-bar">
           <div class="stat-item">
             <span class="stat-number">48</span>
             <span class="stat-label">Teams</span>
@@ -96,23 +95,23 @@ function renderHome() {
         <div class="grid">
           <a href="./?fixtures=1" style="text-decoration:none">
             <div class="card" style="padding:28px; text-align:center">
-              <div style="font-size:2.5rem; margin-bottom:12px">📅</div>
-              <div style="font-family:var(--font-display); font-size:1.4rem; color:var(--green-dark); letter-spacing:.04em">Fixtures</div>
-              <p style="font-size:.875rem; color:var(--text-muted); margin-top:8px">All group stage matches and kick-off times</p>
+              <div class="quick-card-icon">📅</div>
+              <div class="quick-card-title">Fixtures</div>
+              <p class="quick-card-desc">All group stage matches and kick-off times</p>
             </div>
           </a>
           <a href="./?groups=1" style="text-decoration:none">
             <div class="card" style="padding:28px; text-align:center">
-              <div style="font-size:2.5rem; margin-bottom:12px">🏆</div>
-              <div style="font-family:var(--font-display); font-size:1.4rem; color:var(--green-dark); letter-spacing:.04em">Groups</div>
-              <p style="font-size:.875rem; color:var(--text-muted); margin-top:8px">All 12 groups and which teams are in each</p>
+              <div class="quick-card-icon">🏆</div>
+              <div class="quick-card-title">Groups</div>
+              <p class="quick-card-desc">All 12 groups and which teams are in each</p>
             </div>
           </a>
           <a href="./?teams=1" style="text-decoration:none">
             <div class="card" style="padding:28px; text-align:center">
-              <div style="font-size:2.5rem; margin-bottom:12px">🌍</div>
-              <div style="font-family:var(--font-display); font-size:1.4rem; color:var(--green-dark); letter-spacing:.04em">All Teams</div>
-              <p style="font-size:.875rem; color:var(--text-muted); margin-top:8px">Browse and search all 48 competing nations</p>
+              <div class="quick-card-icon">🌍</div>
+              <div class="quick-card-title">All Teams</div>
+              <p class="quick-card-desc">Browse and search all 48 competing nations</p>
             </div>
           </a>
         </div>
