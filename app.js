@@ -192,6 +192,7 @@ async function renderTeam(code) {
             <h1 class="team-hero-name">${team.name.toUpperCase()}</h1>
             <div class="team-hero-group">
               <span class="tag" style="background:rgba(255,255,255,0.15);color:#fff">Group ${team.group}</span>
+              ${team.worldCupWins > 0 ? `<span class="tag" style="background:var(--gold);color:var(--navy);margin-left:8px">🏆 ${team.worldCupWins}× Winners</span>` : ''}
             </div>
           </div>
         </div>
@@ -200,11 +201,32 @@ async function renderTeam(code) {
 
     <div class="team-content">
       <div class="wrap">
+
+        <div class="team-facts-bar">
+          <div class="fact-item">
+            <span class="fact-label">Capital</span>
+            <span class="fact-value">${team.capital || '—'}</span>
+          </div>
+          <div class="fact-item">
+            <span class="fact-label">Population</span>
+            <span class="fact-value">${team.population || '—'}</span>
+          </div>
+          <div class="fact-item">
+            <span class="fact-label">Best World Cup Finish</span>
+            <span class="fact-value">${team.bestFinish || '—'}</span>
+          </div>
+        </div>
+
         <div class="team-grid">
 
           <div class="info-card">
             <h3>About</h3>
             <p>${team.description || team.blurb}</p>
+            ${team.interestingFact ? `
+            <div class="interesting-fact">
+              <span class="fact-tag">💡 Did You Know?</span>
+              <p>${team.interestingFact}</p>
+            </div>` : ''}
           </div>
 
           ${team.players?.length ? `
