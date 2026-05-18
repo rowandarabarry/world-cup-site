@@ -50,8 +50,6 @@ function renderHome() {
         <div class="strip-stat"><strong>16</strong> Venues</div>
         <div class="strip-divider"></div>
         <div class="strip-stat"><strong>12</strong> Groups</div>
-        <div class="strip-divider"></div>
-        <div class="strip-stat"><strong>3</strong> Host Nations</div>
       </div>
     </div>
 
