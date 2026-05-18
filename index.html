@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=16" />
 </head>
 <body>
 
@@ -52,11 +52,11 @@
     /* Fetch total site views using GoatCounter visitor counter */
     async function loadViews() {
       try {
-        const res = await fetch('https://deccy7.goatcounter.com/counter//.json');
+        const res = await fetch('https://deccy7.goatcounter.com/counter/%2F.json');
         if (!res.ok) return;
         const data = await res.json();
-        if (data && data.count) {
-          document.getElementById('site-views').textContent = data.count;
+        if (data && data.count !== undefined) {
+          document.getElementById('site-views').textContent = Number(data.count).toLocaleString();
         }
       } catch(e) { /* silently fail */ }
     }
@@ -64,6 +64,6 @@
   </script>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
