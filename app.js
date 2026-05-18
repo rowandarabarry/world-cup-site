@@ -33,45 +33,26 @@ function renderHome() {
         <img class="hero-bg" src="images/banner.png" alt="FIFA World Cup 2026 banner">
         <div class="hero-image-overlay"></div>
       </div>
-      <div class="hero-content hero-content-image">
-        <div class="hero-stats-bar">
-          <div class="stat-item">
-            <span class="stat-number">48</span>
-            <span class="stat-label">Teams</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">104</span>
-            <span class="stat-label">Matches</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">16</span>
-            <span class="stat-label">Venues</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">12</span>
-            <span class="stat-label">Groups</span>
-          </div>
-        </div>
-        <a class="hero-cta" href="./?teams=1">Explore All Teams →</a>
-      </div>
     </section>
 
-    <div class="host-banner animate-in-2">
-      <div class="host-banner-inner">
-        <div class="host-item">
-          <img src="https://flagcdn.com/w40/us.png" width="28" height="19" alt="USA flag">
-          United States
+    <div class="info-strip animate-in-2">
+      <div class="info-strip-inner wrap">
+        <div class="info-strip-hosts">
+          <span class="info-strip-label">Hosts</span>
+          <div class="host-item"><img src="https://flagcdn.com/w40/us.png" width="24" height="16" alt="USA"> USA</div>
+          <span class="host-divider">·</span>
+          <div class="host-item"><img src="https://flagcdn.com/w40/ca.png" width="24" height="16" alt="Canada"> Canada</div>
+          <span class="host-divider">·</span>
+          <div class="host-item"><img src="https://flagcdn.com/w40/mx.png" width="24" height="16" alt="Mexico"> Mexico</div>
         </div>
-        <span class="host-divider">✦</span>
-        <div class="host-item">
-          <img src="https://flagcdn.com/w40/ca.png" width="28" height="19" alt="Canada flag">
-          Canada
+        <div class="info-strip-divider"></div>
+        <div class="info-strip-stats">
+          <div class="strip-stat"><strong>48</strong> Teams</div>
+          <div class="strip-stat"><strong>104</strong> Matches</div>
+          <div class="strip-stat"><strong>16</strong> Venues</div>
+          <div class="strip-stat"><strong>12</strong> Groups</div>
         </div>
-        <span class="host-divider">✦</span>
-        <div class="host-item">
-          <img src="https://flagcdn.com/w40/mx.png" width="28" height="19" alt="Mexico flag">
-          Mexico
-        </div>
+        <a class="hero-cta hero-cta-sm" href="./?teams=1">Explore Teams →</a>
       </div>
     </div>
 
