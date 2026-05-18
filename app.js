@@ -249,10 +249,26 @@ async function renderTeam(code) {
     </div>
   `;
 
-  /* Inject map silhouette after innerHTML is set */
+  /* Inject map from mapsicon — maps our codes to ISO 2-letter codes */
   const mapEl = document.getElementById('country-map');
-  if (mapEl && window.MAPS && window.MAPS[team.code]) {
-    mapEl.innerHTML = window.MAPS[team.code];
+  if (mapEl) {
+    const codeMap = {
+      MEX:'mx', RSA:'za', KOR:'kr', CZE:'cz', CAN:'ca', BIH:'ba', QAT:'qa',
+      SUI:'ch', BRA:'br', MAR:'ma', HAI:'ht', SCO:'gb', USA:'us', PAR:'py',
+      AUS:'au', TUR:'tr', GER:'de', CUW:'cw', CIV:'ci', ECU:'ec', NED:'nl',
+      JPN:'jp', SWE:'se', TUN:'tn', BEL:'be', EGY:'eg', IRN:'ir', NZL:'nz',
+      ESP:'es', CPV:'cv', KSA:'sa', URU:'uy', FRA:'fr', SEN:'sn', IRQ:'iq',
+      NOR:'no', ARG:'ar', ALG:'dz', AUT:'at', JOR:'jo', POR:'pt', COD:'cd',
+      UZB:'uz', COL:'co', ENG:'gb', CRO:'hr', GHA:'gh', PAN:'pa'
+    };
+    const iso = codeMap[team.code];
+    if (iso) {
+      const img = document.createElement('img');
+      img.src = `https://raw.githubusercontent.com/djaiss/mapsicon/master/all/${iso}/vector.svg`;
+      img.alt = `${team.name} map`;
+      img.onerror = () => { mapEl.style.display = 'none'; };
+      mapEl.appendChild(img);
+    }
   }
 }
 
