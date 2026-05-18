@@ -179,11 +179,7 @@ async function renderTeam(code) {
     return;
   }
 
-  /* Inject map silhouette */
-  const mapEl = document.getElementById('country-map');
-  if (mapEl && window.MAPS && window.MAPS[team.code]) {
-    mapEl.innerHTML = window.MAPS[team.code];
-  }
+  const others = teams.filter(t => t.code !== team.code).slice(0, 4);
 
   app().innerHTML = `
     <a class="back-link" href="./?teams=1">← All Teams</a>
@@ -252,6 +248,12 @@ async function renderTeam(code) {
       </div>
     </div>
   `;
+
+  /* Inject map silhouette after innerHTML is set */
+  const mapEl = document.getElementById('country-map');
+  if (mapEl && window.MAPS && window.MAPS[team.code]) {
+    mapEl.innerHTML = window.MAPS[team.code];
+  }
 }
 
 /* ============================================================
