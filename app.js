@@ -179,7 +179,11 @@ async function renderTeam(code) {
     return;
   }
 
-  const others = teams.filter(t => t.code !== team.code).slice(0, 4);
+  /* Inject map silhouette */
+  const mapEl = document.getElementById('country-map');
+  if (mapEl && window.MAPS && window.MAPS[team.code]) {
+    mapEl.innerHTML = window.MAPS[team.code];
+  }
 
   app().innerHTML = `
     <a class="back-link" href="./?teams=1">← All Teams</a>
@@ -202,26 +206,27 @@ async function renderTeam(code) {
     <div class="team-content">
       <div class="wrap">
 
-        <div class="team-facts-bar">
-          <div class="fact-item">
-            <span class="fact-label">Capital</span>
-            <span class="fact-value">${team.capital || '—'}</span>
-          </div>
-          <div class="fact-item">
-            <span class="fact-label">Population</span>
-            <span class="fact-value">${team.population || '—'}</span>
-          </div>
-          <div class="fact-item">
-            <span class="fact-label">Best World Cup Finish</span>
-            <span class="fact-value">${team.bestFinish || '—'}</span>
-          </div>
-        </div>
-
         <div class="team-grid">
 
           <div class="info-card">
             <h3>About</h3>
-            <p>${team.description || team.blurb}</p>
+            <p class="team-blurb-text">${team.description || team.blurb}</p>
+
+            <div class="team-facts-inline">
+              <div class="fact-row">
+                <span class="fact-label">🏛️ Capital</span>
+                <span class="fact-value">${team.capital || '—'}</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-label">👥 Population</span>
+                <span class="fact-value">${team.population || '—'}</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-label">🏆 Best Finish</span>
+                <span class="fact-value">${team.bestFinish || '—'}</span>
+              </div>
+            </div>
+
             ${team.interestingFact ? `
             <div class="interesting-fact">
               <span class="fact-tag">💡 Did You Know?</span>
@@ -229,13 +234,14 @@ async function renderTeam(code) {
             </div>` : ''}
           </div>
 
-          ${team.players?.length ? `
-          <div class="info-card">
+          <div class="info-card team-right-col">
+            ${team.players?.length ? `
             <h3>Key Players</h3>
             <ul class="player-list">
               ${team.players.map(p => `<li>${p}</li>`).join('')}
-            </ul>
-          </div>` : ''}
+            </ul>` : ''}
+            <div class="country-map" id="country-map"></div>
+          </div>
 
         </div>
 
