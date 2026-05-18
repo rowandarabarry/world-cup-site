@@ -36,29 +36,22 @@ function renderHome() {
       <div class="hero-title-overlay">
         <div class="wrap">
           <div class="hero-site-name">ROWAN'S <span>WORLD CUP HUB</span></div>
-          <div class="hero-site-sub">Your home for FIFA World Cup 2026</div>
+          <a class="hero-cta hero-cta-banner" href="./?teams=1">Explore Teams →</a>
         </div>
       </div>
     </section>
 
     <div class="info-strip animate-in-2">
       <div class="info-strip-inner wrap">
-        <div class="info-strip-hosts">
-          <span class="info-strip-label">Hosts</span>
-          <div class="host-item"><img src="https://flagcdn.com/w40/us.png" width="24" height="16" alt="USA"> USA</div>
-          <span class="host-divider">·</span>
-          <div class="host-item"><img src="https://flagcdn.com/w40/ca.png" width="24" height="16" alt="Canada"> Canada</div>
-          <span class="host-divider">·</span>
-          <div class="host-item"><img src="https://flagcdn.com/w40/mx.png" width="24" height="16" alt="Mexico"> Mexico</div>
-        </div>
-        <div class="info-strip-divider"></div>
-        <div class="info-strip-stats">
-          <div class="strip-stat"><strong>48</strong> Teams</div>
-          <div class="strip-stat"><strong>104</strong> Matches</div>
-          <div class="strip-stat"><strong>16</strong> Venues</div>
-          <div class="strip-stat"><strong>12</strong> Groups</div>
-        </div>
-        <a class="hero-cta hero-cta-sm" href="./?teams=1">Explore Teams →</a>
+        <div class="strip-stat"><strong>48</strong> Teams</div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><strong>104</strong> Matches</div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><strong>16</strong> Venues</div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><strong>12</strong> Groups</div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><strong>3</strong> Host Nations</div>
       </div>
     </div>
 
