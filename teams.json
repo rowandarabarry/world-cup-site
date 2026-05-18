@@ -1,61 +1,434 @@
 [
-  { "code": "MEX", "name": "Mexico", "group": "A", "flag": "https://flagcdn.com/w80/mx.png", "blurb": "Co-hosts with passionate fans and decades of World Cup experience.", "players": ["Hirving Lozano", "Raúl Jiménez", "Alexis Vega"] },
-  { "code": "RSA", "name": "South Africa", "group": "A", "flag": "https://flagcdn.com/w80/za.png", "blurb": "Bafana Bafana back on the world stage with pace and flair.", "players": ["Percy Tau", "Bongani Zungu", "Ronwen Williams"] },
-  { "code": "KOR", "name": "Korea Republic", "group": "A", "flag": "https://flagcdn.com/w80/kr.png", "blurb": "Taegeuk Warriors with intensity, fitness and a flair for the dramatic.", "players": ["Son Heung-min", "Lee Kang-in", "Kim Min-jae"] },
-  { "code": "CZE", "name": "Czechia", "group": "A", "flag": "https://flagcdn.com/w80/cz.png", "blurb": "Technically gifted with a proud footballing history in Central Europe.", "players": ["Patrik Schick", "Tomáš Souček", "Ladislav Krejčí"] },
-
-  { "code": "CAN", "name": "Canada", "group": "B", "flag": "https://flagcdn.com/w80/ca.png", "blurb": "Co-hosts making their mark after decades away from the World Cup.", "players": ["Alphonso Davies", "Jonathan David", "Milan Borjan"] },
-  { "code": "BIH", "name": "Bosnia & Herzegovina", "group": "B", "flag": "https://flagcdn.com/w80/ba.png", "blurb": "The Dragons with attacking flair and a passionate support.", "players": ["Edin Džeko", "Miralem Pjanić", "Jasmin Handanović"] },
-  { "code": "QAT", "name": "Qatar", "group": "B", "flag": "https://flagcdn.com/w80/qa.png", "blurb": "The 2022 hosts now competing as a regular tournament side.", "players": ["Akram Afif", "Almoez Ali", "Meshaal Barsham"] },
-  { "code": "SUI", "name": "Switzerland", "group": "B", "flag": "https://flagcdn.com/w80/ch.png", "blurb": "Quietly one of the most reliable and organised teams in world football.", "players": ["Granit Xhaka", "Xherdan Shaqiri", "Gregor Kobel"] },
-
-  { "code": "BRA", "name": "Brazil", "group": "C", "flag": "https://flagcdn.com/w80/br.png", "blurb": "Samba flair and five stars — always the team everyone watches.", "players": ["Vinicius Jr.", "Raphinha", "Alisson Becker"] },
-  { "code": "MAR", "name": "Morocco", "group": "C", "flag": "https://flagcdn.com/w80/ma.png", "blurb": "The Lions of Atlas dazzled the world in 2022 and want even more.", "players": ["Achraf Hakimi", "Youssef En Nesyri", "Yassine Bounou"] },
-  { "code": "HAI", "name": "Haiti", "group": "C", "flag": "https://flagcdn.com/w80/ht.png", "blurb": "Les Grenadiers on the world stage for the first time in decades.", "players": ["Duckens Nazon", "Frantzdy Pierrot", "Wilson Isidor"] },
-  { "code": "SCO", "name": "Scotland", "group": "C", "flag": "https://flagcdn.com/w80/gb-sct.png", "blurb": "The Tartan Army back on the world stage with pride and passion.", "players": ["Andrew Robertson", "Scott McTominay", "John Mcginn"] },
-
-  { "code": "USA", "name": "United States", "group": "D", "flag": "https://flagcdn.com/w80/us.png", "blurb": "Host nation with a rising generation hungry to impress on home soil.", "players": ["Christian Pulisic", "Tyler Adams", "Folarin Balogun"] },
-  { "code": "PAR", "name": "Paraguay", "group": "D", "flag": "https://flagcdn.com/w80/py.png", "blurb": "La Albirroja with grit, resilience and South American heart.", "players": ["Miguel Almirón", "Ángel Romero", "Antony Silva"] },
-  { "code": "AUS", "name": "Australia", "group": "D", "flag": "https://flagcdn.com/w80/au.png", "blurb": "The Socceroos punch above their weight with pace and determination.", "players": ["Mathew Ryan", "Harry Souttar", "Mitchell Duke"] },
-  { "code": "TUR", "name": "Türkiye", "group": "D", "flag": "https://flagcdn.com/w80/tr.png", "blurb": "The Crescents with passion, quality and a knack for the dramatic.", "players": ["Hakan Çalhanoğlu", "Arda Güler", "Kenan Yildiz"] },
-
-  { "code": "GER", "name": "Germany", "group": "E", "flag": "https://flagcdn.com/w80/de.png", "blurb": "A classic powerhouse rebuilt and hungry to reclaim past glories.", "players": ["Florian Wirtz", "Jamal Musiala", "Antonio Rüdiger"] },
-  { "code": "CUW", "name": "Curaçao", "group": "E", "flag": "https://flagcdn.com/w80/cw.png", "blurb": "The island nation making history on the world's biggest stage.", "players": ["Cuco Martina", "Leandro Bacuna", "Eloy Room"] },
-  { "code": "CIV", "name": "Côte d'Ivoire", "group": "E", "flag": "https://flagcdn.com/w80/ci.png", "blurb": "The Elephants charge with pace, power and a proud football tradition.", "players": ["Sébastien Haller", "Franck Kessié", "Amad Diallo"] },
-  { "code": "ECU", "name": "Ecuador", "group": "E", "flag": "https://flagcdn.com/w80/ec.png", "blurb": "La Tricolor bring passion and ambition from South America.", "players": ["Willian Pacho", "Moisés Caicedo", "Piero Hincapié"] },
-
-  { "code": "NED", "name": "Netherlands", "group": "F", "flag": "https://flagcdn.com/w80/nl.png", "blurb": "Oranje are back in style with a thrilling blend of youth and experience.", "players": ["Virgil van Dijk", "Memphis Depay", "Frenkie de Jong"] },
-  { "code": "JPN", "name": "Japan", "group": "F", "flag": "https://flagcdn.com/w80/jp.png", "blurb": "Blue Samurai with remarkable technical quality and tireless work rate.", "players": ["Takefusa Kubo", "Ritsu Doan", "Junya Ito"] },
-  { "code": "SWE", "name": "Sweden", "group": "F", "flag": "https://flagcdn.com/w80/se.png", "blurb": "Organised and physically powerful with quality in key positions.", "players": ["Alexander Isak", "Dejan Kulusevski", "Viktor Gyökeres"] },
-  { "code": "TUN", "name": "Tunisia", "group": "F", "flag": "https://flagcdn.com/w80/tn.png", "blurb": "The Eagles of Carthage representing Africa with pride and skill.", "players": ["Wahbi Khazri", "Youssef Msakni", "Farouk Ben Mustapha"] },
-
-  { "code": "BEL", "name": "Belgium", "group": "G", "flag": "https://flagcdn.com/w80/be.png", "blurb": "A new golden generation emerging after the famous class of 2018.", "players": ["Romelu Lukaku", "Kevin De Bruyne", "Thibaut Courtois"] },
-  { "code": "EGY", "name": "Egypt", "group": "G", "flag": "https://flagcdn.com/w80/eg.png", "blurb": "The Pharaohs powered by one of the world's most clinical forwards.", "players": ["Mohamed Salah", "Mohamed Elneny", "Ahmed El-Shenawy"] },
-  { "code": "IRN", "name": "IR Iran", "group": "G", "flag": "https://flagcdn.com/w80/ir.png", "blurb": "Team Melli with discipline, organisation and a knack for resilience.", "players": ["Mehdi Taremi", "Sardar Azmoun", "Alireza Beiranvand"] },
-  { "code": "NZL", "name": "New Zealand", "group": "G", "flag": "https://flagcdn.com/w80/nz.png", "blurb": "The All Whites making the most of their Pacific football journey.", "players": ["Chris Wood", "Clayton Lewis", "Joe Bell"] },
-
-  { "code": "ESP", "name": "Spain", "group": "H", "flag": "https://flagcdn.com/w80/es.png", "blurb": "La Roja reborn with a brilliant new crop of technically gifted players.", "players": ["Pedri", "Gavi", "Unai Simón"] },
-  { "code": "CPV", "name": "Cabo Verde", "group": "H", "flag": "https://flagcdn.com/w80/cv.png", "blurb": "The Blue Sharks punching well above their weight on the world stage.", "players": ["Garry Rodrigues", "Ryan Mendes", "Vítor Baia"] },
-  { "code": "KSA", "name": "Saudi Arabia", "group": "H", "flag": "https://flagcdn.com/w80/sa.png", "blurb": "The Green Falcons who shocked Argentina in 2022 are back for more.", "players": ["Salem Al-Dawsari", "Mohammed Al-Owais", "Yasser Al-Shahrani"] },
-  { "code": "URU", "name": "Uruguay", "group": "H", "flag": "https://flagcdn.com/w80/uy.png", "blurb": "Garra Charrúa — fighting spirit and world-class quality combined.", "players": ["Darwin Núñez", "Federico Valverde", "José María Giménez"] },
-
-  { "code": "FRA", "name": "France", "group": "I", "flag": "https://flagcdn.com/w80/fr.png", "blurb": "Depth in every position with electric attacking talent throughout.", "players": ["Kylian Mbappé", "Antoine Griezmann", "Mike Maignan"] },
-  { "code": "SEN", "name": "Senegal", "group": "I", "flag": "https://flagcdn.com/w80/sn.png", "blurb": "African champions with power, pace and a world-class frontline.", "players": ["Sadio Mané", "Kalidou Koulibaly", "Édouard Mendy"] },
-  { "code": "IRQ", "name": "Iraq", "group": "I", "flag": "https://flagcdn.com/w80/iq.png", "blurb": "The Lions of Mesopotamia with a passionate fanbase behind them.", "players": ["Mohanad Ali", "Amjad Attwan", "Jalal Hassan"] },
-  { "code": "NOR", "name": "Norway", "group": "I", "flag": "https://flagcdn.com/w80/no.png", "blurb": "The rising force of European football built around a generational striker.", "players": ["Erling Haaland", "Martin Ødegaard", "Ørjan Nyland"] },
-
-  { "code": "ARG", "name": "Argentina", "group": "J", "flag": "https://flagcdn.com/w80/ar.png", "blurb": "Defending champions with magic in their boots and fire in their hearts.", "players": ["Lionel Messi", "Ángel Di María", "Emiliano Martínez"] },
-  { "code": "ALG", "name": "Algeria", "group": "J", "flag": "https://flagcdn.com/w80/dz.png", "blurb": "The Desert Foxes with flair, pace and a fiercely loyal fanbase.", "players": ["Riyad Mahrez", "Islam Slimani", "Rais M'Bolhi"] },
-  { "code": "AUT", "name": "Austria", "group": "J", "flag": "https://flagcdn.com/w80/at.png", "blurb": "Das Team — technically strong and full of Bundesliga quality.", "players": ["David Alaba", "Marcel Sabitzer", "Alexander Schlager"] },
-  { "code": "JOR", "name": "Jordan", "group": "J", "flag": "https://flagcdn.com/w80/jo.png", "blurb": "The Nashama making their World Cup debut with pride and determination.", "players": ["Yazan Al-Naimat", "Musa Al-Taamari", "Amer Shafi"] },
-
-  { "code": "POR", "name": "Portugal", "group": "K", "flag": "https://flagcdn.com/w80/pt.png", "blurb": "More than one superstar — a genuinely deep squad ready to compete.", "players": ["Cristiano Ronaldo", "Bruno Fernandes", "Rúben Dias"] },
-  { "code": "COD", "name": "Congo DR", "group": "K", "flag": "https://flagcdn.com/w80/cd.png", "blurb": "The Leopards — Africa's giant with raw talent and unstoppable energy.", "players": ["Cédric Bakambu", "Chancel Mbemba", "Ley Matampi"] },
-  { "code": "UZB", "name": "Uzbekistan", "group": "K", "flag": "https://flagcdn.com/w80/uz.png", "blurb": "The White Wolves making a remarkable debut on the world stage.", "players": ["Eldor Shomurodov", "Otabek Shukurov", "Ismoil Arabov"] },
-  { "code": "COL", "name": "Colombia", "group": "K", "flag": "https://flagcdn.com/w80/co.png", "blurb": "Los Cafeteros with flair, creativity and passionate backing.", "players": ["James Rodríguez", "Luis Díaz", "Falcao"] },
-
-  { "code": "ENG", "name": "England", "group": "L", "flag": "https://flagcdn.com/w80/gb-eng.png", "blurb": "Young Lions determined to finally bring football home.", "players": ["Jude Bellingham", "Harry Kane", "Phil Foden"] },
-  { "code": "CRO", "name": "Croatia", "group": "L", "flag": "https://flagcdn.com/w80/hr.png", "blurb": "Chequered shirts and unbreakable spirit — always go further than expected.", "players": ["Luka Modrić", "Ivan Perišić", "Dominik Livaković"] },
-  { "code": "GHA", "name": "Ghana", "group": "L", "flag": "https://flagcdn.com/w80/gh.png", "blurb": "Black Stars with a passionate fanbase and exciting attacking talent.", "players": ["Jordan Ayew", "Thomas Partey", "André Ayew"] },
-  { "code": "PAN", "name": "Panama", "group": "L", "flag": "https://flagcdn.com/w80/pa.png", "blurb": "Los Canaleros with heart, hustle and a never-say-die attitude.", "players": ["Rolando Blackburn", "Armando Cooper", "Luis Mejía"] }
+  {
+    "code": "MEX", "name": "Mexico", "group": "A",
+    "flag": "https://flagcdn.com/w80/mx.png",
+    "blurb": "Co-hosts with passionate fans and decades of World Cup experience.",
+    "players": ["Hirving Lozano", "Raúl Jiménez", "Alexis Vega"],
+    "capital": "Mexico City", "population": "128 million",
+    "bestFinish": "Quarter Final (1970, 1986)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "RSA", "name": "South Africa", "group": "A",
+    "flag": "https://flagcdn.com/w80/za.png",
+    "blurb": "Bafana Bafana back on the world stage with pace and flair.",
+    "players": ["Percy Tau", "Bongani Zungu", "Ronwen Williams"],
+    "capital": "Pretoria", "population": "60 million",
+    "bestFinish": "Group Stage (1998, 2002, 2010)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "KOR", "name": "Korea Republic", "group": "A",
+    "flag": "https://flagcdn.com/w80/kr.png",
+    "blurb": "Taegeuk Warriors with intensity, fitness and a flair for the dramatic.",
+    "players": ["Son Heung-min", "Lee Kang-in", "Kim Min-jae"],
+    "capital": "Seoul", "population": "52 million",
+    "bestFinish": "4th Place (2002)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CZE", "name": "Czechia", "group": "A",
+    "flag": "https://flagcdn.com/w80/cz.png",
+    "blurb": "Technically gifted with a proud footballing history in Central Europe.",
+    "players": ["Patrik Schick", "Tomáš Souček", "Ladislav Krejčí"],
+    "capital": "Prague", "population": "11 million",
+    "bestFinish": "Runners Up (1934, 1962 — as Czechoslovakia)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CAN", "name": "Canada", "group": "B",
+    "flag": "https://flagcdn.com/w80/ca.png",
+    "blurb": "Co-hosts making their mark after decades away from the World Cup.",
+    "players": ["Alphonso Davies", "Jonathan David", "Milan Borjan"],
+    "capital": "Ottawa", "population": "38 million",
+    "bestFinish": "Group Stage (1986)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "BIH", "name": "Bosnia & Herzegovina", "group": "B",
+    "flag": "https://flagcdn.com/w80/ba.png",
+    "blurb": "The Dragons with attacking flair and a passionate support.",
+    "players": ["Edin Džeko", "Miralem Pjanić", "Jasmin Handanović"],
+    "capital": "Sarajevo", "population": "3.5 million",
+    "bestFinish": "Group Stage (2014)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "QAT", "name": "Qatar", "group": "B",
+    "flag": "https://flagcdn.com/w80/qa.png",
+    "blurb": "The 2022 hosts now competing as a regular tournament side.",
+    "players": ["Akram Afif", "Almoez Ali", "Meshaal Barsham"],
+    "capital": "Doha", "population": "2.9 million",
+    "bestFinish": "Group Stage (2022)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "SUI", "name": "Switzerland", "group": "B",
+    "flag": "https://flagcdn.com/w80/ch.png",
+    "blurb": "Quietly one of the most reliable and organised teams in world football.",
+    "players": ["Granit Xhaka", "Xherdan Shaqiri", "Gregor Kobel"],
+    "capital": "Bern", "population": "8.7 million",
+    "bestFinish": "Quarter Final (1934, 1938, 1954)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "BRA", "name": "Brazil", "group": "C",
+    "flag": "https://flagcdn.com/w80/br.png",
+    "blurb": "Samba flair and five stars — always the team everyone watches.",
+    "players": ["Vinicius Jr.", "Raphinha", "Alisson Becker"],
+    "capital": "Brasília", "population": "215 million",
+    "bestFinish": "Winners (1958, 1962, 1970, 1994, 2002)", "worldCupWins": 5,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "MAR", "name": "Morocco", "group": "C",
+    "flag": "https://flagcdn.com/w80/ma.png",
+    "blurb": "The Lions of Atlas dazzled the world in 2022 and want even more.",
+    "players": ["Achraf Hakimi", "Youssef En Nesyri", "Yassine Bounou"],
+    "capital": "Rabat", "population": "37 million",
+    "bestFinish": "4th Place (2022)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "HAI", "name": "Haiti", "group": "C",
+    "flag": "https://flagcdn.com/w80/ht.png",
+    "blurb": "Les Grenadiers on the world stage for the first time in decades.",
+    "players": ["Duckens Nazon", "Frantzdy Pierrot", "Wilson Isidor"],
+    "capital": "Port-au-Prince", "population": "11.5 million",
+    "bestFinish": "Group Stage (1974)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "SCO", "name": "Scotland", "group": "C",
+    "flag": "https://flagcdn.com/w80/gb-sct.png",
+    "blurb": "The Tartan Army back on the world stage with pride and passion.",
+    "players": ["Andrew Robertson", "Scott McTominay", "John Mcginn"],
+    "capital": "Edinburgh", "population": "5.5 million",
+    "bestFinish": "Group Stage (1974, 1978, 1982, 1986, 1990, 1998)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "USA", "name": "United States", "group": "D",
+    "flag": "https://flagcdn.com/w80/us.png",
+    "blurb": "Host nation with a rising generation hungry to impress on home soil.",
+    "players": ["Christian Pulisic", "Tyler Adams", "Folarin Balogun"],
+    "capital": "Washington D.C.", "population": "335 million",
+    "bestFinish": "3rd Place (1930)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "PAR", "name": "Paraguay", "group": "D",
+    "flag": "https://flagcdn.com/w80/py.png",
+    "blurb": "La Albirroja with grit, resilience and South American heart.",
+    "players": ["Miguel Almirón", "Ángel Romero", "Antony Silva"],
+    "capital": "Asunción", "population": "7.4 million",
+    "bestFinish": "Quarter Final (1954, 2010)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "AUS", "name": "Australia", "group": "D",
+    "flag": "https://flagcdn.com/w80/au.png",
+    "blurb": "The Socceroos punch above their weight with pace and determination.",
+    "players": ["Mathew Ryan", "Harry Souttar", "Mitchell Duke"],
+    "capital": "Canberra", "population": "26 million",
+    "bestFinish": "4th Place (2023 — Women's; Men's best: Round of 16 2006, 2022)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "TUR", "name": "Türkiye", "group": "D",
+    "flag": "https://flagcdn.com/w80/tr.png",
+    "blurb": "The Crescents with passion, quality and a knack for the dramatic.",
+    "players": ["Hakan Çalhanoğlu", "Arda Güler", "Kenan Yildiz"],
+    "capital": "Ankara", "population": "85 million",
+    "bestFinish": "3rd Place (2002)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "GER", "name": "Germany", "group": "E",
+    "flag": "https://flagcdn.com/w80/de.png",
+    "blurb": "A classic powerhouse rebuilt and hungry to reclaim past glories.",
+    "players": ["Florian Wirtz", "Jamal Musiala", "Antonio Rüdiger"],
+    "capital": "Berlin", "population": "84 million",
+    "bestFinish": "Winners (1954, 1974, 1990, 2014)", "worldCupWins": 4,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CUW", "name": "Curaçao", "group": "E",
+    "flag": "https://flagcdn.com/w80/cw.png",
+    "blurb": "The island nation making history on the world's biggest stage.",
+    "players": ["Cuco Martina", "Leandro Bacuna", "Eloy Room"],
+    "capital": "Willemstad", "population": "191,000",
+    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CIV", "name": "Côte d'Ivoire", "group": "E",
+    "flag": "https://flagcdn.com/w80/ci.png",
+    "blurb": "The Elephants charge with pace, power and a proud football tradition.",
+    "players": ["Sébastien Haller", "Franck Kessié", "Amad Diallo"],
+    "capital": "Yamoussoukro", "population": "27 million",
+    "bestFinish": "Group Stage (2006, 2010, 2014)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "ECU", "name": "Ecuador", "group": "E",
+    "flag": "https://flagcdn.com/w80/ec.png",
+    "blurb": "La Tricolor bring passion and ambition from South America.",
+    "players": ["Willian Pacho", "Moisés Caicedo", "Piero Hincapié"],
+    "capital": "Quito", "population": "18 million",
+    "bestFinish": "Round of 16 (2006)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "NED", "name": "Netherlands", "group": "F",
+    "flag": "https://flagcdn.com/w80/nl.png",
+    "blurb": "Oranje are back in style with a thrilling blend of youth and experience.",
+    "players": ["Virgil van Dijk", "Memphis Depay", "Frenkie de Jong"],
+    "capital": "Amsterdam", "population": "17.9 million",
+    "bestFinish": "Runners Up (1974, 1978, 2010)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "JPN", "name": "Japan", "group": "F",
+    "flag": "https://flagcdn.com/w80/jp.png",
+    "blurb": "Blue Samurai with remarkable technical quality and tireless work rate.",
+    "players": ["Takefusa Kubo", "Ritsu Doan", "Junya Ito"],
+    "capital": "Tokyo", "population": "125 million",
+    "bestFinish": "Round of 16 (2002, 2010, 2018, 2022)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "SWE", "name": "Sweden", "group": "F",
+    "flag": "https://flagcdn.com/w80/se.png",
+    "blurb": "Organised and physically powerful with quality in key positions.",
+    "players": ["Alexander Isak", "Dejan Kulusevski", "Viktor Gyökeres"],
+    "capital": "Stockholm", "population": "10.5 million",
+    "bestFinish": "3rd Place (1950, 1994)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "TUN", "name": "Tunisia", "group": "F",
+    "flag": "https://flagcdn.com/w80/tn.png",
+    "blurb": "The Eagles of Carthage representing Africa with pride and skill.",
+    "players": ["Wahbi Khazri", "Youssef Msakni", "Farouk Ben Mustapha"],
+    "capital": "Tunis", "population": "12 million",
+    "bestFinish": "Group Stage (best finish)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "BEL", "name": "Belgium", "group": "G",
+    "flag": "https://flagcdn.com/w80/be.png",
+    "blurb": "A new golden generation emerging after the famous class of 2018.",
+    "players": ["Romelu Lukaku", "Kevin De Bruyne", "Thibaut Courtois"],
+    "capital": "Brussels", "population": "11.6 million",
+    "bestFinish": "3rd Place (2018)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "EGY", "name": "Egypt", "group": "G",
+    "flag": "https://flagcdn.com/w80/eg.png",
+    "blurb": "The Pharaohs powered by one of the world's most clinical forwards.",
+    "players": ["Mohamed Salah", "Mohamed Elneny", "Ahmed El-Shenawy"],
+    "capital": "Cairo", "population": "105 million",
+    "bestFinish": "Group Stage (1934, 1990)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "IRN", "name": "IR Iran", "group": "G",
+    "flag": "https://flagcdn.com/w80/ir.png",
+    "blurb": "Team Melli with discipline, organisation and a knack for resilience.",
+    "players": ["Mehdi Taremi", "Sardar Azmoun", "Alireza Beiranvand"],
+    "capital": "Tehran", "population": "87 million",
+    "bestFinish": "Group Stage (1978, 1998, 2006, 2014, 2018, 2022)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "NZL", "name": "New Zealand", "group": "G",
+    "flag": "https://flagcdn.com/w80/nz.png",
+    "blurb": "The All Whites making the most of their Pacific football journey.",
+    "players": ["Chris Wood", "Clayton Lewis", "Joe Bell"],
+    "capital": "Wellington", "population": "5.1 million",
+    "bestFinish": "Group Stage (1982, 2010)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "ESP", "name": "Spain", "group": "H",
+    "flag": "https://flagcdn.com/w80/es.png",
+    "blurb": "La Roja reborn with a brilliant new crop of technically gifted players.",
+    "players": ["Pedri", "Gavi", "Unai Simón"],
+    "capital": "Madrid", "population": "47.4 million",
+    "bestFinish": "Winners (2010)", "worldCupWins": 1,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CPV", "name": "Cabo Verde", "group": "H",
+    "flag": "https://flagcdn.com/w80/cv.png",
+    "blurb": "The Blue Sharks punching well above their weight on the world stage.",
+    "players": ["Garry Rodrigues", "Ryan Mendes", "Vítor Baia"],
+    "capital": "Praia", "population": "560,000",
+    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "KSA", "name": "Saudi Arabia", "group": "H",
+    "flag": "https://flagcdn.com/w80/sa.png",
+    "blurb": "The Green Falcons who shocked Argentina in 2022 are back for more.",
+    "players": ["Salem Al-Dawsari", "Mohammed Al-Owais", "Yasser Al-Shahrani"],
+    "capital": "Riyadh", "population": "35 million",
+    "bestFinish": "Round of 16 (1994)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "URU", "name": "Uruguay", "group": "H",
+    "flag": "https://flagcdn.com/w80/uy.png",
+    "blurb": "Garra Charrúa — fighting spirit and world-class quality combined.",
+    "players": ["Darwin Núñez", "Federico Valverde", "José María Giménez"],
+    "capital": "Montevideo", "population": "3.5 million",
+    "bestFinish": "Winners (1930, 1950)", "worldCupWins": 2,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "FRA", "name": "France", "group": "I",
+    "flag": "https://flagcdn.com/w80/fr.png",
+    "blurb": "Depth in every position with electric attacking talent throughout.",
+    "players": ["Kylian Mbappé", "Antoine Griezmann", "Mike Maignan"],
+    "capital": "Paris", "population": "68 million",
+    "bestFinish": "Winners (1998, 2018)", "worldCupWins": 2,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "SEN", "name": "Senegal", "group": "I",
+    "flag": "https://flagcdn.com/w80/sn.png",
+    "blurb": "African champions with power, pace and a world-class frontline.",
+    "players": ["Sadio Mané", "Kalidou Koulibaly", "Édouard Mendy"],
+    "capital": "Dakar", "population": "17 million",
+    "bestFinish": "Quarter Final (2002)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "IRQ", "name": "Iraq", "group": "I",
+    "flag": "https://flagcdn.com/w80/iq.png",
+    "blurb": "The Lions of Mesopotamia with a passionate fanbase behind them.",
+    "players": ["Mohanad Ali", "Amjad Attwan", "Jalal Hassan"],
+    "capital": "Baghdad", "population": "42 million",
+    "bestFinish": "Group Stage (1986)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "NOR", "name": "Norway", "group": "I",
+    "flag": "https://flagcdn.com/w80/no.png",
+    "blurb": "The rising force of European football built around a generational striker.",
+    "players": ["Erling Haaland", "Martin Ødegaard", "Ørjan Nyland"],
+    "capital": "Oslo", "population": "5.4 million",
+    "bestFinish": "Quarter Final (1938)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "ARG", "name": "Argentina", "group": "J",
+    "flag": "https://flagcdn.com/w80/ar.png",
+    "blurb": "Defending champions with magic in their boots and fire in their hearts.",
+    "players": ["Lionel Messi", "Ángel Di María", "Emiliano Martínez"],
+    "capital": "Buenos Aires", "population": "46 million",
+    "bestFinish": "Winners (1978, 1986, 2022)", "worldCupWins": 3,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "ALG", "name": "Algeria", "group": "J",
+    "flag": "https://flagcdn.com/w80/dz.png",
+    "blurb": "The Desert Foxes with flair, pace and a fiercely loyal fanbase.",
+    "players": ["Riyad Mahrez", "Islam Slimani", "Rais M'Bolhi"],
+    "capital": "Algiers", "population": "45 million",
+    "bestFinish": "Round of 16 (2014)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "AUT", "name": "Austria", "group": "J",
+    "flag": "https://flagcdn.com/w80/at.png",
+    "blurb": "Das Team — technically strong and full of Bundesliga quality.",
+    "players": ["David Alaba", "Marcel Sabitzer", "Alexander Schlager"],
+    "capital": "Vienna", "population": "9.1 million",
+    "bestFinish": "3rd Place (1954)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "JOR", "name": "Jordan", "group": "J",
+    "flag": "https://flagcdn.com/w80/jo.png",
+    "blurb": "The Nashama making their World Cup debut with pride and determination.",
+    "players": ["Yazan Al-Naimat", "Musa Al-Taamari", "Amer Shafi"],
+    "capital": "Amman", "population": "10.2 million",
+    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "POR", "name": "Portugal", "group": "K",
+    "flag": "https://flagcdn.com/w80/pt.png",
+    "blurb": "More than one superstar — a genuinely deep squad ready to compete.",
+    "players": ["Cristiano Ronaldo", "Bruno Fernandes", "Rúben Dias"],
+    "capital": "Lisbon", "population": "10.3 million",
+    "bestFinish": "3rd Place (1966)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "COD", "name": "Congo DR", "group": "K",
+    "flag": "https://flagcdn.com/w80/cd.png",
+    "blurb": "The Leopards — Africa's giant with raw talent and unstoppable energy.",
+    "players": ["Cédric Bakambu", "Chancel Mbemba", "Ley Matampi"],
+    "capital": "Kinshasa", "population": "100 million",
+    "bestFinish": "Group Stage (1974 — as Zaire)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "UZB", "name": "Uzbekistan", "group": "K",
+    "flag": "https://flagcdn.com/w80/uz.png",
+    "blurb": "The White Wolves making a remarkable debut on the world stage.",
+    "players": ["Eldor Shomurodov", "Otabek Shukurov", "Ismoil Arabov"],
+    "capital": "Tashkent", "population": "36 million",
+    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "COL", "name": "Colombia", "group": "K",
+    "flag": "https://flagcdn.com/w80/co.png",
+    "blurb": "Los Cafeteros with flair, creativity and passionate backing.",
+    "players": ["James Rodríguez", "Luis Díaz", "Falcao"],
+    "capital": "Bogotá", "population": "52 million",
+    "bestFinish": "Quarter Final (2014)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "ENG", "name": "England", "group": "L",
+    "flag": "https://flagcdn.com/w80/gb-eng.png",
+    "blurb": "Young Lions determined to finally bring football home.",
+    "players": ["Jude Bellingham", "Harry Kane", "Phil Foden"],
+    "capital": "London", "population": "56 million",
+    "bestFinish": "Winners (1966)", "worldCupWins": 1,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "CRO", "name": "Croatia", "group": "L",
+    "flag": "https://flagcdn.com/w80/hr.png",
+    "blurb": "Chequered shirts and unbreakable spirit — always go further than expected.",
+    "players": ["Luka Modrić", "Ivan Perišić", "Dominik Livaković"],
+    "capital": "Zagreb", "population": "3.9 million",
+    "bestFinish": "Runners Up (2018)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "GHA", "name": "Ghana", "group": "L",
+    "flag": "https://flagcdn.com/w80/gh.png",
+    "blurb": "Black Stars with a passionate fanbase and exciting attacking talent.",
+    "players": ["Jordan Ayew", "Thomas Partey", "André Ayew"],
+    "capital": "Accra", "population": "33 million",
+    "bestFinish": "Quarter Final (2010)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  },
+  {
+    "code": "PAN", "name": "Panama", "group": "L",
+    "flag": "https://flagcdn.com/w80/pa.png",
+    "blurb": "Los Canaleros with heart, hustle and a never-say-die attitude.",
+    "players": ["Rolando Blackburn", "Armando Cooper", "Luis Mejía"],
+    "capital": "Panama City", "population": "4.4 million",
+    "bestFinish": "Group Stage (2018)", "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan"
+  }
 ]
