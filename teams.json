@@ -1,8 +1,8 @@
 [
-  { "code": "MEX", "name": "Mexico", "group": "A", "flag": "https://flagcdn.com/w80/mx.png", "blurb": "Co-hosts with passionate fans and decades of World Cup experience.", "players": ["Hirving Lozano", "Raúl Jiménez", "Guillermo Ochoa"] },
+  { "code": "MEX", "name": "Mexico", "group": "A", "flag": "https://flagcdn.com/w80/mx.png", "blurb": "Co-hosts with passionate fans and decades of World Cup experience.", "players": ["Hirving Lozano", "Raúl Jiménez", "Alexis Vega"] },
   { "code": "RSA", "name": "South Africa", "group": "A", "flag": "https://flagcdn.com/w80/za.png", "blurb": "Bafana Bafana back on the world stage with pace and flair.", "players": ["Percy Tau", "Bongani Zungu", "Ronwen Williams"] },
   { "code": "KOR", "name": "Korea Republic", "group": "A", "flag": "https://flagcdn.com/w80/kr.png", "blurb": "Taegeuk Warriors with intensity, fitness and a flair for the dramatic.", "players": ["Son Heung-min", "Lee Kang-in", "Kim Min-jae"] },
-  { "code": "CZE", "name": "Czechia", "group": "A", "flag": "https://flagcdn.com/w80/cz.png", "blurb": "Technically gifted with a proud footballing history in Central Europe.", "players": ["Patrik Schick", "Tomáš Souček", "Jiří Pavlenka"] },
+  { "code": "CZE", "name": "Czechia", "group": "A", "flag": "https://flagcdn.com/w80/cz.png", "blurb": "Technically gifted with a proud footballing history in Central Europe.", "players": ["Patrik Schick", "Tomáš Souček", "Ladislav Krejčí"] },
 
   { "code": "CAN", "name": "Canada", "group": "B", "flag": "https://flagcdn.com/w80/ca.png", "blurb": "Co-hosts making their mark after decades away from the World Cup.", "players": ["Alphonso Davies", "Jonathan David", "Milan Borjan"] },
   { "code": "BIH", "name": "Bosnia & Herzegovina", "group": "B", "flag": "https://flagcdn.com/w80/ba.png", "blurb": "The Dragons with attacking flair and a passionate support.", "players": ["Edin Džeko", "Miralem Pjanić", "Jasmin Handanović"] },
