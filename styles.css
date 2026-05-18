@@ -780,16 +780,16 @@ a { color: inherit; }
 .country-map {
   margin-top: 20px;
   display: flex; justify-content: center; align-items: center;
-  padding: 16px;
+  padding: 20px;
   background: #f0f0fa;
   border-radius: var(--radius-sm);
-  min-height: 120px;
+  min-height: 140px;
 }
-.country-map svg {
-  width: 100%; max-height: 160px;
-  color: var(--teal);
-  opacity: 0.85;
-  filter: drop-shadow(0 2px 6px rgba(0,180,180,0.25));
+.country-map img {
+  width: 100%; max-height: 180px;
+  object-fit: contain;
+  filter: invert(48%) sepia(79%) saturate(476%) hue-rotate(142deg) brightness(95%) contrast(95%);
+  opacity: 0.9;
 }
 
 /* Interesting fact box */
