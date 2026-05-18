@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=13" />
+  <link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
 
@@ -37,11 +37,36 @@
   <footer>
     <div class="wrap footer-inner">
       <span class="footer-brand">⚽ Rowan's World Cup Hub</span>
+      <div class="footer-views">
+        <span class="views-label">Site Views</span>
+        <span class="views-count" id="site-views">—</span>
+      </div>
       <small>Made with ❤️ by our family · © <span id="year"></span></small>
     </div>
   </footer>
 
+  <!-- GoatCounter — replace YOUR-SITE with your GoatCounter subdomain after signing up -->
+  <script data-goatcounter="https://YOUR-SITE.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+  <script>
+    /* Fetch total site views — replace YOUR-SITE and YOUR-API-TOKEN once signed up at goatcounter.com */
+    async function loadViews() {
+      try {
+        const res = await fetch('https://YOUR-SITE.goatcounter.com/api/v0/stats/total', {
+          headers: { 'Authorization': 'Bearer YOUR-API-TOKEN' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const total = data?.total ?? null;
+        if (total !== null) {
+          document.getElementById('site-views').textContent = total.toLocaleString();
+        }
+      } catch(e) { /* silently fail until set up */ }
+    }
+    loadViews();
+  </script>
+
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>
