@@ -166,6 +166,9 @@ a { color: inherit; }
   display: flex; align-items: flex-end;
   padding-bottom: 28px;
 }
+.hero-title-overlay .wrap {
+  display: flex; flex-direction: column; align-items: flex-start;
+}
 
 .hero-site-name {
   font-family: var(--font-display);
@@ -333,13 +336,45 @@ a { color: inherit; }
   color: var(--teal); font-family: var(--font-display);
   font-size: 1.1rem; margin-right: 3px;
 }
-.hero-cta-sm {
-  padding: 10px 22px; font-size: 0.875rem; flex-shrink: 0;
+.hero-cta-banner {
+  margin-top: 16px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  display: inline-flex;
 }
-@media (max-width: 700px) {
-  .info-strip-inner { justify-content: center; gap: 12px; }
-  .info-strip-divider { display: none; }
-  .hero-cta-sm { width: 100%; text-align: center; justify-content: center; }
+
+/* ============================================================
+   INFO STRIP — stats bar below banner
+   ============================================================ */
+.info-strip {
+  background: var(--purple-dark);
+  border-bottom: 1px solid rgba(0,180,180,0.15);
+  padding: 0;
+}
+.info-strip-inner {
+  display: flex; align-items: stretch;
+  justify-content: center;
+}
+.strip-stat {
+  flex: 1; text-align: center;
+  padding: 14px 8px;
+  font-size: 0.8rem; color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+}
+.strip-stat strong {
+  display: block;
+  color: var(--teal); font-family: var(--font-display);
+  font-size: 1.6rem; line-height: 1;
+  margin-bottom: 2px;
+}
+.strip-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.1);
+  align-self: stretch;
+}
+@media (max-width: 480px) {
+  .strip-stat { font-size: 0.72rem; padding: 12px 4px; }
+  .strip-stat strong { font-size: 1.3rem; }
 }
 
 /* ============================================================
