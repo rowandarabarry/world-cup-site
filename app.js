@@ -33,6 +33,12 @@ function renderHome() {
         <img class="hero-bg" src="images/banner.png" alt="FIFA World Cup 2026 banner">
         <div class="hero-image-overlay"></div>
       </div>
+      <div class="hero-title-overlay">
+        <div class="wrap">
+          <div class="hero-site-name">ROWAN'S <span>WORLD CUP HUB</span></div>
+          <div class="hero-site-sub">Your home for FIFA World Cup 2026</div>
+        </div>
+      </div>
     </section>
 
     <div class="info-strip animate-in-2">
