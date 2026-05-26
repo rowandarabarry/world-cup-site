@@ -692,18 +692,268 @@ function renderAbout() {
 }
 
 /* ============================================================
-   ROUTER — reads URL and decides which page to show
+   SHEET API URL — replace with your deployed Apps Script URL
    ============================================================ */
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbzC6dP9U2x6sSE1WkZ3SD6x2QvgFiGOhJI3ao5kMv7dkIhWXMpztOSwc3Pd2FqHchUK/exec';
+
+/* JSONP helper — bypasses CORS restriction on Google Apps Script */
+function fetchSheet(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    const url = SHEET_API + '?' + new URLSearchParams({...params, callback: cbName});
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.head.removeChild(script);
+      resolve(data);
+    };
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => reject(new Error('Script load failed'));
+    document.head.appendChild(script);
+    setTimeout(() => reject(new Error('Timeout')), 10000);
+  });
+}
+
+/* ============================================================
+   RESULTS PAGE — loads live from Google Sheets
+   ============================================================ */
+async function renderResults() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">Match <span>Results</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+        <div id="results-content">
+          <p style="color:var(--text-muted)">Loading results…</p>
+        </div>
+      </div>
+    </div>`;
+
+  try {
+    const data = await fetchSheet({action: 'getResults'});
+    const results = data.results || [];
+
+    /* Group by group */
+    const groups = {};
+    results.forEach(r => {
+      const g = r.Group || 'Other';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(r);
+    });
+
+    const played = results.filter(r => r.Status === 'Played');
+    const upcoming = results.filter(r => r.Status !== 'Played');
+
+    document.getElementById('results-content').innerHTML = `
+      <div class="results-summary">
+        <div class="rs-item"><strong>${played.length}</strong> Played</div>
+        <div class="rs-item"><strong>${upcoming.length}</strong> Remaining</div>
+      </div>
+
+      ${Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([group, matches]) => `
+        <div class="fixture-group">
+          <div class="fixture-group-title">${group}</div>
+          ${matches.map(m => `
+            <div class="fixture-card ${m.Status === 'Played' ? 'fixture-played' : ''}">
+              <div class="fixture-team home">
+                <span>${m.HomeTeam}</span>
+                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" alt="${m.HomeTeam}">
+              </div>
+              <div class="fixture-score">
+                ${m.Status === 'Played'
+                  ? `<div class="fixture-result">${m.HomeScore} – ${m.AwayScore}</div>`
+                  : `<div class="fixture-vs">VS</div>`}
+                <div class="fixture-time">${m.Date}</div>
+              </div>
+              <div class="fixture-team away">
+                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" alt="${m.AwayTeam}">
+                <span>${m.AwayTeam}</span>
+              </div>
+            </div>`).join('')}
+        </div>`).join('')}`;
+  } catch(e) {
+    document.getElementById('results-content').innerHTML =
+      `<p style="color:var(--text-muted)">Could not load results. Make sure the Google Sheet is set up correctly.</p>`;
+  }
+}
+
+/* ============================================================
+   ADMIN PANEL
+   ============================================================ */
+let adminPin = null;
+
+async function renderAdmin() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">Admin <span>Panel</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+        <div id="admin-content">
+          <div class="admin-login" id="admin-login">
+            <div class="info-card" style="max-width:360px;margin:0 auto;text-align:center">
+              <h3>Admin Login</h3>
+              <p style="margin-bottom:20px;color:var(--text-muted)">Enter your PIN to access the admin panel</p>
+              <input type="password" id="pin-input" class="search" placeholder="Enter PIN"
+                style="text-align:center;letter-spacing:0.3em;font-size:1.2rem;margin-bottom:12px">
+              <button onclick="submitPin()" class="hero-cta" style="width:100%;justify-content:center">
+                Login →
+              </button>
+              <p id="pin-error" style="color:#e63200;margin-top:10px;display:none">Incorrect PIN</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  /* Allow Enter key on PIN input */
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitPin();
+  });
+}
+
+async function submitPin() {
+  const pin = document.getElementById('pin-input').value.trim();
+  try {
+    const data = await fetchSheet({action: 'verifyPin', pin});
+    if (data.success) {
+      adminPin = pin;
+      loadAdminPanel();
+    } else {
+      document.getElementById('pin-error').style.display = 'block';
+    }
+  } catch(e) {
+    alert('Could not connect to server. Check your Apps Script URL.');
+  }
+}
+
+async function loadAdminPanel() {
+  document.getElementById('admin-content').innerHTML =
+    `<p style="color:var(--text-muted)">Loading matches…</p>`;
+
+  try {
+    const data = await fetchSheet({action: 'getResults'});
+    const results = data.results || [];
+    const upcoming = results.filter(r => r.Status !== 'Played');
+    const played   = results.filter(r => r.Status === 'Played');
+
+    document.getElementById('admin-content').innerHTML = `
+      <div class="admin-header">
+        <p style="color:var(--text-muted);margin-bottom:24px">
+          ✅ ${played.length} results entered &nbsp;·&nbsp; ⏳ ${upcoming.length} remaining
+        </p>
+      </div>
+
+      <h2 class="section-title" style="margin-bottom:16px">Enter <span>Results</span></h2>
+      ${upcoming.length === 0 ? '<p style="color:var(--text-muted)">All results entered!</p>' : ''}
+      ${upcoming.map(m => `
+        <div class="admin-match-card" id="match-${m.MatchID}">
+          <div class="admin-match-teams">
+            <img src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" class="fixture-flag" alt="">
+            <span class="admin-team-name">${m.HomeTeam}</span>
+            <input type="number" min="0" max="20" class="score-input" id="home-${m.MatchID}" placeholder="0">
+            <span class="admin-vs">–</span>
+            <input type="number" min="0" max="20" class="score-input" id="away-${m.MatchID}" placeholder="0">
+            <span class="admin-team-name">${m.AwayTeam}</span>
+            <img src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" class="fixture-flag" alt="">
+          </div>
+          <div class="admin-match-meta">${m.Group} · ${m.Date}</div>
+          <button class="admin-save-btn" onclick="saveResult(${m.MatchID})">Save Result</button>
+          <span class="admin-saved" id="saved-${m.MatchID}" style="display:none">✅ Saved!</span>
+        </div>`).join('')}
+
+      ${played.length > 0 ? `
+      <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Entered <span>Results</span></h2>
+      ${played.map(m => `
+        <div class="admin-match-card admin-match-played">
+          <div class="admin-match-teams">
+            <img src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" class="fixture-flag" alt="">
+            <span class="admin-team-name">${m.HomeTeam}</span>
+            <span class="admin-score-display">${m.HomeScore} – ${m.AwayScore}</span>
+            <span class="admin-team-name">${m.AwayTeam}</span>
+            <img src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" class="fixture-flag" alt="">
+          </div>
+          <div class="admin-match-meta">${m.Group} · ${m.Date}</div>
+        </div>`).join('')}` : ''}`;
+
+  } catch(e) {
+    document.getElementById('admin-content').innerHTML =
+      `<p style="color:var(--text-muted)">Could not load matches.</p>`;
+  }
+}
+
+async function saveResult(matchId) {
+  const homeScore = document.getElementById(`home-${matchId}`).value;
+  const awayScore = document.getElementById(`away-${matchId}`).value;
+
+  if (homeScore === '' || awayScore === '') {
+    alert('Please enter both scores before saving.');
+    return;
+  }
+
+  const btn = document.querySelector(`#match-${matchId} .admin-save-btn`);
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  try {
+    const data = await fetchSheet({
+      action: 'saveResult',
+      pin: adminPin,
+      matchId,
+      homeScore: parseInt(homeScore),
+      awayScore: parseInt(awayScore)
+    });
+    if (data.success) {
+      document.getElementById(`saved-${matchId}`).style.display = 'inline';
+      btn.style.display = 'none';
+      document.getElementById(`match-${matchId}`).style.opacity = '0.6';
+    } else {
+      alert('Error saving result: ' + (data.error || 'Unknown error'));
+      btn.textContent = 'Save Result';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    alert('Could not connect to server.');
+    btn.textContent = 'Save Result';
+    btn.disabled = false;
+  }
+}
+
+/* Helper — map team names to flag codes */
+function flagCode(team) {
+  const map = {
+    'Mexico':'mx','South Africa':'za','Korea Republic':'kr','Czechia':'cz',
+    'Canada':'ca','Bosnia & Herzegovina':'ba','Qatar':'qa','Switzerland':'ch',
+    'Brazil':'br','Morocco':'ma','Haiti':'ht','Scotland':'gb-sct',
+    'United States':'us','USA':'us','Paraguay':'py','Australia':'au','Türkiye':'tr',
+    'Germany':'de','Curaçao':'cw',"Côte d'Ivoire":'ci','Ecuador':'ec',
+    'Netherlands':'nl','Japan':'jp','Sweden':'se','Tunisia':'tn',
+    'Belgium':'be','Egypt':'eg','IR Iran':'ir','New Zealand':'nz',
+    'Spain':'es','Cabo Verde':'cv','Saudi Arabia':'sa','Uruguay':'uy',
+    'France':'fr','Senegal':'sn','Iraq':'iq','Norway':'no',
+    'Argentina':'ar','Algeria':'dz','Austria':'at','Jordan':'jo',
+    'Portugal':'pt','Congo DR':'cd','Uzbekistan':'uz','Colombia':'co',
+    'England':'gb-eng','Croatia':'hr','Ghana':'gh','Panama':'pa'
+  };
+  return map[team] || 'un';
+}
 (async function init() {
   const params = new URLSearchParams(location.search);
 
   try {
-    if (params.has('about'))    { renderAbout();                         }
-    else if (params.has('fixtures')) { renderFixtures();                 }
-    else if (params.has('groups'))   { await renderGroups();             }
+    if (params.has('about'))         { renderAbout();                        }
+    else if (params.has('fixtures')) { renderFixtures();                     }
+    else if (params.has('groups'))   { await renderGroups();                 }
+    else if (params.has('results'))  { await renderResults();                }
+    else if (params.has('admin'))    { await renderAdmin();                  }
     else if (params.get('team'))     { await renderTeam(params.get('team')); }
-    else if (params.has('teams'))    { await renderList();               }
-    else                             { renderHome();                     }
+    else if (params.has('teams'))    { await renderList();                   }
+    else                             { renderHome();                         }
   } catch (err) {
     app().innerHTML = `<div class="wrap" style="padding:2rem"><p>Something went wrong: ${err.message}</p></div>`;
   }
@@ -717,10 +967,11 @@ function renderAbout() {
   document.querySelectorAll('.tab').forEach(tab => {
     const page = tab.dataset.page;
     const isActive =
-      (page === 'home'     && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.get('team')) ||
+      (page === 'home'     && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.has('results') && !params.get('team')) ||
       (page === 'teams'    && (params.has('teams') || params.get('team'))) ||
       (page === 'fixtures' && params.has('fixtures')) ||
       (page === 'groups'   && params.has('groups')) ||
+      (page === 'results'  && params.has('results')) ||
       (page === 'about'    && params.has('about'));
     if (isActive) tab.classList.add('active');
   });
