@@ -590,18 +590,17 @@ function renderFixtures() {
 }
 
 /* ============================================================
-   GROUPS PAGE
+   GROUPS PAGE — live standings from Google Sheets
    ============================================================ */
 async function renderGroups() {
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap">
-        <h1 class="page-title">Group <span>Stage</span></h1>
+        <h1 class="page-title">Group <span>Standings</span></h1>
       </div>
     </div>
     <div class="section">
       <div class="wrap">
-        <p style="color:var(--text-muted);margin-bottom:24px">All 12 groups — top 2 from each group advance to the Round of 32</p>
         <div class="groups-grid" id="groups-grid">
           <p style="color:var(--text-muted)">Loading…</p>
         </div>
@@ -609,43 +608,73 @@ async function renderGroups() {
     </div>
   `;
 
-  const teams = await loadTeams();
+  const [teams, results] = await Promise.all([
+    loadTeams(),
+    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vTz224Prn4SdoE-52id9MEMgUkgUuCE1_Rrz6rq7TeQLLPCKAH2ev1pOnVK0kOPuwG7eGVWQOECnW3S/pub?gid=0&single=true&output=csv')
+      .then(r => r.text()).then(parseCSV).catch(() => [])
+  ]);
 
-  /* Build groups map */
-  const groups = {};
+  /* Build standings from played results */
+  const standings = {};
   teams.forEach(t => {
-    (groups[t.group] = groups[t.group] || []).push(t);
+    if (!standings[t.group]) standings[t.group] = {};
+    standings[t.group][t.name] = { team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
   });
 
-  $('groups-grid').innerHTML = Object.entries(groups)
+  results.filter(r => r.Status === 'Played').forEach(r => {
+    const hScore = parseInt(r.HomeScore);
+    const aScore = parseInt(r.AwayScore);
+    const grp = r.Group.replace('Group ', '');
+    if (!standings[grp]) return;
+    const home = standings[grp][r.HomeTeam];
+    const away = standings[grp][r.AwayTeam];
+    if (!home || !away) return;
+    home.p++; away.p++;
+    home.gf += hScore; home.ga += aScore;
+    away.gf += aScore; away.ga += hScore;
+    if (hScore > aScore)      { home.w++; home.pts+=3; away.l++; }
+    else if (hScore < aScore) { away.w++; away.pts+=3; home.l++; }
+    else                      { home.d++; home.pts++; away.d++; away.pts++; }
+  });
+
+  const sortedGroups = Object.entries(standings)
     .sort(([a],[b]) => a.localeCompare(b))
-    .map(([letter, members]) => `
+    .map(([letter, teams]) => ({
+      letter,
+      teams: Object.values(teams).sort((a,b) =>
+        b.pts - a.pts || (b.gf-b.ga) - (a.gf-a.ga) || b.gf - a.gf
+      )
+    }));
+
+  $('groups-grid').innerHTML = sortedGroups.map(({letter, teams}) => `
       <div class="group-card">
         <div class="group-card-header">
           <div>
             <div class="group-letter">${letter}</div>
             <div class="group-label">Group ${letter}</div>
           </div>
-          <div style="color:rgba(255,255,255,0.4);font-size:0.8rem">${members.length} teams</div>
         </div>
         <table class="group-table">
           <thead>
             <tr>
               <th>Team</th>
-              <th>P</th><th>W</th><th>D</th><th>L</th><th>Pts</th>
+              <th>P</th><th>W</th><th>D</th><th>L</th>
+              <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
             </tr>
           </thead>
           <tbody>
-            ${members.map(t => `
+            ${teams.map(s => `
               <tr>
                 <td>
-                  <a class="team-cell" href="?team=${encodeURIComponent(t.code)}">
-                    <img src="${t.flag}" alt="${t.name}" loading="lazy">
-                    ${t.name}
+                  <a class="team-cell" href="?team=${encodeURIComponent(s.team.code)}">
+                    <img src="${s.team.flag}" alt="${s.team.name}" loading="lazy">
+                    ${s.team.name}
                   </a>
                 </td>
-                <td>0</td><td>0</td><td>0</td><td>0</td>
-                <td style="font-weight:700;color:var(--green-dark)">0</td>
+                <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                <td>${s.gf}</td><td>${s.ga}</td>
+                <td>${s.gf-s.ga > 0 ? '+' : ''}${s.gf-s.ga}</td>
+                <td class="pts-cell">${s.pts}</td>
               </tr>`).join('')}
           </tbody>
         </table>
