@@ -884,9 +884,9 @@ async function loadAdminPanel() {
           <div class="admin-match-teams">
             <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
             <span class="admin-team-name">${m.home_team}</span>
-            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" placeholder="0">
+            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="0">
             <span class="admin-vs">–</span>
-            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" placeholder="0">
+            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="0">
             <span class="admin-team-name">${m.away_team}</span>
             <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
