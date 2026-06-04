@@ -951,25 +951,45 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 .group-table th, .group-table td {
   white-space: nowrap;
   font-size: 0.78rem;
-  padding: 8px 6px;
+  padding: 8px 5px;
 }
 .group-table th:first-child,
 .group-table td:first-child {
-  white-space: normal;
-  min-width: 90px;
-  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
 }
 .team-cell {
   font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.team-cell span, .team-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .team-cell img {
   flex-shrink: 0;
+  min-width: 28px;
 }
+.group-card { overflow: hidden; }
+.group-table { table-layout: fixed; width: 100%; }
+.group-table th:first-child,
+.group-table td:first-child { width: 35%; }
+.group-table th:not(:first-child),
+.group-table td:not(:first-child) { width: 9%; text-align: center; }
+
 @media (max-width: 480px) {
-  /* Hide GF and GA on small screens */
   .group-table th:nth-child(6),
   .group-table th:nth-child(7),
   .group-table td:nth-child(6),
   .group-table td:nth-child(7) { display: none; }
-  .group-table th, .group-table td { padding: 7px 4px; font-size: 0.72rem; }
+  .group-table th, .group-table td { padding: 7px 3px; font-size: 0.7rem; }
+  .group-table th:first-child, .group-table td:first-child { width: 38%; }
 }
