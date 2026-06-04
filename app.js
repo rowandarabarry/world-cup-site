@@ -1139,11 +1139,12 @@ async function loadUserPredictions(userId) {
 /* Save predictions for a section (upsert) */
 async function savePredictions(userId, predictions) {
   const rows = predictions.map(p => ({
-    user_id: userId,
-    match_id: p.matchId,
+    user_id:   userId,
+    match_id:  p.matchId,
     home_score: p.homeScore,
     away_score: p.awayScore,
-    stage: p.stage,
+    et_winner:  p.etWinner || null,
+    stage:      p.stage,
     updated_at: new Date().toISOString()
   }));
 
@@ -1309,17 +1310,21 @@ function generateFinal(sfFixtures, sfPreds) {
   ];
 }
 
-/* Render a section of prediction matches */
+/* Render a section of prediction matches — knockouts include ET winner picker */
 function renderPredictionSection(fixtures, savedPreds, readOnly) {
   const predMap = {};
   savedPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
 
   return fixtures.map(fix => {
-    const saved = predMap[fix.matchId] || predMap[fix.match_id];
+    const saved  = predMap[fix.matchId] || predMap[fix.match_id];
     const hScore = saved ? (saved.home_score ?? saved.homeScore ?? 0) : 0;
     const aScore = saved ? (saved.away_score ?? saved.awayScore ?? 0) : 0;
-    const hFlag = flagCode(fix.home_team || fix.home);
-    const aFlag = flagCode(fix.away_team || fix.away);
+    const etWinner = saved ? (saved.et_winner || '') : '';
+    const hFlag  = flagCode(fix.home_team || fix.home);
+    const aFlag  = flagCode(fix.away_team || fix.away);
+    const homeTeam = fix.home_team || fix.home;
+    const awayTeam = fix.away_team || fix.away;
+    const isDraw = parseInt(hScore) === parseInt(aScore);
 
     return `
       <div class="pred-match-card" id="pred-${fix.matchId}">
@@ -1327,23 +1332,31 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
         <div class="pred-match-teams">
           <div class="pred-team home">
             <img src="https://flagcdn.com/w40/${hFlag}.png" class="fixture-flag" alt="">
-            <span class="pred-team-name">${fix.home_team || fix.home}</span>
+            <span class="pred-team-name">${homeTeam}</span>
           </div>
           <div class="pred-inputs">
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="ph-${fix.matchId}" value="${hScore}"
               ${readOnly ? 'disabled' : ''}
-              onchange="onPredChange()">
+              oninput="onKnockoutChange(${fix.matchId}, '${homeTeam}', '${awayTeam}')">
             <span class="admin-vs">–</span>
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="pa-${fix.matchId}" value="${aScore}"
               ${readOnly ? 'disabled' : ''}
-              onchange="onPredChange()">
+              oninput="onKnockoutChange(${fix.matchId}, '${homeTeam}', '${awayTeam}')">
           </div>
           <div class="pred-team away">
-            <span class="pred-team-name">${fix.away_team || fix.away}</span>
+            <span class="pred-team-name">${awayTeam}</span>
             <img src="https://flagcdn.com/w40/${aFlag}.png" class="fixture-flag" alt="">
           </div>
+        </div>
+        <div class="et-winner-row" id="et-${fix.matchId}" style="${isDraw ? '' : 'display:none'}">
+          <span class="et-label">After extra time, winner:</span>
+          <select class="et-select" id="et-sel-${fix.matchId}" ${readOnly ? 'disabled' : ''}>
+            <option value="">— pick winner —</option>
+            <option value="${homeTeam}" ${etWinner === homeTeam ? 'selected' : ''}>${homeTeam}</option>
+            <option value="${awayTeam}" ${etWinner === awayTeam ? 'selected' : ''}>${awayTeam}</option>
+          </select>
         </div>
       </div>`;
   }).join('');
@@ -1690,6 +1703,24 @@ function onPredChange() {
   /* Will be expanded to cascade through rounds */
 }
 
+/* Show/hide ET winner picker when knockout score changes */
+function onKnockoutChange(matchId, homeTeam, awayTeam) {
+  const hVal = parseInt($(`ph-${matchId}`)?.value ?? 0);
+  const aVal = parseInt($(`pa-${matchId}`)?.value ?? 0);
+  const etRow = $(`et-${matchId}`);
+  const etSel = $(`et-sel-${matchId}`);
+  if (!etRow) return;
+  if (hVal === aVal) {
+    etRow.style.display = 'flex';
+    /* Update options in case team names changed */
+    etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam;
+    etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam;
+  } else {
+    etRow.style.display = 'none';
+    etSel.value = '';
+  }
+}
+
 /* Save a section */
 async function saveSection(stage) {
   const user = window._predUser;
@@ -1711,15 +1742,18 @@ async function saveSection(stage) {
       }));
   } else {
     /* Knockout stages — find inputs on page */
-    document.querySelectorAll(`#${stage === 'r32' ? 'r32' : stage === 'r16' ? 'r16' : stage === 'qf' ? 'qf' : stage === 'sf' ? 'sf' : 'final'}-matches .pred-match-card`).forEach(card => {
+    const sectionId = `${stage}-matches`;
+    document.querySelectorAll(`#${sectionId} .pred-match-card`).forEach(card => {
       const id = card.id.replace('pred-', '');
-      const hInput = $(`ph-${id}`);
-      const aInput = $(`pa-${id}`);
+      const hInput  = $(`ph-${id}`);
+      const aInput  = $(`pa-${id}`);
+      const etInput = $(`et-sel-${id}`);
       if (hInput && aInput) {
         fixtures.push({
-          matchId: parseInt(id),
+          matchId:   parseInt(id),
           homeScore: parseInt(hInput.value ?? 0),
           awayScore: parseInt(aInput.value ?? 0),
+          etWinner:  etInput?.value || null,
           stage
         });
       }
@@ -1844,7 +1878,7 @@ async function renderLeaderboard() {
         <thead>
           <tr>
             <th style="text-align:left;padding-left:16px">Pos</th>
-            <th style="text-align:left">Name</th>
+            <th style="text-align:left">Player</th>
             <th>Match Pts</th>
             <th>Total</th>
           </tr>
@@ -1853,7 +1887,7 @@ async function renderLeaderboard() {
           ${data.map((row, i) => `
             <tr>
               <td style="padding-left:16px;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">${i+1}</td>
-              <td style="font-weight:600;text-align:left">${row.name}</td>
+              <td style="font-weight:600;text-align:left">${row.username || row.name || '—'}</td>
               <td>${row.match_pts}</td>
               <td class="pts-cell">${row.total_pts}</td>
             </tr>`).join('')}
