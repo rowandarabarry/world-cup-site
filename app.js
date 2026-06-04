@@ -611,7 +611,7 @@ async function renderGroups() {
   const [teams, results] = await Promise.all([
     loadTeams(),
     fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vTz224Prn4SdoE-52id9MEMgUkgUuCE1_Rrz6rq7TeQLLPCKAH2ev1pOnVK0kOPuwG7eGVWQOECnW3S/pub?gid=0&single=true&output=csv')
-      .then(r => r.text()).then(parseCSV).catch(() => [])
+    sbGet('results').catch(() => [])
   ]);
 
   /* Build standings from played results */
@@ -726,7 +726,7 @@ function renderAbout() {
 /* ============================================================
    SUPABASE CONFIG
    ============================================================ */
-const ADMIN_PIN     = '1919'; // ← Change this to your PIN
+const ADMIN_PIN     = 'CHANGEME'; // ← Change this to your PIN
 const SUPABASE_URL  = 'https://gniybjqkfkzlzmyuckmq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaXlianFrZmt6bHpteXVja21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQ0ODcsImV4cCI6MjA5NjE1MDQ4N30.q-sKWngq5f3FR89x00h54gr9YlpXQtELqWU4o5tC2Ho';
 
@@ -920,7 +920,7 @@ async function saveResult(matchId) {
   const homeScore = document.getElementById(`home-${matchId}`).value;
   const awayScore = document.getElementById(`away-${matchId}`).value;
 
-  if (homeScore === '' || awayScore === '' || homeScore === null || awayScore === null) {
+  if (homeScore === '' || awayScore === '') {
     alert('Please enter both scores before saving.');
     return;
   }
