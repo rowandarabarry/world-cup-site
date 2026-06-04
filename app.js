@@ -732,7 +732,7 @@ function renderAbout() {
 /* ============================================================
    SUPABASE CONFIG
    ============================================================ */
-const ADMIN_PIN     = 'CHANGEME'; // ← Change this to your PIN
+const ADMIN_PIN     = '1919'; // ← Change this to your PIN
 const SUPABASE_URL  = 'https://gniybjqkfkzlzmyuckmq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaXlianFrZmt6bHpteXVja21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQ0ODcsImV4cCI6MjA5NjE1MDQ4N30.q-sKWngq5f3FR89x00h54gr9YlpXQtELqWU4o5tC2Ho';
 
