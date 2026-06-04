@@ -916,10 +916,12 @@ async function loadAdminPanel() {
 }
 
 async function saveResult(matchId) {
-  const homeScore = document.getElementById(`home-${matchId}`).value;
-  const awayScore = document.getElementById(`away-${matchId}`).value;
+  const homeVal = document.getElementById(`home-${matchId}`).value;
+  const awayVal = document.getElementById(`away-${matchId}`).value;
+  const homeScore = homeVal === '' ? null : parseInt(homeVal);
+  const awayScore = awayVal === '' ? null : parseInt(awayVal);
 
-  if (homeScore === '' || awayScore === '') {
+  if (homeScore === null || awayScore === null || isNaN(homeScore) || isNaN(awayScore)) {
     alert('Please enter both scores before saving.');
     return;
   }
@@ -930,8 +932,8 @@ async function saveResult(matchId) {
 
   try {
     const ok = await sbUpdate('results', matchId, {
-      home_score: parseInt(homeScore),
-      away_score: parseInt(awayScore),
+      home_score: homeScore,
+      away_score: awayScore,
       status: 'Played'
     });
     if (ok) {
