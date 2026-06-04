@@ -620,13 +620,20 @@ async function renderGroups() {
     standings[t.group][t.name] = { team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
   });
 
+  /* Build standings — normalise team names for lookup */
+  const nameMap = {
+    'Bosnia & Herzegovina': 'Bosnia & Herz.',
+    'Côte d\'Ivoire': "Côte d'Ivoire"
+  };
+  const normName = n => nameMap[n] || n;
+
   results.filter(r => r.status === 'Played').forEach(r => {
     const hScore = parseInt(r.home_score);
     const aScore = parseInt(r.away_score);
     const grp = r.group_name.replace('Group ', '');
     if (!standings[grp]) return;
-    const home = standings[grp][r.home_team];
-    const away = standings[grp][r.away_team];
+    const home = standings[grp][normName(r.home_team)];
+    const away = standings[grp][normName(r.away_team)];
     if (!home || !away) return;
     home.p++; away.p++;
     home.gf += hScore; home.ga += aScore;
