@@ -610,7 +610,6 @@ async function renderGroups() {
 
   const [teams, results] = await Promise.all([
     loadTeams(),
-    fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vTz224Prn4SdoE-52id9MEMgUkgUuCE1_Rrz6rq7TeQLLPCKAH2ev1pOnVK0kOPuwG7eGVWQOECnW3S/pub?gid=0&single=true&output=csv')
     sbGet('results').catch(() => [])
   ]);
 
