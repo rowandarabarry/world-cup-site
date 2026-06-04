@@ -937,7 +937,7 @@ async function saveResult(matchId) {
   const homeScore = document.getElementById(`home-${matchId}`).value;
   const awayScore = document.getElementById(`away-${matchId}`).value;
 
-  if (homeScore === '' || awayScore === '') {
+  if (homeScore === '' || awayScore === '' || homeScore === null || awayScore === null) {
     alert('Please enter both scores before saving.');
     return;
   }
