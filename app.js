@@ -870,7 +870,7 @@ async function submitPin() {
 
 async function loadAdminPanel() {
   document.getElementById('admin-content').innerHTML =
-    `<p style="color:var(--text-muted)">Loading matches…</p>`;
+    `<p style="color:var(--text-muted)">Loading…</p>`;
 
   try {
     const results = await sbGet('results');
@@ -914,7 +914,24 @@ async function loadAdminPanel() {
             <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
           <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
-        </div>`).join('')}` : ''}`;
+        </div>`).join('')}` : ''}
+
+      <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Reset <span>Password</span></h2>
+      <div id="admin-users-list"><p style="color:var(--text-muted)">Loading users…</p></div>`;
+
+  /* Load users for password reset */
+  fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username&order=username`, { headers: sbHeaders })
+    .then(r => r.json())
+    .then(users => {
+      if (!users.length) { $('admin-users-list').innerHTML = '<p style="color:var(--text-muted)">No users yet.</p>'; return; }
+      $('admin-users-list').innerHTML = users.map(u => `
+        <div class="admin-match-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-weight:600;flex:1;min-width:120px">${u.username}</span>
+          <input class="search" id="pw-${u.id}" type="password" placeholder="New password" style="padding:8px 12px;flex:2;min-width:160px">
+          <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')">Reset</button>
+          <span id="pw-msg-${u.id}" style="color:var(--teal);font-size:0.85rem;display:none">✅ Done</span>
+        </div>`).join('');
+    });
 
   } catch(e) {
     document.getElementById('admin-content').innerHTML =
@@ -954,6 +971,33 @@ async function saveResult(matchId) {
     alert('Could not connect to server.');
     btn.textContent = 'Save Result';
     btn.disabled = false;
+  }
+}
+
+async function adminResetPassword(userId, username) {
+  const input = $(`pw-${userId}`);
+  const msg   = $(`pw-msg-${userId}`);
+  const newPw = input?.value.trim();
+
+  if (!newPw || newPw.length < 4) {
+    alert('Password must be at least 4 characters.');
+    return;
+  }
+
+  const password_hash = await sha256(newPw + 'wc2026pw');
+
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ password_hash })
+  }).then(r => r.ok);
+
+  if (ok) {
+    input.value = '';
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  } else {
+    alert('Could not reset password. Try again.');
   }
 }
 
@@ -1040,34 +1084,48 @@ function isPastCutoff() {
   return new Date() > CUTOFF;
 }
 
-/* Generate a token from email — same email always gives same token */
-async function emailToToken(email) {
-  const msgBuffer = new TextEncoder().encode(email.toLowerCase().trim() + 'wc2026salt');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+/* Hash a string with SHA-256 */
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-/* Register or retrieve user by email */
-async function getOrCreateUser(name, email) {
-  const token = await emailToToken(email);
+/* Generate token from username — same username always gives same token */
+async function usernameToToken(username) {
+  return (await sha256(username.toLowerCase().trim() + 'wc2026token')).slice(0, 32);
+}
 
-  /* Check if user exists */
+/* Register a new user */
+async function registerUser(username, password) {
+  const token         = await usernameToToken(username);
+  const password_hash = await sha256(password + 'wc2026pw');
+
+  /* Check username not taken */
   const existing = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=*`,
+    `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=id`,
     { headers: sbHeaders }
   ).then(r => r.json());
+  if (existing.length > 0) throw new Error('Username already taken — please choose another.');
 
-  if (existing.length > 0) return existing[0];
-
-  /* Create new user */
   const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
     method: 'POST',
     headers: { ...sbHeaders, 'Prefer': 'return=representation' },
-    body: JSON.stringify({ name, email, token })
+    body: JSON.stringify({ username, password_hash, token })
   });
   const data = await res.json();
+  if (!data[0]) throw new Error('Registration failed — please try again.');
   return data[0];
+}
+
+/* Login existing user */
+async function loginUser(username, password) {
+  const password_hash = await sha256(password + 'wc2026pw');
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&password_hash=eq.${password_hash}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+  if (!res.length) throw new Error('Incorrect username or password.');
+  return res[0];
 }
 
 /* Load existing predictions for a user */
@@ -1308,29 +1366,65 @@ async function renderPredict() {
       </div>
       <div class="section">
         <div class="wrap">
-          <div class="info-card" style="max-width:480px;margin:0 auto">
-            <h3>Enter the Competition</h3>
-            <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem">
-              Register with your name and email to get your unique prediction link.
-              If you've entered before, use the same email to retrieve your picks.
-            </p>
-            <div style="display:flex;flex-direction:column;gap:14px">
-              <div>
-                <label style="font-size:0.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Your Name</label>
-                <input class="search" id="reg-name" placeholder="e.g. John Barry" style="padding:12px 16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:700px;margin:0 auto">
+
+            <!-- Register -->
+            <div class="info-card">
+              <h3 style="margin-bottom:6px">New? Register</h3>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">
+                Pick a username (one word, unique) and a password.
+                You'll get a personal link to bookmark.
+              </p>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Username</label>
+                  <input class="search" id="reg-username" placeholder="e.g. johndec" style="padding:11px 14px" autocomplete="off">
+                </div>
+                <div>
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Password</label>
+                  <input class="search" id="reg-password" type="password" placeholder="Choose a password" style="padding:11px 14px">
+                </div>
+                <button onclick="handleRegister()" class="hero-cta" style="width:100%;justify-content:center">
+                  Register →
+                </button>
+                <p id="reg-error" style="color:#e63200;font-size:0.82rem;display:none;text-align:center"></p>
               </div>
-              <div>
-                <label style="font-size:0.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Email Address</label>
-                <input class="search" id="reg-email" type="email" placeholder="e.g. john@example.com" style="padding:12px 16px">
-              </div>
-              <button onclick="registerUser()" class="hero-cta" style="width:100%;justify-content:center;margin-top:8px">
-                Get My Prediction Link →
-              </button>
-              <p id="reg-error" style="color:#e63200;font-size:0.85rem;display:none;text-align:center"></p>
             </div>
+
+            <!-- Login -->
+            <div class="info-card">
+              <h3 style="margin-bottom:6px">Already registered?</h3>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">
+                Enter your username and password to get back to your predictions.
+              </p>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Username</label>
+                  <input class="search" id="login-username" placeholder="Your username" style="padding:11px 14px" autocomplete="off">
+                </div>
+                <div>
+                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Password</label>
+                  <input class="search" id="login-password" type="password" placeholder="Your password" style="padding:11px 14px">
+                </div>
+                <button onclick="handleLogin()" class="hero-cta" style="width:100%;justify-content:center;background:var(--purple-mid)">
+                  Login →
+                </button>
+                <p id="login-error" style="color:#e63200;font-size:0.82rem;display:none;text-align:center"></p>
+              </div>
+            </div>
+
           </div>
+          <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:20px">
+            Forgotten your password? Contact the admin to reset it.
+          </p>
         </div>
       </div>`;
+
+    /* Enter key support */
+    setTimeout(() => {
+      $('reg-password')?.addEventListener('keydown', e => { if(e.key==='Enter') handleRegister(); });
+      $('login-password')?.addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
+    }, 100);
     return;
   }
 
@@ -1386,7 +1480,7 @@ async function renderPredict() {
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <h1 class="page-title">🏆 <span>${user.name}'s</span> Predictions</h1>
+        <h1 class="page-title">🏆 <span>${user.username}'s</span> Predictions</h1>
         ${locked
           ? `<span class="tag" style="background:#e63200;color:#fff;font-size:0.85rem">Predictions Locked</span>`
           : `<span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">Locks ${cutoffStr}</span>`}
@@ -1643,49 +1737,77 @@ async function saveSection(stage) {
   }
 }
 
-/* Register new user */
-async function registerUser() {
-  const name  = $('reg-name')?.value.trim();
-  const email = $('reg-email')?.value.trim();
-  const err   = $('reg-error');
+/* Handle registration form */
+async function handleRegister() {
+  const username = $('reg-username')?.value.trim().toLowerCase().replace(/\s+/g,'');
+  const password = $('reg-password')?.value;
+  const err      = $('reg-error');
 
-  if (!name)  { err.textContent = 'Please enter your name.';  err.style.display = 'block'; return; }
-  if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email.'; err.style.display = 'block'; return; }
+  if (!username || username.length < 3) {
+    err.textContent = 'Username must be at least 3 characters, no spaces.';
+    err.style.display = 'block'; return;
+  }
+  if (!password || password.length < 4) {
+    err.textContent = 'Password must be at least 4 characters.';
+    err.style.display = 'block'; return;
+  }
 
-  const btn = document.querySelector('#reg-name').closest('.info-card').querySelector('button');
-  btn.textContent = 'Setting up…';
-  btn.disabled = true;
+  const btn = $('reg-username').closest('.info-card').querySelector('button');
+  btn.textContent = 'Registering…'; btn.disabled = true; err.style.display = 'none';
 
   try {
-    const user = await getOrCreateUser(name, email);
-    const link = `${location.origin}${location.pathname}?predict=1&token=${user.token}`;
-
-    /* Show the link */
-    app().innerHTML = `
-      <div class="section">
-        <div class="wrap">
-          <div class="info-card" style="max-width:520px;margin:0 auto;text-align:center">
-            <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
-            <h3 style="margin-bottom:12px">You're in, ${user.name}!</h3>
-            <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
-              Bookmark this link — it's your personal prediction page.
-              Use it every time you want to view or update your picks.
-            </p>
-            <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;word-break:break-all;font-size:0.8rem;color:var(--text-mid);margin-bottom:20px">
-              ${link}
-            </div>
-            <a class="hero-cta" href="${link}" style="display:inline-flex;width:100%;justify-content:center">
-              Start Making Predictions →
-            </a>
-          </div>
-        </div>
-      </div>`;
+    const user = await registerUser(username, password);
+    showPredLink(user);
   } catch(e) {
-    btn.textContent = 'Get My Prediction Link →';
-    btn.disabled = false;
-    err.textContent = 'Something went wrong. Please try again.';
-    err.style.display = 'block';
+    btn.textContent = 'Register →'; btn.disabled = false;
+    err.textContent = e.message; err.style.display = 'block';
   }
+}
+
+/* Handle login form */
+async function handleLogin() {
+  const username = $('login-username')?.value.trim().toLowerCase();
+  const password = $('login-password')?.value;
+  const err      = $('login-error');
+
+  if (!username || !password) {
+    err.textContent = 'Please enter your username and password.';
+    err.style.display = 'block'; return;
+  }
+
+  const btn = $('login-username').closest('.info-card').querySelector('button');
+  btn.textContent = 'Logging in…'; btn.disabled = true; err.style.display = 'none';
+
+  try {
+    const user = await loginUser(username, password);
+    showPredLink(user);
+  } catch(e) {
+    btn.textContent = 'Login →'; btn.disabled = false;
+    err.textContent = e.message; err.style.display = 'block';
+  }
+}
+
+/* Show the unique prediction link */
+function showPredLink(user) {
+  const link = `${location.origin}${location.pathname}?predict=1&token=${user.token}`;
+  app().innerHTML = `
+    <div class="section">
+      <div class="wrap">
+        <div class="info-card" style="max-width:520px;margin:0 auto;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
+          <h3 style="margin-bottom:12px">Welcome, ${user.username}!</h3>
+          <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
+            Bookmark this link — it takes you straight to your predictions every time.
+          </p>
+          <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;word-break:break-all;font-size:0.8rem;color:var(--text-mid);margin-bottom:20px">
+            ${link}
+          </div>
+          <a class="hero-cta" href="${link}" style="display:inline-flex;width:100%;justify-content:center">
+            Go to My Predictions →
+          </a>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ============================================================
