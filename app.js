@@ -732,7 +732,7 @@ function renderAbout() {
 /* ============================================================
    SUPABASE CONFIG
    ============================================================ */
-const ADMIN_PIN     = '1919'; // ← Change this to your PIN
+const ADMIN_PIN     = 'CHANGEME'; // ← Change this to your PIN
 const SUPABASE_URL  = 'https://gniybjqkfkzlzmyuckmq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaXlianFrZmt6bHpteXVja21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQ0ODcsImV4cCI6MjA5NjE1MDQ4N30.q-sKWngq5f3FR89x00h54gr9YlpXQtELqWU4o5tC2Ho';
 
@@ -979,14 +979,16 @@ function flagCode(team) {
   const params = new URLSearchParams(location.search);
 
   try {
-    if (params.has('about'))         { renderAbout();                        }
-    else if (params.has('fixtures')) { renderFixtures();                     }
-    else if (params.has('groups'))   { await renderGroups();                 }
-    else if (params.has('results'))  { await renderResults();                }
-    else if (params.has('admin'))    { await renderAdmin();                  }
-    else if (params.get('team'))     { await renderTeam(params.get('team')); }
-    else if (params.has('teams'))    { await renderList();                   }
-    else                             { renderHome();                         }
+    if (params.has('about'))           { renderAbout();                        }
+    else if (params.has('fixtures'))   { renderFixtures();                     }
+    else if (params.has('groups'))     { await renderGroups();                 }
+    else if (params.has('results'))    { await renderResults();                }
+    else if (params.has('admin'))      { await renderAdmin();                  }
+    else if (params.has('predict'))    { await renderPredict();                }
+    else if (params.has('leaderboard')){ await renderLeaderboard();            }
+    else if (params.get('team'))       { await renderTeam(params.get('team')); }
+    else if (params.has('teams'))      { await renderList();                   }
+    else                               { renderHome();                         }
   } catch (err) {
     app().innerHTML = `<div class="wrap" style="padding:2rem"><p>Something went wrong: ${err.message}</p></div>`;
   }
@@ -1000,12 +1002,14 @@ function flagCode(team) {
   document.querySelectorAll('.tab').forEach(tab => {
     const page = tab.dataset.page;
     const isActive =
-      (page === 'home'     && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.has('results') && !params.get('team')) ||
-      (page === 'teams'    && (params.has('teams') || params.get('team'))) ||
-      (page === 'fixtures' && params.has('fixtures')) ||
-      (page === 'groups'   && params.has('groups')) ||
-      (page === 'results'  && params.has('results')) ||
-      (page === 'about'    && params.has('about'));
+      (page === 'home'        && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.has('results') && !params.has('predict') && !params.has('leaderboard') && !params.get('team')) ||
+      (page === 'teams'       && (params.has('teams') || params.get('team'))) ||
+      (page === 'fixtures'    && params.has('fixtures')) ||
+      (page === 'groups'      && params.has('groups')) ||
+      (page === 'results'     && params.has('results')) ||
+      (page === 'predict'     && params.has('predict')) ||
+      (page === 'leaderboard' && params.has('leaderboard')) ||
+      (page === 'about'       && params.has('about'));
     if (isActive) tab.classList.add('active');
   });
 
@@ -1025,3 +1029,715 @@ function flagCode(team) {
       : '0 4px 20px rgba(0,0,0,0.3)';
   }, { passive: true });
 })();
+
+/* ============================================================
+   PREDICTIONS — helper functions
+   ============================================================ */
+
+const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match (15:00 UTC)
+
+function isPastCutoff() {
+  return new Date() > CUTOFF;
+}
+
+/* Generate a token from email — same email always gives same token */
+async function emailToToken(email) {
+  const msgBuffer = new TextEncoder().encode(email.toLowerCase().trim() + 'wc2026salt');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+/* Register or retrieve user by email */
+async function getOrCreateUser(name, email) {
+  const token = await emailToToken(email);
+
+  /* Check if user exists */
+  const existing = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+
+  if (existing.length > 0) return existing[0];
+
+  /* Create new user */
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ name, email, token })
+  });
+  const data = await res.json();
+  return data[0];
+}
+
+/* Load existing predictions for a user */
+async function loadUserPredictions(userId) {
+  return fetch(
+    `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+}
+
+/* Save predictions for a section (upsert) */
+async function savePredictions(userId, predictions) {
+  const rows = predictions.map(p => ({
+    user_id: userId,
+    match_id: p.matchId,
+    home_score: p.homeScore,
+    away_score: p.awayScore,
+    stage: p.stage,
+    updated_at: new Date().toISOString()
+  }));
+
+  return fetch(`${SUPABASE_URL}/rest/v1/match_predictions`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(rows)
+  });
+}
+
+/* Calculate predicted group standings from predictions */
+function calcStandings(teams, predictions) {
+  const standings = {};
+  teams.forEach(t => {
+    if (!standings[t.group]) standings[t.group] = {};
+    standings[t.group][t.name] = { team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+  });
+
+  predictions.forEach(p => {
+    const grp = p.group_name ? p.group_name.replace('Group ','') : p.group;
+    if (!grp || !standings[grp]) return;
+    const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+    const home = standings[grp][normName(p.home_team || p.homeTeam)];
+    const away = standings[grp][normName(p.away_team || p.awayTeam)];
+    if (!home || !away || p.home_score === '' || p.away_score === '') return;
+    const hs = parseInt(p.home_score ?? p.homeScore);
+    const as_ = parseInt(p.away_score ?? p.awayScore);
+    if (isNaN(hs) || isNaN(as_)) return;
+    home.p++; away.p++;
+    home.gf += hs; home.ga += as_;
+    away.gf += as_; away.ga += hs;
+    if (hs > as_)       { home.w++; home.pts+=3; away.l++; }
+    else if (hs < as_)  { away.w++; away.pts+=3; home.l++; }
+    else                { home.d++; home.pts++; away.d++; away.pts++; }
+  });
+
+  const sorted = {};
+  Object.entries(standings).forEach(([g, teams]) => {
+    sorted[g] = Object.values(teams).sort((a,b) =>
+      b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf
+    );
+  });
+  return sorted;
+}
+
+/* Generate Round of 32 fixtures from predicted standings */
+function generateR32(standings) {
+  /* 2026 format: 12 groups A-L, top 2 qualify + 8 best 3rd place
+     For simplicity we just use top 2 from each group for now */
+  const groups = 'ABCDEFGHIJKL'.split('');
+  const winners = {}, runners = {};
+  groups.forEach(g => {
+    if (standings[g] && standings[g].length >= 2) {
+      winners[g] = standings[g][0].team.name;
+      runners[g] = standings[g][1].team.name;
+    } else {
+      winners[g] = `Winner Group ${g}`;
+      runners[g] = `Runner-up Group ${g}`;
+    }
+  });
+
+  /* Official 2026 R32 matchups */
+  return [
+    { matchId:73, home: winners['A'], away: runners['B'],  stage:'r32', date:'Sun 29 Jun' },
+    { matchId:74, home: winners['C'], away: runners['D'],  stage:'r32', date:'Sun 29 Jun' },
+    { matchId:75, home: winners['E'], away: runners['F'],  stage:'r32', date:'Mon 30 Jun' },
+    { matchId:76, home: winners['G'], away: runners['H'],  stage:'r32', date:'Mon 30 Jun' },
+    { matchId:77, home: winners['I'], away: runners['J'],  stage:'r32', date:'Tue 1 Jul'  },
+    { matchId:78, home: winners['K'], away: runners['L'],  stage:'r32', date:'Tue 1 Jul'  },
+    { matchId:79, home: winners['B'], away: runners['A'],  stage:'r32', date:'Wed 2 Jul'  },
+    { matchId:80, home: winners['D'], away: runners['C'],  stage:'r32', date:'Wed 2 Jul'  },
+    { matchId:81, home: winners['F'], away: runners['E'],  stage:'r32', date:'Thu 3 Jul'  },
+    { matchId:82, home: winners['H'], away: runners['G'],  stage:'r32', date:'Thu 3 Jul'  },
+    { matchId:83, home: winners['J'], away: runners['I'],  stage:'r32', date:'Fri 4 Jul'  },
+    { matchId:84, home: winners['L'], away: runners['K'],  stage:'r32', date:'Fri 4 Jul'  },
+    { matchId:85, home: `3rd ACEF`,   away: `3rd BDGH`,    stage:'r32', date:'Sat 5 Jul'  },
+    { matchId:86, home: `3rd IJKL`,   away: `3rd ADEF`,    stage:'r32', date:'Sat 5 Jul'  },
+    { matchId:87, home: `3rd BCFG`,   away: `3rd AHIJ`,    stage:'r32', date:'Sun 6 Jul'  },
+    { matchId:88, home: `3rd CDKL`,   away: `3rd BEGL`,    stage:'r32', date:'Sun 6 Jul'  },
+  ];
+}
+
+/* Generate R16 from R32 predictions */
+function generateR16(r32Fixtures, r32Preds) {
+  const predMap = {};
+  r32Preds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
+
+  function winner(fix) {
+    const p = predMap[fix.matchId];
+    if (!p) return `Winner Match ${fix.matchId}`;
+    const hs = parseInt(p.homeScore ?? p.home_score);
+    const as_ = parseInt(p.awayScore ?? p.away_score);
+    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    if (hs > as_) return fix.home;
+    if (hs < as_) return fix.away;
+    return `Winner Match ${fix.matchId}`; /* draw — needs extra time */
+  }
+
+  return [
+    { matchId:89, home: winner(r32Fixtures[0]), away: winner(r32Fixtures[1]),  stage:'r16', date:'Tue 7 Jul'  },
+    { matchId:90, home: winner(r32Fixtures[2]), away: winner(r32Fixtures[3]),  stage:'r16', date:'Tue 7 Jul'  },
+    { matchId:91, home: winner(r32Fixtures[4]), away: winner(r32Fixtures[5]),  stage:'r16', date:'Wed 8 Jul'  },
+    { matchId:92, home: winner(r32Fixtures[6]), away: winner(r32Fixtures[7]),  stage:'r16', date:'Wed 8 Jul'  },
+    { matchId:93, home: winner(r32Fixtures[8]), away: winner(r32Fixtures[9]),  stage:'r16', date:'Thu 9 Jul'  },
+    { matchId:94, home: winner(r32Fixtures[10]),away: winner(r32Fixtures[11]), stage:'r16', date:'Thu 9 Jul'  },
+    { matchId:95, home: winner(r32Fixtures[12]),away: winner(r32Fixtures[13]), stage:'r16', date:'Fri 10 Jul' },
+    { matchId:96, home: winner(r32Fixtures[14]),away: winner(r32Fixtures[15]), stage:'r16', date:'Fri 10 Jul' },
+  ];
+}
+
+/* Generate QF from R16 predictions */
+function generateQF(r16Fixtures, r16Preds) {
+  const predMap = {};
+  r16Preds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
+  function winner(fix) {
+    const p = predMap[fix.matchId];
+    if (!p) return `Winner Match ${fix.matchId}`;
+    const hs = parseInt(p.homeScore ?? p.home_score);
+    const as_ = parseInt(p.awayScore ?? p.away_score);
+    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    return hs >= as_ ? fix.home : fix.away;
+  }
+  return [
+    { matchId:97,  home: winner(r16Fixtures[0]), away: winner(r16Fixtures[1]), stage:'qf', date:'Mon 13 Jul' },
+    { matchId:98,  home: winner(r16Fixtures[2]), away: winner(r16Fixtures[3]), stage:'qf', date:'Mon 13 Jul' },
+    { matchId:99,  home: winner(r16Fixtures[4]), away: winner(r16Fixtures[5]), stage:'qf', date:'Tue 14 Jul' },
+    { matchId:100, home: winner(r16Fixtures[6]), away: winner(r16Fixtures[7]), stage:'qf', date:'Tue 14 Jul' },
+  ];
+}
+
+/* Generate SF from QF predictions */
+function generateSF(qfFixtures, qfPreds) {
+  const predMap = {};
+  qfPreds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
+  function winner(fix) {
+    const p = predMap[fix.matchId];
+    if (!p) return `Winner Match ${fix.matchId}`;
+    const hs = parseInt(p.homeScore ?? p.home_score);
+    const as_ = parseInt(p.awayScore ?? p.away_score);
+    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    return hs >= as_ ? fix.home : fix.away;
+  }
+  return [
+    { matchId:101, home: winner(qfFixtures[0]), away: winner(qfFixtures[1]), stage:'sf', date:'Fri 17 Jul' },
+    { matchId:102, home: winner(qfFixtures[2]), away: winner(qfFixtures[3]), stage:'sf', date:'Sat 18 Jul' },
+  ];
+}
+
+/* Generate Final from SF predictions */
+function generateFinal(sfFixtures, sfPreds) {
+  const predMap = {};
+  sfPreds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
+  function winner(fix) {
+    const p = predMap[fix.matchId];
+    if (!p) return `Winner Match ${fix.matchId}`;
+    const hs = parseInt(p.homeScore ?? p.home_score);
+    const as_ = parseInt(p.awayScore ?? p.away_score);
+    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    return hs >= as_ ? fix.home : fix.away;
+  }
+  return [
+    { matchId:103, home: winner(sfFixtures[0]), away: winner(sfFixtures[1]), stage:'final', date:'Sun 19 Jul' },
+  ];
+}
+
+/* Render a section of prediction matches */
+function renderPredictionSection(fixtures, savedPreds, readOnly) {
+  const predMap = {};
+  savedPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
+
+  return fixtures.map(fix => {
+    const saved = predMap[fix.matchId] || predMap[fix.match_id];
+    const hScore = saved ? (saved.home_score ?? saved.homeScore ?? 0) : 0;
+    const aScore = saved ? (saved.away_score ?? saved.awayScore ?? 0) : 0;
+    const hFlag = flagCode(fix.home_team || fix.home);
+    const aFlag = flagCode(fix.away_team || fix.away);
+
+    return `
+      <div class="pred-match-card" id="pred-${fix.matchId}">
+        <div class="pred-match-date">${fix.match_date || fix.date}</div>
+        <div class="pred-match-teams">
+          <div class="pred-team home">
+            <img src="https://flagcdn.com/w40/${hFlag}.png" class="fixture-flag" alt="">
+            <span class="pred-team-name">${fix.home_team || fix.home}</span>
+          </div>
+          <div class="pred-inputs">
+            <input type="number" min="0" max="20" class="score-input pred-score"
+              id="ph-${fix.matchId}" value="${hScore}"
+              ${readOnly ? 'disabled' : ''}
+              onchange="onPredChange()">
+            <span class="admin-vs">–</span>
+            <input type="number" min="0" max="20" class="score-input pred-score"
+              id="pa-${fix.matchId}" value="${aScore}"
+              ${readOnly ? 'disabled' : ''}
+              onchange="onPredChange()">
+          </div>
+          <div class="pred-team away">
+            <span class="pred-team-name">${fix.away_team || fix.away}</span>
+            <img src="https://flagcdn.com/w40/${aFlag}.png" class="fixture-flag" alt="">
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   PREDICTIONS PAGE
+   ============================================================ */
+async function renderPredict() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+
+  /* ── Step 1: Registration / Login ── */
+  if (!token) {
+    app().innerHTML = `
+      <div class="page-title-bar">
+        <div class="wrap">
+          <h1 class="page-title">Make Your <span>Predictions</span></h1>
+        </div>
+      </div>
+      <div class="section">
+        <div class="wrap">
+          <div class="info-card" style="max-width:480px;margin:0 auto">
+            <h3>Enter the Competition</h3>
+            <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.9rem">
+              Register with your name and email to get your unique prediction link.
+              If you've entered before, use the same email to retrieve your picks.
+            </p>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <label style="font-size:0.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Your Name</label>
+                <input class="search" id="reg-name" placeholder="e.g. John Barry" style="padding:12px 16px">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Email Address</label>
+                <input class="search" id="reg-email" type="email" placeholder="e.g. john@example.com" style="padding:12px 16px">
+              </div>
+              <button onclick="registerUser()" class="hero-cta" style="width:100%;justify-content:center;margin-top:8px">
+                Get My Prediction Link →
+              </button>
+              <p id="reg-error" style="color:#e63200;font-size:0.85rem;display:none;text-align:center"></p>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  /* ── Step 2: Load user from token ── */
+  const userRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?token=eq.${token}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+
+  if (!userRes.length) {
+    app().innerHTML = `<div class="wrap" style="padding:2rem"><p>Invalid prediction link. Please <a href="?predict=1">register again</a>.</p></div>`;
+    return;
+  }
+
+  const user = userRes[0];
+  const savedPreds = await loadUserPredictions(user.id);
+  const teams = await loadTeams();
+  const results = await sbGet('results');
+  const locked = isPastCutoff();
+
+  /* Group stage fixtures from results table */
+  const groupFixtures = results.filter(r => parseInt(r.match_id) <= 72);
+
+  /* Build prediction map */
+  const predMap = {};
+  savedPreds.forEach(p => { predMap[p.match_id] = p; });
+
+  /* Calculate current predicted standings from saved group preds */
+  const groupPreds = groupFixtures.map(fix => ({
+    ...fix,
+    home_score: predMap[fix.match_id]?.home_score ?? '',
+    away_score: predMap[fix.match_id]?.away_score ?? ''
+  }));
+  const standings = calcStandings(teams, groupPreds);
+
+  /* Generate knockout fixtures */
+  const r32Fixtures = generateR32(standings);
+  const r32Preds = savedPreds.filter(p => p.match_id >= 73 && p.match_id <= 88)
+    .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
+  const r16Fixtures = generateR16(r32Fixtures, r32Preds);
+  const r16Preds = savedPreds.filter(p => p.match_id >= 89 && p.match_id <= 96)
+    .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
+  const qfFixtures = generateQF(r16Fixtures, r16Preds);
+  const qfPreds = savedPreds.filter(p => p.match_id >= 97 && p.match_id <= 100)
+    .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
+  const sfFixtures = generateSF(qfFixtures, qfPreds);
+  const sfPreds = savedPreds.filter(p => p.match_id >= 101 && p.match_id <= 102)
+    .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
+  const finalFixtures = generateFinal(sfFixtures, sfPreds);
+
+  const cutoffStr = CUTOFF.toLocaleDateString('en-GB', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">🏆 <span>${user.name}'s</span> Predictions</h1>
+        ${locked
+          ? `<span class="tag" style="background:#e63200;color:#fff;font-size:0.85rem">Predictions Locked</span>`
+          : `<span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">Locks ${cutoffStr}</span>`}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="wrap">
+
+        <!-- GROUP STAGE -->
+        <div class="pred-section" id="section-group">
+          <div class="pred-section-header">
+            <h2 class="section-title">Group <span>Stage</span></h2>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Predict all 72 group stage matches. Your predicted standings will automatically
+              generate your knockout fixtures below.
+            </p>
+          </div>
+          <div id="group-matches">
+            ${renderGroupMatchesByGroup(groupFixtures, savedPreds, locked)}
+          </div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('group')" id="save-group">
+              Save Group Stage & See Knockouts →
+            </button>
+            <p id="save-group-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Group stage saved!</p>
+          </div>` : ''}
+        </div>
+
+        <!-- PREDICTED STANDINGS -->
+        <div class="pred-section" id="section-standings" style="margin-top:40px">
+          <h2 class="section-title">Your Predicted <span>Standings</span></h2>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Updates as you fill in scores above.</p>
+          <div id="pred-standings">${renderPredStandings(standings)}</div>
+        </div>
+
+        <!-- ROUND OF 32 -->
+        <div class="pred-section" style="margin-top:40px">
+          <h2 class="section-title">Round of <span>32</span></h2>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
+          <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('r32')" id="save-r32">Save Round of 32 →</button>
+            <p id="save-r32-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 32 saved!</p>
+          </div>` : ''}
+        </div>
+
+        <!-- ROUND OF 16 -->
+        <div class="pred-section" style="margin-top:40px">
+          <h2 class="section-title">Round of <span>16</span></h2>
+          <div id="r16-matches">${renderPredictionSection(r16Fixtures, savedPreds, locked)}</div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('r16')" id="save-r16">Save Round of 16 →</button>
+            <p id="save-r16-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 16 saved!</p>
+          </div>` : ''}
+        </div>
+
+        <!-- QUARTER FINALS -->
+        <div class="pred-section" style="margin-top:40px">
+          <h2 class="section-title">Quarter <span>Finals</span></h2>
+          <div id="qf-matches">${renderPredictionSection(qfFixtures, savedPreds, locked)}</div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('qf')" id="save-qf">Save Quarter Finals →</button>
+            <p id="save-qf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Quarter finals saved!</p>
+          </div>` : ''}
+        </div>
+
+        <!-- SEMI FINALS -->
+        <div class="pred-section" style="margin-top:40px">
+          <h2 class="section-title">Semi <span>Finals</span></h2>
+          <div id="sf-matches">${renderPredictionSection(sfFixtures, savedPreds, locked)}</div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('sf')" id="save-sf">Save Semi Finals →</button>
+            <p id="save-sf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Semi finals saved!</p>
+          </div>` : ''}
+        </div>
+
+        <!-- FINAL -->
+        <div class="pred-section" style="margin-top:40px;margin-bottom:40px">
+          <h2 class="section-title">The <span>Final</span></h2>
+          <div id="final-matches">${renderPredictionSection(finalFixtures, savedPreds, locked)}</div>
+          ${!locked ? `
+          <div style="text-align:center;margin-top:24px">
+            <button class="hero-cta" onclick="saveSection('final')" id="save-final"
+              style="background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.4)">
+              🏆 Save Final Prediction
+            </button>
+            <p id="save-final-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ All predictions saved! Good luck!</p>
+          </div>` : ''}
+        </div>
+
+      </div>
+    </div>`;
+
+  /* Store user in window for save functions */
+  window._predUser = user;
+  window._predTeams = teams;
+  window._results = results;
+}
+
+function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
+  const predMap = {};
+  savedPreds.forEach(p => { predMap[p.match_id] = p; });
+
+  const groups = {};
+  fixtures.forEach(fix => {
+    const g = fix.group_name.replace('Group ', '');
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(fix);
+  });
+
+  return Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([g, matches]) => `
+    <div style="margin-bottom:28px">
+      <div class="fixture-group-title">Group ${g}</div>
+      ${matches.map(fix => {
+        const saved = predMap[fix.match_id];
+        const hScore = saved ? (saved.home_score ?? 0) : 0;
+        const aScore = saved ? (saved.away_score ?? 0) : 0;
+        return `
+          <div class="pred-match-card" id="pred-${fix.match_id}">
+            <div class="pred-match-date">${fix.match_date}</div>
+            <div class="pred-match-teams">
+              <div class="pred-team home">
+                <img src="https://flagcdn.com/w40/${flagCode(fix.home_team)}.png" class="fixture-flag" alt="">
+                <span class="pred-team-name">${fix.home_team}</span>
+              </div>
+              <div class="pred-inputs">
+                <input type="number" min="0" max="20" class="score-input pred-score"
+                  id="ph-${fix.match_id}" value="${hScore}"
+                  ${locked ? 'disabled' : ''}
+                  oninput="onGroupPredChange()">
+                <span class="admin-vs">–</span>
+                <input type="number" min="0" max="20" class="score-input pred-score"
+                  id="pa-${fix.match_id}" value="${aScore}"
+                  ${locked ? 'disabled' : ''}
+                  oninput="onGroupPredChange()">
+              </div>
+              <div class="pred-team away">
+                <span class="pred-team-name">${fix.away_team}</span>
+                <img src="https://flagcdn.com/w40/${flagCode(fix.away_team)}.png" class="fixture-flag" alt="">
+              </div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function renderPredStandings(standings) {
+  return `<div class="groups-grid">
+    ${Object.entries(standings).sort(([a],[b]) => a.localeCompare(b)).map(([letter, teams]) => `
+      <div class="group-card">
+        <div class="group-card-header">
+          <div class="group-letter">${letter}</div>
+        </div>
+        <table class="group-table">
+          <thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+          <tbody>
+            ${teams.map(s => `
+              <tr>
+                <td><div class="team-cell">
+                  <img src="${s.team.flag}" alt="" loading="lazy">
+                  ${s.team.name}
+                </div></td>
+                <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                <td>${s.gf-s.ga > 0 ? '+' : ''}${s.gf-s.ga}</td>
+                <td class="pts-cell">${s.pts}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* Called when group scores change — update standings and regenerate knockouts */
+function onGroupPredChange() {
+  if (!window._predTeams || !window._results) return;
+  const groupFixtures = window._results.filter(r => parseInt(r.match_id) <= 72);
+  const groupPreds = groupFixtures.map(fix => ({
+    ...fix,
+    home_score: $(`ph-${fix.match_id}`)?.value ?? '',
+    away_score: $(`pa-${fix.match_id}`)?.value ?? ''
+  }));
+  const standings = calcStandings(window._predTeams, groupPreds);
+  const standingsEl = $('pred-standings');
+  if (standingsEl) standingsEl.innerHTML = renderPredStandings(standings);
+
+  /* Regenerate R32 */
+  const r32Fixtures = generateR32(standings);
+  const r32El = $('r32-matches');
+  if (r32El) {
+    const r32Preds = r32Fixtures.map(fix => ({
+      matchId: fix.matchId,
+      home_score: $(`ph-${fix.matchId}`)?.value ?? 0,
+      away_score: $(`pa-${fix.matchId}`)?.value ?? 0
+    }));
+    r32El.innerHTML = renderPredictionSection(r32Fixtures, [], false);
+  }
+}
+
+/* onPredChange — update downstream knockout fixtures */
+function onPredChange() {
+  /* Will be expanded to cascade through rounds */
+}
+
+/* Save a section */
+async function saveSection(stage) {
+  const user = window._predUser;
+  if (!user) return;
+
+  const btn = $(`save-${stage}`);
+  const msg = $(`save-${stage}-msg`);
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  let fixtures = [];
+  if (stage === 'group') {
+    fixtures = (window._results || []).filter(r => parseInt(r.match_id) <= 72)
+      .map(fix => ({
+        matchId: fix.match_id,
+        homeScore: parseInt($(`ph-${fix.match_id}`)?.value ?? 0),
+        awayScore: parseInt($(`pa-${fix.match_id}`)?.value ?? 0),
+        stage: 'group'
+      }));
+  } else {
+    /* Knockout stages — find inputs on page */
+    document.querySelectorAll(`#${stage === 'r32' ? 'r32' : stage === 'r16' ? 'r16' : stage === 'qf' ? 'qf' : stage === 'sf' ? 'sf' : 'final'}-matches .pred-match-card`).forEach(card => {
+      const id = card.id.replace('pred-', '');
+      const hInput = $(`ph-${id}`);
+      const aInput = $(`pa-${id}`);
+      if (hInput && aInput) {
+        fixtures.push({
+          matchId: parseInt(id),
+          homeScore: parseInt(hInput.value ?? 0),
+          awayScore: parseInt(aInput.value ?? 0),
+          stage
+        });
+      }
+    });
+  }
+
+  try {
+    await savePredictions(user.id, fixtures);
+    btn.textContent = stage === 'final' ? '🏆 Save Final Prediction' : `Save ${stage.toUpperCase()} →`;
+    btn.disabled = false;
+    if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+  } catch(e) {
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+  }
+}
+
+/* Register new user */
+async function registerUser() {
+  const name  = $('reg-name')?.value.trim();
+  const email = $('reg-email')?.value.trim();
+  const err   = $('reg-error');
+
+  if (!name)  { err.textContent = 'Please enter your name.';  err.style.display = 'block'; return; }
+  if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email.'; err.style.display = 'block'; return; }
+
+  const btn = document.querySelector('#reg-name').closest('.info-card').querySelector('button');
+  btn.textContent = 'Setting up…';
+  btn.disabled = true;
+
+  try {
+    const user = await getOrCreateUser(name, email);
+    const link = `${location.origin}${location.pathname}?predict=1&token=${user.token}`;
+
+    /* Show the link */
+    app().innerHTML = `
+      <div class="section">
+        <div class="wrap">
+          <div class="info-card" style="max-width:520px;margin:0 auto;text-align:center">
+            <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
+            <h3 style="margin-bottom:12px">You're in, ${user.name}!</h3>
+            <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
+              Bookmark this link — it's your personal prediction page.
+              Use it every time you want to view or update your picks.
+            </p>
+            <div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;word-break:break-all;font-size:0.8rem;color:var(--text-mid);margin-bottom:20px">
+              ${link}
+            </div>
+            <a class="hero-cta" href="${link}" style="display:inline-flex;width:100%;justify-content:center">
+              Start Making Predictions →
+            </a>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) {
+    btn.textContent = 'Get My Prediction Link →';
+    btn.disabled = false;
+    err.textContent = 'Something went wrong. Please try again.';
+    err.style.display = 'block';
+  }
+}
+
+/* ============================================================
+   LEADERBOARD PAGE
+   ============================================================ */
+async function renderLeaderboard() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">🏆 <span>Leaderboard</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+        <div id="leaderboard-content">
+          <p style="color:var(--text-muted)">Loading…</p>
+        </div>
+      </div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) {
+      $('leaderboard-content').innerHTML = '<p style="color:var(--text-muted)">No predictions submitted yet.</p>';
+      return;
+    }
+
+    $('leaderboard-content').innerHTML = `
+      <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding-left:16px">Pos</th>
+            <th style="text-align:left">Name</th>
+            <th>Match Pts</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map((row, i) => `
+            <tr>
+              <td style="padding-left:16px;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">${i+1}</td>
+              <td style="font-weight:600;text-align:left">${row.name}</td>
+              <td>${row.match_pts}</td>
+              <td class="pts-cell">${row.total_pts}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    $('leaderboard-content').innerHTML = '<p style="color:var(--text-muted)">Could not load leaderboard.</p>';
+  }
+}
