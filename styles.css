@@ -950,10 +950,26 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 }
 .group-table th, .group-table td {
   white-space: nowrap;
+  font-size: 0.78rem;
+  padding: 8px 6px;
 }
-@media (max-width: 400px) {
+.group-table th:first-child,
+.group-table td:first-child {
+  white-space: normal;
+  min-width: 90px;
+  max-width: 120px;
+}
+.team-cell {
+  font-size: 0.78rem;
+}
+.team-cell img {
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  /* Hide GF and GA on small screens */
   .group-table th:nth-child(6),
   .group-table th:nth-child(7),
   .group-table td:nth-child(6),
   .group-table td:nth-child(7) { display: none; }
+  .group-table th, .group-table td { padding: 7px 4px; font-size: 0.72rem; }
 }
