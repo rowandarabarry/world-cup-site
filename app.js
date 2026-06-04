@@ -621,13 +621,13 @@ async function renderGroups() {
     standings[t.group][t.name] = { team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
   });
 
-  results.filter(r => r.Status === 'Played').forEach(r => {
-    const hScore = parseInt(r.HomeScore);
-    const aScore = parseInt(r.AwayScore);
-    const grp = r.Group.replace('Group ', '');
+  results.filter(r => r.status === 'Played').forEach(r => {
+    const hScore = parseInt(r.home_score);
+    const aScore = parseInt(r.away_score);
+    const grp = r.group_name.replace('Group ', '');
     if (!standings[grp]) return;
-    const home = standings[grp][r.HomeTeam];
-    const away = standings[grp][r.AwayTeam];
+    const home = standings[grp][r.home_team];
+    const away = standings[grp][r.away_team];
     if (!home || !away) return;
     home.p++; away.p++;
     home.gf += hScore; home.ga += aScore;
@@ -723,36 +723,31 @@ function renderAbout() {
 /* ============================================================
    SHEET API URL — replace with your deployed Apps Script URL
    ============================================================ */
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbzC6dP9U2x6sSE1WkZ3SD6x2QvgFiGOhJI3ao5kMv7dkIhWXMpztOSwc3Pd2FqHchUK/exec';
+/* ============================================================
+   SUPABASE CONFIG
+   ============================================================ */
+const ADMIN_PIN     = '1919'; // ← Change this to your PIN
+const SUPABASE_URL  = 'https://gniybjqkfkzlzmyuckmq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaXlianFrZmt6bHpteXVja21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQ0ODcsImV4cCI6MjA5NjE1MDQ4N30.q-sKWngq5f3FR89x00h54gr9YlpXQtELqWU4o5tC2Ho';
 
-/* JSONP helper — bypasses CORS restriction on Google Apps Script */
-function fetchSheet(params) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Math.random().toString(36).slice(2);
-    const url = SHEET_API + '?' + new URLSearchParams({...params, callback: cbName});
-    window[cbName] = (data) => {
-      delete window[cbName];
-      document.head.removeChild(script);
-      resolve(data);
-    };
-    const script = document.createElement('script');
-    script.src = url;
-    script.onerror = () => reject(new Error('Script load failed'));
-    document.head.appendChild(script);
-    setTimeout(() => reject(new Error('Timeout')), 10000);
-  });
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_ANON,
+  'Authorization': `Bearer ${SUPABASE_ANON}`
+};
+
+async function sbGet(table, params = '') {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=match_id${params}`, { headers: sbHeaders });
+  return res.json();
 }
 
-/* Parse CSV from Google Sheets into array of objects */
-function parseCSV(csv) {
-  const lines = csv.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = values[i] || '');
-    return obj;
+async function sbUpdate(table, match_id, data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?match_id=eq.${match_id}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify(data)
   });
+  return res.ok;
 }
 
 /* ============================================================
@@ -774,10 +769,7 @@ async function renderResults() {
     </div>`;
 
   try {
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTz224Prn4SdoE-52id9MEMgUkgUuCE1_Rrz6rq7TeQLLPCKAH2ev1pOnVK0kOPuwG7eGVWQOECnW3S/pub?gid=0&single=true&output=csv';
-    const res = await fetch(CSV_URL);
-    const csv = await res.text();
-    const results = parseCSV(csv);
+    const results = await sbGet('results');
 
     /* Group by group */
     const groups = {};
@@ -787,8 +779,8 @@ async function renderResults() {
       groups[g].push(r);
     });
 
-    const played = results.filter(r => r.Status === 'Played');
-    const upcoming = results.filter(r => r.Status !== 'Played');
+    const played = results.filter(r => r.status === 'Played');
+    const upcoming = results.filter(r => r.status !== 'Played');
 
     document.getElementById('results-content').innerHTML = `
       <div class="results-summary">
@@ -800,20 +792,20 @@ async function renderResults() {
         <div class="fixture-group">
           <div class="fixture-group-title">${group}</div>
           ${matches.map(m => `
-            <div class="fixture-card ${m.Status === 'Played' ? 'fixture-played' : ''}">
+            <div class="fixture-card ${m.status === 'Played' ? 'fixture-played' : ''}">
               <div class="fixture-team home">
-                <span>${m.HomeTeam}</span>
-                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" alt="${m.HomeTeam}">
+                <span>${m.home_team}</span>
+                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" alt="${m.home_team}">
               </div>
               <div class="fixture-score">
-                ${m.Status === 'Played'
-                  ? `<div class="fixture-result">${m.HomeScore} – ${m.AwayScore}</div>`
+                ${m.status === 'Played'
+                  ? `<div class="fixture-result">${m.home_score} – ${m.away_score}</div>`
                   : `<div class="fixture-vs">VS</div>`}
-                <div class="fixture-time">${m.Date}</div>
+                <div class="fixture-time">${m.match_date}</div>
               </div>
               <div class="fixture-team away">
-                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" alt="${m.AwayTeam}">
-                <span>${m.AwayTeam}</span>
+                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" alt="${m.away_team}">
+                <span>${m.away_team}</span>
               </div>
             </div>`).join('')}
         </div>`).join('')}`;
@@ -862,17 +854,11 @@ async function renderAdmin() {
 
 async function submitPin() {
   const pin = document.getElementById('pin-input').value.trim();
-  /* Verify PIN via Apps Script */
-  try {
-    const res = await fetch(`${SHEET_API}?action=verifyPin&pin=${pin}&callback=x`, {mode:'no-cors'});
-    /* no-cors means we can't read the response — so just accept the PIN and let
-       the server reject individual saveResult calls if PIN is wrong */
+  if (pin === ADMIN_PIN) {
     adminPin = pin;
     loadAdminPanel();
-  } catch(e) {
-    /* If Apps Script completely unreachable, still allow entry — server will reject bad PINs */
-    adminPin = pin;
-    loadAdminPanel();
+  } else {
+    document.getElementById('pin-error').style.display = 'block';
   }
 }
 
@@ -881,12 +867,9 @@ async function loadAdminPanel() {
     `<p style="color:var(--text-muted)">Loading matches…</p>`;
 
   try {
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTz224Prn4SdoE-52id9MEMgUkgUuCE1_Rrz6rq7TeQLLPCKAH2ev1pOnVK0kOPuwG7eGVWQOECnW3S/pub?gid=0&single=true&output=csv';
-    const res = await fetch(CSV_URL);
-    const csv = await res.text();
-    const results = parseCSV(csv);
-    const upcoming = results.filter(r => r.Status !== 'Played');
-    const played   = results.filter(r => r.Status === 'Played');
+    const results = await sbGet('results');
+    const upcoming = results.filter(r => r.status !== 'Played');
+    const played   = results.filter(r => r.status === 'Played');
 
     document.getElementById('admin-content').innerHTML = `
       <div class="admin-header">
@@ -898,19 +881,19 @@ async function loadAdminPanel() {
       <h2 class="section-title" style="margin-bottom:16px">Enter <span>Results</span></h2>
       ${upcoming.length === 0 ? '<p style="color:var(--text-muted)">All results entered!</p>' : ''}
       ${upcoming.map(m => `
-        <div class="admin-match-card" id="match-${m.MatchID}">
+        <div class="admin-match-card" id="match-${m.match_id}">
           <div class="admin-match-teams">
-            <img src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" class="fixture-flag" alt="">
-            <span class="admin-team-name">${m.HomeTeam}</span>
-            <input type="number" min="0" max="20" class="score-input" id="home-${m.MatchID}" placeholder="0">
+            <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
+            <span class="admin-team-name">${m.home_team}</span>
+            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" placeholder="0">
             <span class="admin-vs">–</span>
-            <input type="number" min="0" max="20" class="score-input" id="away-${m.MatchID}" placeholder="0">
-            <span class="admin-team-name">${m.AwayTeam}</span>
-            <img src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" class="fixture-flag" alt="">
+            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" placeholder="0">
+            <span class="admin-team-name">${m.away_team}</span>
+            <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
-          <div class="admin-match-meta">${m.Group} · ${m.Date}</div>
-          <button class="admin-save-btn" onclick="saveResult(${m.MatchID})">Save Result</button>
-          <span class="admin-saved" id="saved-${m.MatchID}" style="display:none">✅ Saved!</span>
+          <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
+          <button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
+          <span class="admin-saved" id="saved-${m.match_id}" style="display:none">✅ Saved!</span>
         </div>`).join('')}
 
       ${played.length > 0 ? `
@@ -918,13 +901,13 @@ async function loadAdminPanel() {
       ${played.map(m => `
         <div class="admin-match-card admin-match-played">
           <div class="admin-match-teams">
-            <img src="https://flagcdn.com/w40/${flagCode(m.HomeTeam)}.png" class="fixture-flag" alt="">
-            <span class="admin-team-name">${m.HomeTeam}</span>
-            <span class="admin-score-display">${m.HomeScore} – ${m.AwayScore}</span>
-            <span class="admin-team-name">${m.AwayTeam}</span>
-            <img src="https://flagcdn.com/w40/${flagCode(m.AwayTeam)}.png" class="fixture-flag" alt="">
+            <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
+            <span class="admin-team-name">${m.home_team}</span>
+            <span class="admin-score-display">${m.home_score} – ${m.away_score}</span>
+            <span class="admin-team-name">${m.away_team}</span>
+            <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
-          <div class="admin-match-meta">${m.Group} · ${m.Date}</div>
+          <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
         </div>`).join('')}` : ''}`;
 
   } catch(e) {
@@ -947,11 +930,18 @@ async function saveResult(matchId) {
   btn.disabled = true;
 
   try {
-    await fetch(`${SHEET_API}?action=saveResult&pin=${adminPin}&matchId=${matchId}&homeScore=${parseInt(homeScore)}&awayScore=${parseInt(awayScore)}`, {mode:'no-cors'});
-    /* no-cors means we can't read response but request goes through */
-    document.getElementById(`saved-${matchId}`).style.display = 'inline';
-    btn.style.display = 'none';
-    document.getElementById(`match-${matchId}`).style.opacity = '0.6';
+    const ok = await sbUpdate('results', matchId, {
+      home_score: parseInt(homeScore),
+      away_score: parseInt(awayScore),
+      status: 'Played'
+    });
+    if (ok) {
+      document.getElementById(`saved-${matchId}`).style.display = 'inline';
+      btn.style.display = 'none';
+      document.getElementById(`match-${matchId}`).style.opacity = '0.6';
+    } else {
+      throw new Error('Update failed');
+    }
   } catch(e) {
     alert('Could not connect to server.');
     btn.textContent = 'Save Result';
