@@ -1050,3 +1050,25 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   .pred-team-name { max-width: 80px; font-size: 0.78rem; }
   .pred-score { width: 44px; height: 36px; font-size: 1rem; }
 }
+
+/* ET Winner picker */
+.et-winner-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  flex-wrap: wrap;
+}
+.et-label {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--text-muted); white-space: nowrap;
+}
+.et-select {
+  flex: 1; min-width: 160px;
+  padding: 7px 12px;
+  border: 2px solid var(--teal);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem; font-family: var(--font-body);
+  color: var(--text-dark); background: var(--white);
+  outline: none; cursor: pointer;
+}
+.et-select:focus { box-shadow: 0 0 0 3px rgba(0,180,180,0.15); }
