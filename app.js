@@ -732,7 +732,7 @@ function renderAbout() {
 /* ============================================================
    SUPABASE CONFIG
    ============================================================ */
-const ADMIN_PIN     = '1919'; // ← Change this to your PIN
+const ADMIN_PIN     = 'CHANGEME'; // ← Change this to your PIN
 const SUPABASE_URL  = 'https://gniybjqkfkzlzmyuckmq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImduaXlianFrZmt6bHpteXVja21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NzQ0ODcsImV4cCI6MjA5NjE1MDQ4N30.q-sKWngq5f3FR89x00h54gr9YlpXQtELqWU4o5tC2Ho';
 
@@ -1190,10 +1190,82 @@ function calcStandings(teams, predictions) {
   return sorted;
 }
 
+/* Get ranked list of all 3rd place teams from standings */
+function getRanked3rd(standings) {
+  const groups = 'ABCDEFGHIJKL'.split('');
+  const thirds = [];
+  groups.forEach(g => {
+    if (standings[g] && standings[g].length >= 3) {
+      const t = standings[g][2];
+      thirds.push({ ...t, fromGroup: g });
+    }
+  });
+  /* Sort by pts, GD, GF */
+  return thirds.sort((a, b) =>
+    b.pts - a.pts ||
+    (b.gf - b.ga) - (a.gf - a.ga) ||
+    b.gf - a.gf
+  );
+}
+
+/* Work out which 3rd place teams auto-qualify and which are tied */
+function get3rdPlaceQualifiers(standings, userPicks = []) {
+  const ranked = getRanked3rd(standings);
+  if (ranked.length < 8) {
+    /* Not enough data yet — return placeholders */
+    return { qualified: ranked, tied: [], needsPicks: false };
+  }
+
+  const top8 = ranked.slice(0, 8);
+  const rank8 = ranked[7];
+  const rank9 = ranked.length > 8 ? ranked[8] : null;
+
+  /* Check if 8th and 9th are tied on all criteria */
+  const isTied = rank9 &&
+    rank8.pts === rank9.pts &&
+    (rank8.gf - rank8.ga) === (rank9.gf - rank9.ga) &&
+    rank8.gf === rank9.gf;
+
+  if (!isTied) {
+    return { qualified: top8, tied: [], needsPicks: false };
+  }
+
+  /* Find all teams tied with 8th place */
+  const tiedTeams = ranked.filter(t =>
+    t.pts === rank8.pts &&
+    (t.gf - t.ga) === (rank8.gf - rank8.ga) &&
+    t.gf === rank8.gf
+  );
+
+  /* How many spots remain for tied teams */
+  const autoQualified = ranked.filter(t =>
+    t.pts > rank8.pts ||
+    ((t.pts === rank8.pts) && (t.gf - t.ga) > (rank8.gf - rank8.ga)) ||
+    ((t.pts === rank8.pts) && (t.gf - t.ga) === (rank8.gf - rank8.ga) && t.gf > rank8.gf)
+  );
+  const spotsLeft = 8 - autoQualified.length;
+
+  /* Apply user picks if provided */
+  const picked = userPicks.filter(name =>
+    tiedTeams.some(t => t.team.name === name)
+  ).slice(0, spotsLeft);
+
+  const qualified = [
+    ...autoQualified,
+    ...tiedTeams.filter(t => picked.includes(t.team.name))
+  ];
+
+  return {
+    qualified,
+    tied: tiedTeams,
+    spotsLeft,
+    needsPicks: picked.length < spotsLeft,
+    autoQualified
+  };
+}
+
 /* Generate Round of 32 fixtures from predicted standings */
-function generateR32(standings) {
-  /* 2026 format: 12 groups A-L, top 2 qualify + 8 best 3rd place
-     For simplicity we just use top 2 from each group for now */
+function generateR32(standings, userPicks3rd = []) {
   const groups = 'ABCDEFGHIJKL'.split('');
   const winners = {}, runners = {};
   groups.forEach(g => {
@@ -1206,25 +1278,43 @@ function generateR32(standings) {
     }
   });
 
-  /* Official 2026 R32 matchups */
-  return [
-    { matchId:73, home: winners['A'], away: runners['B'],  stage:'r32', date:'Sun 29 Jun' },
-    { matchId:74, home: winners['C'], away: runners['D'],  stage:'r32', date:'Sun 29 Jun' },
-    { matchId:75, home: winners['E'], away: runners['F'],  stage:'r32', date:'Mon 30 Jun' },
-    { matchId:76, home: winners['G'], away: runners['H'],  stage:'r32', date:'Mon 30 Jun' },
-    { matchId:77, home: winners['I'], away: runners['J'],  stage:'r32', date:'Tue 1 Jul'  },
-    { matchId:78, home: winners['K'], away: runners['L'],  stage:'r32', date:'Tue 1 Jul'  },
-    { matchId:79, home: winners['B'], away: runners['A'],  stage:'r32', date:'Wed 2 Jul'  },
-    { matchId:80, home: winners['D'], away: runners['C'],  stage:'r32', date:'Wed 2 Jul'  },
-    { matchId:81, home: winners['F'], away: runners['E'],  stage:'r32', date:'Thu 3 Jul'  },
-    { matchId:82, home: winners['H'], away: runners['G'],  stage:'r32', date:'Thu 3 Jul'  },
-    { matchId:83, home: winners['J'], away: runners['I'],  stage:'r32', date:'Fri 4 Jul'  },
-    { matchId:84, home: winners['L'], away: runners['K'],  stage:'r32', date:'Fri 4 Jul'  },
-    { matchId:85, home: `3rd ACEF`,   away: `3rd BDGH`,    stage:'r32', date:'Sat 5 Jul'  },
-    { matchId:86, home: `3rd IJKL`,   away: `3rd ADEF`,    stage:'r32', date:'Sat 5 Jul'  },
-    { matchId:87, home: `3rd BCFG`,   away: `3rd AHIJ`,    stage:'r32', date:'Sun 6 Jul'  },
-    { matchId:88, home: `3rd CDKL`,   away: `3rd BEGL`,    stage:'r32', date:'Sun 6 Jul'  },
-  ];
+  /* Get 3rd place qualifiers */
+  const { qualified, tied, needsPicks, spotsLeft, autoQualified } =
+    get3rdPlaceQualifiers(standings, userPicks3rd);
+
+  /* Map 3rd place teams to their R32 slots (1-8 in ranking order) */
+  const third = (n) => {
+    const t = qualified[n];
+    if (t) return t.team.name;
+    if (tied.length > 0 && needsPicks) return `TBD_3rd_${n}`;
+    return `3rd Place #${n+1}`;
+  };
+
+  return {
+    fixtures: [
+      { matchId:73, home: winners['A'], away: runners['B'],  stage:'r32', date:'Sun 29 Jun' },
+      { matchId:74, home: winners['C'], away: runners['D'],  stage:'r32', date:'Sun 29 Jun' },
+      { matchId:75, home: winners['E'], away: runners['F'],  stage:'r32', date:'Mon 30 Jun' },
+      { matchId:76, home: winners['G'], away: runners['H'],  stage:'r32', date:'Mon 30 Jun' },
+      { matchId:77, home: winners['I'], away: runners['J'],  stage:'r32', date:'Tue 1 Jul'  },
+      { matchId:78, home: winners['K'], away: runners['L'],  stage:'r32', date:'Tue 1 Jul'  },
+      { matchId:79, home: winners['B'], away: runners['A'],  stage:'r32', date:'Wed 2 Jul'  },
+      { matchId:80, home: winners['D'], away: runners['C'],  stage:'r32', date:'Wed 2 Jul'  },
+      { matchId:81, home: winners['F'], away: runners['E'],  stage:'r32', date:'Thu 3 Jul'  },
+      { matchId:82, home: winners['H'], away: runners['G'],  stage:'r32', date:'Thu 3 Jul'  },
+      { matchId:83, home: winners['J'], away: runners['I'],  stage:'r32', date:'Fri 4 Jul'  },
+      { matchId:84, home: winners['L'], away: runners['K'],  stage:'r32', date:'Fri 4 Jul'  },
+      { matchId:85, home: third(0),    away: third(1),       stage:'r32', date:'Sat 5 Jul'  },
+      { matchId:86, home: third(2),    away: third(3),       stage:'r32', date:'Sat 5 Jul'  },
+      { matchId:87, home: third(4),    away: third(5),       stage:'r32', date:'Sun 6 Jul'  },
+      { matchId:88, home: third(6),    away: third(7),       stage:'r32', date:'Sun 6 Jul'  },
+    ],
+    tiedTeams: tied,
+    needsPicks,
+    spotsLeft,
+    autoQualified,
+    qualified
+  };
 }
 
 /* Generate R16 from R32 predictions */
@@ -1474,7 +1564,11 @@ async function renderPredict() {
   const standings = calcStandings(teams, groupPreds);
 
   /* Generate knockout fixtures */
-  const r32Fixtures = generateR32(standings);
+  const r32Result = generateR32(standings, window._userPicks3rd || []);
+  const r32Fixtures = r32Result.fixtures;
+  const r32TiedTeams = r32Result.tiedTeams;
+  const r32NeedsPicks = r32Result.needsPicks;
+  const r32SpotsLeft = r32Result.spotsLeft;
   const r32Preds = savedPreds.filter(p => p.match_id >= 73 && p.match_id <= 88)
     .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
   const r16Fixtures = generateR16(r32Fixtures, r32Preds);
@@ -1530,6 +1624,30 @@ async function renderPredict() {
           <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Updates as you fill in scores above.</p>
           <div id="pred-standings">${renderPredStandings(standings)}</div>
         </div>
+
+        <!-- 3RD PLACE PICKER (only shown if there's a tie) -->
+        ${r32NeedsPicks ? `
+        <div class="pred-section" style="margin-top:40px" id="section-3rd">
+          <h2 class="section-title">Pick <span>3rd Place Qualifiers</span></h2>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+            ${r32SpotsLeft} spot${r32SpotsLeft > 1 ? 's' : ''} remain${r32SpotsLeft === 1 ? 's' : ''} — these teams are all level on points, goal difference and goals scored.
+            Pick ${r32SpotsLeft} to qualify:
+          </p>
+          <div class="third-place-picker" id="third-place-picker">
+            ${r32TiedTeams.map(t => `
+              <label class="third-pick-option">
+                <input type="checkbox" name="third-pick" value="${t.team.name}"
+                  ${(window._userPicks3rd||[]).includes(t.team.name) ? 'checked' : ''}
+                  onchange="onThirdPick(${r32SpotsLeft})">
+                <img src="${t.team.flag}" width="28" height="19" style="border-radius:2px;border:1px solid var(--border)">
+                <span>${t.team.name}</span>
+                <span class="third-pick-stats">${t.pts}pts · GD${t.gf-t.ga > 0 ? '+' : ''}${t.gf-t.ga} · GF${t.gf}</span>
+              </label>`).join('')}
+          </div>
+          <p id="third-pick-msg" style="color:#e63200;font-size:0.85rem;margin-top:8px;display:none">
+            Please pick exactly ${r32SpotsLeft} team${r32SpotsLeft > 1 ? 's' : ''}.
+          </p>
+        </div>` : ''}
 
         <!-- ROUND OF 32 -->
         <div class="pred-section" style="margin-top:40px">
@@ -1672,6 +1790,37 @@ function renderPredStandings(standings) {
   </div>`;
 }
 
+/* Handle 3rd place team picks */
+function onThirdPick(spotsLeft) {
+  const checked = Array.from(document.querySelectorAll('input[name="third-pick"]:checked'))
+    .map(cb => cb.value);
+  const msg = $('third-pick-msg');
+
+  /* Prevent checking more than spotsLeft */
+  if (checked.length > spotsLeft) {
+    event.target.checked = false;
+    return;
+  }
+
+  window._userPicks3rd = checked;
+
+  if (msg) msg.style.display = checked.length === spotsLeft ? 'none' : 'block';
+
+  /* Regenerate R32 with new picks */
+  if (window._predTeams && window._results) {
+    const groupFixtures = window._results.filter(r => parseInt(r.match_id) <= 72);
+    const groupPreds = groupFixtures.map(fix => ({
+      ...fix,
+      home_score: $(`ph-${fix.match_id}`)?.value ?? '',
+      away_score: $(`pa-${fix.match_id}`)?.value ?? ''
+    }));
+    const standings = calcStandings(window._predTeams, groupPreds);
+    const r32Result = generateR32(standings, window._userPicks3rd);
+    const r32El = $('r32-matches');
+    if (r32El) r32El.innerHTML = renderPredictionSection(r32Result.fixtures, [], false);
+  }
+}
+
 /* Called when group scores change — update standings and regenerate knockouts */
 function onGroupPredChange() {
   if (!window._predTeams || !window._results) return;
@@ -1686,7 +1835,8 @@ function onGroupPredChange() {
   if (standingsEl) standingsEl.innerHTML = renderPredStandings(standings);
 
   /* Regenerate R32 */
-  const r32Fixtures = generateR32(standings);
+  const r32Result = generateR32(standings, window._userPicks3rd || []);
+  const r32Fixtures = r32Result.fixtures;
   const r32El = $('r32-matches');
   if (r32El) {
     const r32Preds = r32Fixtures.map(fix => ({
