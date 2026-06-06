@@ -35,7 +35,7 @@ function renderHome() {
       </div>
       <div class="hero-title-overlay">
         <div class="wrap">
-          <div class="hero-site-name">ROWAN'S <span>WORLD CUP HUB</span></div>
+          <div class="hero-site-name">ROWAN'S <span>WORLD CUP ZONE</span></div>
           <a class="hero-cta hero-cta-banner" href="./?teams=1">Explore Teams →</a>
         </div>
       </div>
@@ -933,6 +933,10 @@ async function loadAdminPanel() {
         </div>`).join('');
     });
 
+    /* Add blog management section */
+    const blogHtml = await renderAdminBlog();
+    document.getElementById('admin-content').innerHTML += blogHtml;
+
   } catch(e) {
     document.getElementById('admin-content').innerHTML =
       `<p style="color:var(--text-muted)">Could not load matches.</p>`;
@@ -1030,6 +1034,9 @@ function flagCode(team) {
     else if (params.has('admin'))      { await renderAdmin();                  }
     else if (params.has('predict'))    { await renderPredict();                }
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
+    else if (params.has('wallchart'))  { await renderWallChart();              }
+    else if (params.has('review'))     { await renderReview();                 }
+    else if (params.has('blog'))       { await renderBlog();                   }
     else if (params.get('team'))       { await renderTeam(params.get('team')); }
     else if (params.has('teams'))      { await renderList();                   }
     else                               { renderHome();                         }
@@ -1046,13 +1053,16 @@ function flagCode(team) {
   document.querySelectorAll('.tab').forEach(tab => {
     const page = tab.dataset.page;
     const isActive =
-      (page === 'home'        && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.has('results') && !params.has('predict') && !params.has('leaderboard') && !params.get('team')) ||
+      (page === 'home'        && !params.has('teams') && !params.has('fixtures') && !params.has('groups') && !params.has('about') && !params.has('results') && !params.has('predict') && !params.has('leaderboard') && !params.has('wallchart') && !params.has('review') && !params.has('blog') && !params.get('team')) ||
       (page === 'teams'       && (params.has('teams') || params.get('team'))) ||
       (page === 'fixtures'    && params.has('fixtures')) ||
       (page === 'groups'      && params.has('groups')) ||
       (page === 'results'     && params.has('results')) ||
+      (page === 'wallchart'   && params.has('wallchart')) ||
       (page === 'predict'     && params.has('predict')) ||
       (page === 'leaderboard' && params.has('leaderboard')) ||
+      (page === 'review'      && params.has('review')) ||
+      (page === 'blog'        && params.has('blog')) ||
       (page === 'about'       && params.has('about'));
     if (isActive) tab.classList.add('active');
   });
@@ -1063,6 +1073,27 @@ function flagCode(team) {
   toggle?.addEventListener('click', () => {
     const open = tabs.classList.toggle('open');
     toggle.setAttribute('aria-expanded', open);
+  });
+
+  /* Dropdown nav — highlight parent when child is active */
+  document.querySelectorAll('.tab-dropdown').forEach(dd => {
+    const items = dd.querySelectorAll('.tab-dropdown-item');
+    items.forEach(item => {
+      const page = item.dataset.page;
+      if (page && params.has(page)) {
+        dd.querySelector('.tab-drop-btn')?.classList.add('active');
+        item.classList.add('active');
+      }
+    });
+  });
+
+  /* Close dropdown on click outside */
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.tab-dropdown')) {
+      document.querySelectorAll('.tab-dropdown-menu').forEach(m => {
+        m.style.display = '';
+      });
+    }
   });
 
   /* Scroll shadow on header */
@@ -2045,5 +2076,402 @@ async function renderLeaderboard() {
       </table>`;
   } catch(e) {
     $('leaderboard-content').innerHTML = '<p style="color:var(--text-muted)">Could not load leaderboard.</p>';
+  }
+}
+
+/* ============================================================
+   TOURNAMENT REVIEW PAGE — Rowan's opinions
+   ============================================================ */
+async function renderReview() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">Rowan's <span>Tournament Review</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="review-content">
+        <p style="color:var(--text-muted)">Loading…</p>
+      </div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/tournament_review?id=eq.1&select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    const r = data[0] || {};
+
+    const fields = [
+      { key:'winner_pick',       label:'🏆 My Winner Pick',       icon:'🏆' },
+      { key:'fav_team',          label:'❤️ Favourite Team',        icon:'❤️' },
+      { key:'player_to_watch',   label:'⭐ Player to Watch',       icon:'⭐' },
+      { key:'team_to_watch',     label:'👀 Team to Watch',         icon:'👀' },
+      { key:'dark_horse',        label:'🐴 Dark Horse',            icon:'🐴' },
+      { key:'early_exit',        label:'😬 Shock Early Exit',      icon:'😬' },
+      { key:'golden_boot',       label:'👟 Golden Boot Pick',      icon:'👟' },
+    ];
+
+    const hasContent = fields.some(f => r[f.key]);
+
+    $('review-content').innerHTML = `
+      ${!hasContent ? `
+        <div class="info-card" style="text-align:center;padding:40px">
+          <div style="font-size:3rem;margin-bottom:12px">⚽</div>
+          <h3>Rowan's review coming soon!</h3>
+          <p style="color:var(--text-muted);margin-top:8px">Check back once the tournament gets underway.</p>
+        </div>` : `
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:28px">
+          ${fields.filter(f => r[f.key]).map(f => `
+            <div class="review-card">
+              <span class="review-card-label">${f.label}</span>
+              <div class="review-card-value">${r[f.key]}</div>
+            </div>`).join('')}
+        </div>
+        ${r.overall_thoughts ? `
+        <div class="review-card">
+          <span class="review-card-label">📝 Overall Thoughts</span>
+          <div class="review-card-text">${r.overall_thoughts}</div>
+        </div>` : ''}
+      `}`;
+  } catch(e) {
+    $('review-content').innerHTML = '<p style="color:var(--text-muted)">Could not load review.</p>';
+  }
+}
+
+/* ============================================================
+   BLOG PAGE — Rowan's rolling thoughts
+   ============================================================ */
+async function renderBlog() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">Rowan's <span>Blog</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="blog-content">
+        <p style="color:var(--text-muted)">Loading…</p>
+      </div>
+    </div>`;
+
+  try {
+    const posts = await fetch(
+      `${SUPABASE_URL}/rest/v1/blog_posts?published=eq.true&order=created_at.desc&select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!posts.length) {
+      $('blog-content').innerHTML = `
+        <div class="info-card" style="text-align:center;padding:40px">
+          <div style="font-size:3rem;margin-bottom:12px">✍️</div>
+          <h3>Blog coming soon!</h3>
+          <p style="color:var(--text-muted);margin-top:8px">Rowan's thoughts on the tournament will appear here.</p>
+        </div>`;
+      return;
+    }
+
+    $('blog-content').innerHTML = posts.map(post => {
+      const typeLabels = {
+        thought: 'Thought', preview: 'Match Preview',
+        review: 'Match Review', general: 'General'
+      };
+      const date = new Date(post.created_at).toLocaleDateString('en-GB',
+        { day:'numeric', month:'long', year:'numeric' });
+      return `
+        <div class="blog-post">
+          <div class="blog-post-header">
+            <div class="blog-post-meta">
+              <span class="blog-post-type type-${post.post_type}">${typeLabels[post.post_type] || post.post_type}</span>
+              <span class="blog-post-date">${date}</span>
+            </div>
+            <div class="blog-post-title">${post.title}</div>
+          </div>
+          <div class="blog-post-body">${post.content}</div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    $('blog-content').innerHTML = '<p style="color:var(--text-muted)">Could not load blog.</p>';
+  }
+}
+
+/* ============================================================
+   WALL CHART PAGE
+   ============================================================ */
+async function renderWallChart(filledPreds = null, username = '') {
+  app().innerHTML = `
+    <div class="page-title-bar no-print">
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ` — ${username}` : ''}</h1>
+        <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">
+          🖨️ Print / Download
+        </button>
+      </div>
+    </div>
+    <div class="wall-chart-wrap">
+      <div class="wc-title">ROWAN'S WORLD CUP ZONE</div>
+      <div class="wc-subtitle">FIFA World Cup 2026 · USA · Canada · Mexico${username ? ` · ${username}'s Predictions` : ' · Wall Chart'}</div>
+      <div id="wc-content"><p style="color:var(--text-muted)">Building chart…</p></div>
+    </div>`;
+
+  const [teams, results] = await Promise.all([
+    loadTeams(),
+    sbGet('results')
+  ]);
+
+  /* Build group fixtures map */
+  const groupFixtures = {};
+  results.filter(r => parseInt(r.match_id) <= 72).forEach(r => {
+    const g = r.group_name.replace('Group ','');
+    if (!groupFixtures[g]) groupFixtures[g] = [];
+    groupFixtures[g].push(r);
+  });
+
+  /* Prediction map if filled */
+  const predMap = {};
+  if (filledPreds) filledPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
+
+  const scoreDisplay = (matchId, isHome) => {
+    if (filledPreds) {
+      const p = predMap[matchId];
+      if (p) return isHome ? (p.home_score ?? '') : (p.away_score ?? '');
+    }
+    const r = results.find(r => r.match_id == matchId);
+    if (r && r.status === 'Played') return isHome ? r.home_score : r.away_score;
+    return '';
+  };
+
+  /* Group stage HTML */
+  const groupsHtml = Object.entries(groupFixtures)
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([g, matches]) => `
+      <div class="wc-group">
+        <div class="wc-group-header">
+          <span>GROUP ${g}</span>
+        </div>
+        ${matches.map(m => `
+          <div class="wc-match-row">
+            <div class="wc-match-teams">
+              <img src="https://flagcdn.com/w20/${flagCode(m.home_team)}.png" width="16" height="11" style="border-radius:1px">
+              <span>${m.home_team}</span>
+              <span style="color:var(--text-muted);margin:0 2px">v</span>
+              <span>${m.away_team}</span>
+              <img src="https://flagcdn.com/w20/${flagCode(m.away_team)}.png" width="16" height="11" style="border-radius:1px">
+            </div>
+            <div class="wc-score-box">
+              <input class="wc-score-input" value="${scoreDisplay(m.match_id, true)}" readonly>
+              <span class="wc-dash">–</span>
+              <input class="wc-score-input" value="${scoreDisplay(m.match_id, false)}" readonly>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+
+  /* Knockout bracket */
+  const r32Matches = results.filter(r => r.match_id >= 73 && r.match_id <= 88);
+  const r16Matches = results.filter(r => r.match_id >= 89 && r.match_id <= 96);
+  const qfMatches  = results.filter(r => r.match_id >= 97 && r.match_id <= 100);
+  const sfMatches  = results.filter(r => r.match_id >= 101 && r.match_id <= 102);
+  const finalMatch = results.find(r => r.match_id === 103);
+
+  const bracketMatch = (matchId, label, homeLabel, awayLabel) => {
+    const hs = scoreDisplay(matchId, true);
+    const as_ = scoreDisplay(matchId, false);
+    return `
+      <div class="wc-bracket-match">
+        <div class="wc-bracket-match-label">${label}</div>
+        <div class="wc-bracket-team">
+          <span class="wc-bracket-team-name">${homeLabel}</span>
+          <input class="wc-bracket-score" value="${hs}" readonly>
+        </div>
+        <div class="wc-bracket-team">
+          <span class="wc-bracket-team-name">${awayLabel}</span>
+          <input class="wc-bracket-score" value="${as_}" readonly>
+        </div>
+      </div>`;
+  };
+
+  $('wc-content').innerHTML = `
+    <div class="wc-groups-grid">${groupsHtml}</div>
+
+    <div class="wc-bracket">
+      <div class="wc-bracket-header">ROUND OF 32</div>
+      <div class="wc-bracket-grid">
+        ${Array.from({length:16}, (_,i) => {
+          const m = results.find(r => r.match_id === 73+i) || {match_id:73+i,home_team:'TBD',away_team:'TBD'};
+          return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team || 'TBD', m.away_team || 'TBD');
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="wc-bracket">
+      <div class="wc-bracket-header">ROUND OF 16</div>
+      <div class="wc-bracket-grid">
+        ${Array.from({length:8}, (_,i) => {
+          const m = results.find(r => r.match_id === 89+i) || {match_id:89+i,home_team:'TBD',away_team:'TBD'};
+          return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
+        }).join('')}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="wc-bracket">
+        <div class="wc-bracket-header">QUARTER FINALS</div>
+        <div class="wc-bracket-grid" style="grid-template-columns:1fr 1fr">
+          ${Array.from({length:4}, (_,i) => {
+            const m = results.find(r => r.match_id === 97+i) || {match_id:97+i,home_team:'TBD',away_team:'TBD'};
+            return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
+          }).join('')}
+        </div>
+      </div>
+      <div class="wc-bracket">
+        <div class="wc-bracket-header">SEMI FINALS</div>
+        <div class="wc-bracket-grid" style="grid-template-columns:1fr 1fr">
+          ${Array.from({length:2}, (_,i) => {
+            const m = results.find(r => r.match_id === 101+i) || {match_id:101+i,home_team:'TBD',away_team:'TBD'};
+            return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="wc-bracket" style="border:2px solid var(--gold)">
+      <div class="wc-bracket-header" style="background:var(--gold);color:var(--navy);font-size:1.2rem">🏆 THE FINAL — Sunday 19 July</div>
+      <div class="wc-bracket-grid" style="grid-template-columns:1fr">
+        ${bracketMatch(103, 'Match 103 · MetLife Stadium', finalMatch?.home_team||'TBD', finalMatch?.away_team||'TBD')}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   ADMIN — Blog management added to loadAdminPanel
+   ============================================================ */
+async function renderAdminBlog() {
+  const posts = await fetch(
+    `${SUPABASE_URL}/rest/v1/blog_posts?order=created_at.desc&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  const results = await sbGet('results').catch(() => []);
+
+  return `
+    <h2 class="section-title" style="margin:40px 0 20px">Rowan's <span>Blog</span></h2>
+
+    <div class="admin-blog-form">
+      <h3>Add New Post</h3>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="blog-title" placeholder="e.g. England vs Croatia Preview">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Post Type</label>
+        <select class="form-select" id="blog-type">
+          <option value="thought">Tournament Thought</option>
+          <option value="preview">Match Preview</option>
+          <option value="review">Match Review</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content</label>
+        <textarea class="form-textarea" id="blog-content" rows="6" placeholder="Write your post here…"></textarea>
+      </div>
+      <button class="admin-save-btn" onclick="adminSaveBlogPost()" style="margin-top:8px">Publish Post</button>
+      <span id="blog-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:12px">✅ Published!</span>
+    </div>
+
+    <h2 class="section-title" style="margin:32px 0 16px">Existing <span>Posts</span></h2>
+    ${!posts.length ? '<p style="color:var(--text-muted)">No posts yet.</p>' :
+      posts.map(p => `
+        <div class="admin-match-card" style="margin-bottom:10px">
+          <div style="font-weight:700;color:var(--purple-dark);margin-bottom:4px">${p.title}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">
+            ${p.post_type} · ${new Date(p.created_at).toLocaleDateString('en-GB')}
+          </div>
+          <div style="font-size:0.875rem;color:var(--text-mid);margin-bottom:10px;white-space:pre-wrap">${p.content.slice(0,150)}${p.content.length>150?'…':''}</div>
+          <button class="admin-save-btn" style="background:#e63200" onclick="adminDeletePost('${p.id}')">Delete</button>
+        </div>`).join('')}
+
+    <h2 class="section-title" style="margin:40px 0 20px">Tournament <span>Review</span></h2>
+    <div class="admin-blog-form" id="review-form">
+      <h3>Rowan's Tournament Review</h3>
+      ${await renderReviewAdminForm()}
+    </div>`;
+}
+
+async function renderReviewAdminForm() {
+  const data = await fetch(
+    `${SUPABASE_URL}/rest/v1/tournament_review?id=eq.1&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => [{}]);
+  const r = data[0] || {};
+
+  const fields = [
+    { key:'winner_pick',     label:'Winner Pick'       },
+    { key:'fav_team',        label:'Favourite Team'    },
+    { key:'player_to_watch', label:'Player to Watch'   },
+    { key:'team_to_watch',   label:'Team to Watch'     },
+    { key:'dark_horse',      label:'Dark Horse'        },
+    { key:'early_exit',      label:'Shock Early Exit'  },
+    { key:'golden_boot',     label:'Golden Boot Pick'  },
+  ];
+
+  return `
+    ${fields.map(f => `
+      <div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <input class="form-input" id="rev-${f.key}" value="${r[f.key] || ''}" placeholder="${f.label}">
+      </div>`).join('')}
+    <div class="form-group">
+      <label class="form-label">Overall Thoughts</label>
+      <textarea class="form-textarea" id="rev-overall_thoughts" rows="5">${r.overall_thoughts || ''}</textarea>
+    </div>
+    <button class="admin-save-btn" onclick="adminSaveReview()">Save Review</button>
+    <span id="review-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:12px">✅ Saved!</span>`;
+}
+
+async function adminSaveBlogPost() {
+  const title   = $('blog-title')?.value.trim();
+  const content = $('blog-content')?.value.trim();
+  const type    = $('blog-type')?.value;
+  if (!title || !content) { alert('Please fill in title and content.'); return; }
+
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ title, content, post_type: type, published: true })
+  }).then(r => r.ok);
+
+  if (ok) {
+    $('blog-title').value = '';
+    $('blog-content').value = '';
+    $('blog-save-msg').style.display = 'inline';
+    setTimeout(() => $('blog-save-msg').style.display = 'none', 3000);
+  }
+}
+
+async function adminDeletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?id=eq.${id}`, {
+    method: 'DELETE', headers: sbHeaders
+  });
+  loadAdminPanel();
+}
+
+async function adminSaveReview() {
+  const fields = ['winner_pick','fav_team','player_to_watch','team_to_watch',
+                  'dark_horse','early_exit','golden_boot','overall_thoughts'];
+  const data = {};
+  fields.forEach(f => { data[f] = $(`rev-${f}`)?.value.trim() || null; });
+
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/tournament_review?id=eq.1`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify(data)
+  }).then(r => r.ok);
+
+  if (ok) {
+    $('review-save-msg').style.display = 'inline';
+    setTimeout(() => $('review-save-msg').style.display = 'none', 3000);
   }
 }
