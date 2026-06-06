@@ -153,35 +153,33 @@ a { color: inherit; }
   object-position: unset;
 }
 
-/* Mobile — overlay on image, zoomed to hide FIFA badge */
+/* Mobile — crop tight to hide FIFA badge, text sits flush below */
 @media (max-width: 680px) {
   .hero-image {
-    min-height: 280px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    display: block;
+    position: relative;
   }
   .hero-image-wrap {
-    position: absolute;
-    inset: 0;
-    height: 100%;
+    position: relative;
+    height: 240px;
     overflow: hidden;
   }
   .hero-bg {
-    width: 115%;
-    height: 115%;
+    width: 120%;
+    height: 120%;
     object-fit: cover;
-    object-position: 40% 40%;
-    margin-left: -7%;
-    margin-top: -12%;
+    object-position: 40% 20%;
+    margin-left: -10%;
+    margin-top: -8%;
   }
   .hero-title-overlay {
     position: relative;
-    inset: unset;
-    z-index: 1;
-    padding: 0 1.25rem 20px;
+    top: auto; left: auto; right: auto; bottom: auto;
     display: flex;
-    align-items: flex-end;
+    padding: 14px 1.25rem 20px;
+    background: var(--navy);
+    justify-content: flex-start;
+    align-items: flex-start;
   }
 }
 
