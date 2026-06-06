@@ -153,17 +153,16 @@ a { color: inherit; }
   object-position: unset;
 }
 
-/* Mobile — fixed height with cover crop, same as before */
+/* Mobile — show full width of image, natural height */
 @media (max-width: 680px) {
   .hero-image-wrap {
-    height: 460px;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
   .hero-bg {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
+    height: auto;
+    object-fit: unset;
   }
 }
 
