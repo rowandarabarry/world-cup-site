@@ -1519,18 +1519,22 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
   savedPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
 
   return fixtures.map(fix => {
-    const saved  = predMap[fix.matchId] || predMap[fix.match_id];
-    const hScore = saved ? (saved.home_score ?? saved.homeScore ?? 0) : 0;
-    const aScore = saved ? (saved.away_score ?? saved.awayScore ?? 0) : 0;
-    const etWinner = saved ? (saved.et_winner || '') : '';
-    const hFlag  = flagCode(fix.home_team || fix.home);
-    const aFlag  = flagCode(fix.away_team || fix.away);
+    const saved    = predMap[fix.matchId] || predMap[fix.match_id];
+    const hScore   = saved != null ? (saved.home_score ?? saved.homeScore ?? 0) : 0;
+    const aScore   = saved != null ? (saved.away_score ?? saved.awayScore ?? 0) : 0;
+    const etWinner = saved ? (saved.et_winner || saved.etWinner || '') : '';
+    const hFlag    = flagCode(fix.home_team || fix.home);
+    const aFlag    = flagCode(fix.away_team || fix.away);
     const homeTeam = fix.home_team || fix.home;
     const awayTeam = fix.away_team || fix.away;
-    const isDraw = parseInt(hScore) === parseInt(aScore);
+    /* Only show ET picker if there's actually a score entered (non-zero sum or explicit draw) */
+    const hasScore = saved != null;
+    const isDraw   = hasScore && parseInt(hScore) === parseInt(aScore);
 
     return `
-      <div class="pred-match-card" id="pred-${fix.matchId}">
+      <div class="pred-match-card" id="pred-${fix.matchId}"
+        data-home="${homeTeam.replace(/"/g,'&quot;')}"
+        data-away="${awayTeam.replace(/"/g,'&quot;')}">
         <div class="pred-match-date">${fix.match_date || fix.date}</div>
         <div class="pred-match-teams">
           <div class="pred-team home">
@@ -1541,12 +1545,12 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="ph-${fix.matchId}" value="${hScore}"
               ${readOnly ? 'disabled' : ''}
-              oninput="onKnockoutChange(${fix.matchId}, '${homeTeam}', '${awayTeam}')">
+              oninput="onKnockoutChange(${fix.matchId})">
             <span class="admin-vs">–</span>
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="pa-${fix.matchId}" value="${aScore}"
               ${readOnly ? 'disabled' : ''}
-              oninput="onKnockoutChange(${fix.matchId}, '${homeTeam}', '${awayTeam}')">
+              oninput="onKnockoutChange(${fix.matchId})">
           </div>
           <div class="pred-team away">
             <span class="pred-team-name">${awayTeam}</span>
@@ -1555,7 +1559,8 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
         </div>
         <div class="et-winner-row" id="et-${fix.matchId}" style="${isDraw ? '' : 'display:none'}">
           <span class="et-label">After extra time, winner:</span>
-          <select class="et-select" id="et-sel-${fix.matchId}" ${readOnly ? 'disabled' : ''}>
+          <select class="et-select" id="et-sel-${fix.matchId}" ${readOnly ? 'disabled' : ''}
+            onchange="cascadeKnockouts()">
             <option value="">— pick winner —</option>
             <option value="${homeTeam}" ${etWinner === homeTeam ? 'selected' : ''}>${homeTeam}</option>
             <option value="${awayTeam}" ${etWinner === awayTeam ? 'selected' : ''}>${awayTeam}</option>
@@ -1961,16 +1966,23 @@ function onPredChange() {
 }
 
 /* Show/hide ET winner picker when knockout score changes */
-function onKnockoutChange(matchId, homeTeam, awayTeam) {
-  const hVal = parseInt($(`ph-${matchId}`)?.value ?? 0);
-  const aVal = parseInt($(`pa-${matchId}`)?.value ?? 0);
+function onKnockoutChange(matchId) {
+  const hVal = parseInt($(`ph-${matchId}`)?.value ?? '');
+  const aVal = parseInt($(`pa-${matchId}`)?.value ?? '');
   const etRow = $(`et-${matchId}`);
   const etSel = $(`et-sel-${matchId}`);
-  if (!etRow) return;
-  if (hVal === aVal) {
+  const card  = document.getElementById(`pred-${matchId}`);
+  if (!etRow || !card) return;
+
+  const homeTeam = card.dataset.home || '';
+  const awayTeam = card.dataset.away || '';
+
+  /* Update team names in ET picker in case they changed */
+  if (etSel.options[1]) { etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam; }
+  if (etSel.options[2]) { etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam; }
+
+  if (!isNaN(hVal) && !isNaN(aVal) && hVal === aVal) {
     etRow.style.display = 'flex';
-    etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam;
-    etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam;
   } else {
     etRow.style.display = 'none';
     etSel.value = '';
