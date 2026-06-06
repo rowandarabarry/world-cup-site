@@ -190,16 +190,14 @@ a { color: inherit; }
 /* Mobile */
 @media (max-width: 680px) {
   .hero-image-wrap {
-    height: 240px;
+    height: 340px;
     overflow: hidden;
   }
   .hero-bg {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center center;
-    transform: scale(1.3) translate(-5%, -8%);
-    transform-origin: center center;
+    object-position: center top;
   }
 }
 .hero-site-name span { color: var(--teal); }
