@@ -190,7 +190,7 @@ a { color: inherit; }
 /* Mobile */
 @media (max-width: 680px) {
   .hero-image-wrap {
-    height: 320px;
+    height: 300px;
     overflow: hidden;
   }
   .hero-bg {
