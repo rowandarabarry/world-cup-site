@@ -153,7 +153,7 @@ a { color: inherit; }
   object-position: unset;
 }
 
-/* Mobile — crop tight to hide FIFA badge, text sits flush below */
+/* Mobile — use background-image for reliable cropping */
 @media (max-width: 680px) {
   .hero-image {
     display: block;
@@ -163,14 +163,10 @@ a { color: inherit; }
     position: relative;
     height: 240px;
     overflow: hidden;
+    background: url('images/banner.png') center 25% / cover no-repeat;
   }
   .hero-bg {
-    position: absolute;
-    top: -30px;
-    left: -5%;
-    width: 110%;
-    height: auto;
-    object-fit: unset;
+    display: none;
   }
   .hero-title-overlay {
     position: relative;
