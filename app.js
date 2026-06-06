@@ -1394,22 +1394,23 @@ function generateR32(standings, userPicks3rd = []) {
 
   return {
     fixtures: [
-      { matchId:73, home: winners['A'], away: runners['B'],  stage:'r32', date:'Sun 29 Jun' },
-      { matchId:74, home: winners['C'], away: runners['D'],  stage:'r32', date:'Sun 29 Jun' },
-      { matchId:75, home: winners['E'], away: runners['F'],  stage:'r32', date:'Mon 30 Jun' },
-      { matchId:76, home: winners['G'], away: runners['H'],  stage:'r32', date:'Mon 30 Jun' },
-      { matchId:77, home: winners['I'], away: runners['J'],  stage:'r32', date:'Tue 1 Jul'  },
-      { matchId:78, home: winners['K'], away: runners['L'],  stage:'r32', date:'Tue 1 Jul'  },
-      { matchId:79, home: winners['B'], away: runners['A'],  stage:'r32', date:'Wed 2 Jul'  },
-      { matchId:80, home: winners['D'], away: runners['C'],  stage:'r32', date:'Wed 2 Jul'  },
-      { matchId:81, home: winners['F'], away: runners['E'],  stage:'r32', date:'Thu 3 Jul'  },
-      { matchId:82, home: winners['H'], away: runners['G'],  stage:'r32', date:'Thu 3 Jul'  },
-      { matchId:83, home: winners['J'], away: runners['I'],  stage:'r32', date:'Fri 4 Jul'  },
-      { matchId:84, home: winners['L'], away: runners['K'],  stage:'r32', date:'Fri 4 Jul'  },
-      { matchId:85, home: third(0),    away: third(1),       stage:'r32', date:'Sat 5 Jul'  },
-      { matchId:86, home: third(2),    away: third(3),       stage:'r32', date:'Sat 5 Jul'  },
-      { matchId:87, home: third(4),    away: third(5),       stage:'r32', date:'Sun 6 Jul'  },
-      { matchId:88, home: third(6),    away: third(7),       stage:'r32', date:'Sun 6 Jul'  },
+      /* Official FIFA 2026 R32 pairings per Article 12.6 */
+      { matchId:73, home: runners['A'],  away: runners['B'],  stage:'r32', date:'Sun 29 Jun' },
+      { matchId:74, home: winners['E'],  away: third(0),      stage:'r32', date:'Sun 29 Jun' },  /* best 3rd ABCDF */
+      { matchId:75, home: winners['F'],  away: runners['C'],  stage:'r32', date:'Mon 30 Jun' },
+      { matchId:76, home: winners['C'],  away: runners['F'],  stage:'r32', date:'Mon 30 Jun' },
+      { matchId:77, home: winners['I'],  away: third(1),      stage:'r32', date:'Tue 1 Jul'  },  /* best 3rd CDFGH */
+      { matchId:78, home: runners['E'],  away: runners['I'],  stage:'r32', date:'Tue 1 Jul'  },
+      { matchId:79, home: winners['A'],  away: third(2),      stage:'r32', date:'Wed 2 Jul'  },  /* best 3rd CEFHI */
+      { matchId:80, home: winners['L'],  away: third(3),      stage:'r32', date:'Wed 2 Jul'  },  /* best 3rd EHIJK */
+      { matchId:81, home: winners['D'],  away: third(4),      stage:'r32', date:'Thu 3 Jul'  },  /* best 3rd BEFIJ */
+      { matchId:82, home: winners['G'],  away: third(5),      stage:'r32', date:'Thu 3 Jul'  },  /* best 3rd AEHIJ */
+      { matchId:83, home: runners['K'],  away: runners['L'],  stage:'r32', date:'Fri 4 Jul'  },
+      { matchId:84, home: winners['H'],  away: runners['J'],  stage:'r32', date:'Fri 4 Jul'  },
+      { matchId:85, home: winners['B'],  away: third(6),      stage:'r32', date:'Sat 5 Jul'  },  /* best 3rd EFGIJ */
+      { matchId:86, home: winners['J'],  away: runners['H'],  stage:'r32', date:'Sat 5 Jul'  },
+      { matchId:87, home: winners['K'],  away: third(7),      stage:'r32', date:'Sun 6 Jul'  },  /* best 3rd DEIJL */
+      { matchId:88, home: runners['D'],  away: runners['G'],  stage:'r32', date:'Sun 6 Jul'  },
     ],
     tiedTeams: tied,
     needsPicks,
@@ -1432,22 +1433,27 @@ function generateR16(r32Fixtures, r32Preds) {
     if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return `Winner Match ${fix.matchId}`; /* draw — needs extra time */
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
 
+  /* Official FIFA R16 pairings per Article 12.7
+     indices: 0=M73,1=M74,2=M75,3=M76,4=M77,5=M78,6=M79,7=M80,
+              8=M81,9=M82,10=M83,11=M84,12=M85,13=M86,14=M87,15=M88 */
   return [
-    { matchId:89, home: winner(r32Fixtures[0]), away: winner(r32Fixtures[1]),  stage:'r16', date:'Tue 7 Jul'  },
-    { matchId:90, home: winner(r32Fixtures[2]), away: winner(r32Fixtures[3]),  stage:'r16', date:'Tue 7 Jul'  },
-    { matchId:91, home: winner(r32Fixtures[4]), away: winner(r32Fixtures[5]),  stage:'r16', date:'Wed 8 Jul'  },
-    { matchId:92, home: winner(r32Fixtures[6]), away: winner(r32Fixtures[7]),  stage:'r16', date:'Wed 8 Jul'  },
-    { matchId:93, home: winner(r32Fixtures[8]), away: winner(r32Fixtures[9]),  stage:'r16', date:'Thu 9 Jul'  },
-    { matchId:94, home: winner(r32Fixtures[10]),away: winner(r32Fixtures[11]), stage:'r16', date:'Thu 9 Jul'  },
-    { matchId:95, home: winner(r32Fixtures[12]),away: winner(r32Fixtures[13]), stage:'r16', date:'Fri 10 Jul' },
-    { matchId:96, home: winner(r32Fixtures[14]),away: winner(r32Fixtures[15]), stage:'r16', date:'Fri 10 Jul' },
+    { matchId:89,  home: winner(r32Fixtures[1]),  away: winner(r32Fixtures[4]),  stage:'r16', date:'Tue 7 Jul'  },  /* W74 v W77 */
+    { matchId:90,  home: winner(r32Fixtures[0]),  away: winner(r32Fixtures[2]),  stage:'r16', date:'Tue 7 Jul'  },  /* W73 v W75 */
+    { matchId:91,  home: winner(r32Fixtures[3]),  away: winner(r32Fixtures[5]),  stage:'r16', date:'Wed 8 Jul'  },  /* W76 v W78 */
+    { matchId:92,  home: winner(r32Fixtures[6]),  away: winner(r32Fixtures[7]),  stage:'r16', date:'Wed 8 Jul'  },  /* W79 v W80 */
+    { matchId:93,  home: winner(r32Fixtures[10]), away: winner(r32Fixtures[11]), stage:'r16', date:'Thu 9 Jul'  },  /* W83 v W84 */
+    { matchId:94,  home: winner(r32Fixtures[8]),  away: winner(r32Fixtures[9]),  stage:'r16', date:'Thu 9 Jul'  },  /* W81 v W82 */
+    { matchId:95,  home: winner(r32Fixtures[13]), away: winner(r32Fixtures[15]), stage:'r16', date:'Fri 10 Jul' },  /* W86 v W88 */
+    { matchId:96,  home: winner(r32Fixtures[12]), away: winner(r32Fixtures[14]), stage:'r16', date:'Fri 10 Jul' },  /* W85 v W87 */
   ];
 }
 
-/* Generate QF from R16 predictions */
+/* Generate QF from R16 predictions per Article 12.8
+   M97: W89 v W90, M98: W93 v W94, M99: W91 v W92, M100: W95 v W96
+   indices: 0=M89,1=M90,2=M91,3=M92,4=M93,5=M94,6=M95,7=M96 */
 function generateQF(r16Fixtures, r16Preds) {
   const predMap = {};
   r16Preds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
@@ -1457,17 +1463,20 @@ function generateQF(r16Fixtures, r16Preds) {
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
     if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
-    return hs >= as_ ? fix.home : fix.away;
+    if (hs > as_) return fix.home;
+    if (hs < as_) return fix.away;
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
   return [
-    { matchId:97,  home: winner(r16Fixtures[0]), away: winner(r16Fixtures[1]), stage:'qf', date:'Mon 13 Jul' },
-    { matchId:98,  home: winner(r16Fixtures[2]), away: winner(r16Fixtures[3]), stage:'qf', date:'Mon 13 Jul' },
-    { matchId:99,  home: winner(r16Fixtures[4]), away: winner(r16Fixtures[5]), stage:'qf', date:'Tue 14 Jul' },
-    { matchId:100, home: winner(r16Fixtures[6]), away: winner(r16Fixtures[7]), stage:'qf', date:'Tue 14 Jul' },
+    { matchId:97,  home: winner(r16Fixtures[0]), away: winner(r16Fixtures[1]), stage:'qf', date:'Mon 13 Jul' },  /* W89 v W90 */
+    { matchId:98,  home: winner(r16Fixtures[4]), away: winner(r16Fixtures[5]), stage:'qf', date:'Mon 13 Jul' },  /* W93 v W94 */
+    { matchId:99,  home: winner(r16Fixtures[2]), away: winner(r16Fixtures[3]), stage:'qf', date:'Tue 14 Jul' },  /* W91 v W92 */
+    { matchId:100, home: winner(r16Fixtures[6]), away: winner(r16Fixtures[7]), stage:'qf', date:'Tue 14 Jul' },  /* W95 v W96 */
   ];
 }
 
-/* Generate SF from QF predictions */
+/* Generate SF from QF predictions per Article 12.9
+   M101: W97 v W98, M102: W99 v W100 */
 function generateSF(qfFixtures, qfPreds) {
   const predMap = {};
   qfPreds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
@@ -1477,11 +1486,13 @@ function generateSF(qfFixtures, qfPreds) {
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
     if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
-    return hs >= as_ ? fix.home : fix.away;
+    if (hs > as_) return fix.home;
+    if (hs < as_) return fix.away;
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
   return [
-    { matchId:101, home: winner(qfFixtures[0]), away: winner(qfFixtures[1]), stage:'sf', date:'Fri 17 Jul' },
-    { matchId:102, home: winner(qfFixtures[2]), away: winner(qfFixtures[3]), stage:'sf', date:'Sat 18 Jul' },
+    { matchId:101, home: winner(qfFixtures[0]), away: winner(qfFixtures[1]), stage:'sf', date:'Fri 17 Jul' },  /* W97 v W98 */
+    { matchId:102, home: winner(qfFixtures[2]), away: winner(qfFixtures[3]), stage:'sf', date:'Sat 18 Jul' },  /* W99 v W100 */
   ];
 }
 
@@ -1737,6 +1748,7 @@ async function renderPredict() {
   window._predUser      = user;
   window._predTeams     = teams;
   window._results       = results;
+  window._savedPreds    = savedPreds;
   window._r32Fixtures   = r32Fixtures;
   window._r16Fixtures   = r16Fixtures;
   window._qfFixtures    = qfFixtures;
@@ -1934,10 +1946,12 @@ function cascadeKnockouts() {
   const sfEl   = $('sf-matches');
   const finEl  = $('final-matches');
 
-  if (r16El)  r16El.innerHTML  = renderPredictionSection(r16Fixtures,   [], locked);
-  if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    [], locked);
-  if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    [], locked);
-  if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, [], locked);
+  /* Pass saved preds so previously entered scores are preserved */
+  const saved = window._savedPreds || [];
+  if (r16El)  r16El.innerHTML  = renderPredictionSection(r16Fixtures,   saved, locked);
+  if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    saved, locked);
+  if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    saved, locked);
+  if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, saved, locked);
 }
 
 /* onPredChange — cascade knockout fixtures when any knockout score changes */
