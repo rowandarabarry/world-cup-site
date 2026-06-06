@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=52" />
+  <link rel="stylesheet" href="styles.css?v=53" />
 </head>
 <body>
 
@@ -86,7 +86,35 @@
     loadViews();
   </script>
 
+  <!-- Bottom nav bar — mobile only -->
+  <nav class="bottom-nav" aria-label="Mobile navigation">
+    <a class="bottom-nav-item" href="./" data-page="home">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
+    </a>
+    <a class="bottom-nav-item" href="./?results=1" data-page="results">
+      <span class="nav-icon">📊</span>
+      <span>Results</span>
+    </a>
+    <a class="bottom-nav-item" href="./?groups=1" data-page="groups">
+      <span class="nav-icon">🏆</span>
+      <span>Groups</span>
+    </a>
+    <a class="bottom-nav-item" href="./?predict=1" data-page="predict">
+      <span class="nav-icon">🎯</span>
+      <span>Predict</span>
+    </a>
+    <a class="bottom-nav-item" href="./?leaderboard=1" data-page="leaderboard">
+      <span class="nav-icon">🥇</span>
+      <span>Leaders</span>
+    </a>
+    <a class="bottom-nav-item" href="./?blog=1" data-page="blog">
+      <span class="nav-icon">✍️</span>
+      <span>Blog</span>
+    </a>
+  </nav>
+
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=52"></script>
+  <script src="app.js?v=53"></script>
 </body>
 </html>
