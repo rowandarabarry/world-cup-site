@@ -156,7 +156,7 @@ a { color: inherit; }
 /* Mobile — fixed height with cover crop, same as before */
 @media (max-width: 680px) {
   .hero-image-wrap {
-    height: 320px;
+    height: 460px;
     overflow: hidden;
   }
   .hero-bg {
