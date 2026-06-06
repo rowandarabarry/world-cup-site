@@ -1733,10 +1733,15 @@ async function renderPredict() {
       </div>
     </div>`;
 
-  /* Store user in window for save functions */
-  window._predUser = user;
-  window._predTeams = teams;
-  window._results = results;
+  /* Store user and fixtures in window for save/cascade functions */
+  window._predUser      = user;
+  window._predTeams     = teams;
+  window._results       = results;
+  window._r32Fixtures   = r32Fixtures;
+  window._r16Fixtures   = r16Fixtures;
+  window._qfFixtures    = qfFixtures;
+  window._sfFixtures    = sfFixtures;
+  window._finalFixtures = finalFixtures;
 }
 
 function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
@@ -1893,6 +1898,71 @@ function onKnockoutChange(matchId, homeTeam, awayTeam) {
   }
 }
 
+/* Full cascade — regenerate all knockout rounds from current page inputs */
+function cascadeKnockouts() {
+  if (!window._predTeams || !window._results || !window._r32Fixtures) return;
+
+  const getPred = (matchId) => ({
+    matchId, match_id: matchId,
+    home_score: parseInt($(`ph-${matchId}`)?.value ?? 0),
+    away_score: parseInt($(`pa-${matchId}`)?.value ?? 0),
+    et_winner:  $(`et-sel-${matchId}`)?.value || null,
+    homeScore:  parseInt($(`ph-${matchId}`)?.value ?? 0),
+    awayScore:  parseInt($(`pa-${matchId}`)?.value ?? 0),
+    etWinner:   $(`et-sel-${matchId}`)?.value || null,
+  });
+
+  const r32Preds    = window._r32Fixtures.map(f => getPred(f.matchId));
+  const r16Fixtures = generateR16(window._r32Fixtures, r32Preds);
+  window._r16Fixtures = r16Fixtures;
+
+  const r16Preds    = r16Fixtures.map(f => getPred(f.matchId));
+  const qfFixtures  = generateQF(r16Fixtures, r16Preds);
+  window._qfFixtures = qfFixtures;
+
+  const qfPreds     = qfFixtures.map(f => getPred(f.matchId));
+  const sfFixtures  = generateSF(qfFixtures, qfPreds);
+  window._sfFixtures = sfFixtures;
+
+  const sfPreds         = sfFixtures.map(f => getPred(f.matchId));
+  const finalFixtures   = generateFinal(sfFixtures, sfPreds);
+  window._finalFixtures = finalFixtures;
+
+  const locked = isPastCutoff();
+  const r16El  = $('r16-matches');
+  const qfEl   = $('qf-matches');
+  const sfEl   = $('sf-matches');
+  const finEl  = $('final-matches');
+
+  if (r16El)  r16El.innerHTML  = renderPredictionSection(r16Fixtures,   [], locked);
+  if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    [], locked);
+  if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    [], locked);
+  if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, [], locked);
+}
+
+/* onPredChange — cascade knockout fixtures when any knockout score changes */
+function onPredChange() {
+  cascadeKnockouts();
+}
+
+/* Show/hide ET winner picker when knockout score changes */
+function onKnockoutChange(matchId, homeTeam, awayTeam) {
+  const hVal = parseInt($(`ph-${matchId}`)?.value ?? 0);
+  const aVal = parseInt($(`pa-${matchId}`)?.value ?? 0);
+  const etRow = $(`et-${matchId}`);
+  const etSel = $(`et-sel-${matchId}`);
+  if (!etRow) return;
+  if (hVal === aVal) {
+    etRow.style.display = 'flex';
+    etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam;
+    etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam;
+  } else {
+    etRow.style.display = 'none';
+    etSel.value = '';
+  }
+  cascadeKnockouts();
+}
+
 /* Save a section */
 async function saveSection(stage) {
   const user = window._predUser;
@@ -1937,6 +2007,27 @@ async function saveSection(stage) {
     btn.textContent = stage === 'final' ? '🏆 Save Final Prediction' : `Save ${stage.toUpperCase()} →`;
     btn.disabled = false;
     if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+
+    /* After saving group stage — regenerate R32 then cascade */
+    if (stage === 'group' && window._predTeams && window._results) {
+      const groupFixtures = window._results.filter(r => parseInt(r.match_id) <= 72);
+      const groupPreds = groupFixtures.map(fix => ({
+        ...fix,
+        home_score: $(`ph-${fix.match_id}`)?.value ?? 0,
+        away_score: $(`pa-${fix.match_id}`)?.value ?? 0
+      }));
+      const standings = calcStandings(window._predTeams, groupPreds);
+      const r32Result = generateR32(standings, window._userPicks3rd || []);
+      window._r32Fixtures = r32Result.fixtures;
+      const r32El = $('r32-matches');
+      if (r32El) r32El.innerHTML = renderPredictionSection(r32Result.fixtures, [], isPastCutoff());
+      const standingsEl = $('pred-standings');
+      if (standingsEl) standingsEl.innerHTML = renderPredStandings(standings);
+    }
+
+    /* Cascade all knockout rounds */
+    cascadeKnockouts();
+
   } catch(e) {
     btn.textContent = 'Error — try again';
     btn.disabled = false;
