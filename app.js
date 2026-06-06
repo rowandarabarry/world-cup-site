@@ -9,6 +9,28 @@
 
 const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match
 
+const BUSTER_POTS = [
+  { pot: 1, label: 'Elite',       desc: 'Tournament favourites',              teams: ['France','Brazil','England','Argentina','Spain','Germany','Portugal','Netherlands'] },
+  { pot: 2, label: 'Contenders',  desc: 'Strong teams who could win it',      teams: ['Belgium','Uruguay','Colombia','Morocco','Croatia','United States','Mexico','Japan'] },
+  { pot: 3, label: 'Challengers', desc: 'Quality teams who could go deep',    teams: ['Senegal','Norway','Türkiye','Switzerland','Canada','Korea Republic',"Côte d'Ivoire",'Ecuador'] },
+  { pot: 4, label: 'Dark Horses', desc: 'Teams that could surprise everyone', teams: ['Austria','Algeria','Scotland','Sweden','Australia','Egypt','Ghana','South Africa'] },
+  { pot: 5, label: 'Underdogs',   desc: 'Solid but unlikely to go far',       teams: ['Czechia','Tunisia','Saudi Arabia','IR Iran','Paraguay','Bosnia & Herz.','Cabo Verde','Iraq'] },
+  { pot: 6, label: 'Minnows',     desc: 'Real underdogs and first timers',    teams: ['Curaçao','Haiti','Jordan','Congo DR','Uzbekistan','New Zealand','Panama','Qatar'] },
+];
+
+const BUSTER_POINTS = {
+  winner: 25, final: 17, sf: 12, qf: 8,
+  r16: 5, best_third: 1, group_second: 2, group_winner: 3, eliminated: 0
+};
+
+const STAGE_LABELS = {
+  winner: '🏆 World Cup Winner', final: '🥈 Finalist',
+  sf: '🌟 Semi Final', qf: '⚡ Quarter Final',
+  r16: '🔟 Round of 16', best_third: '✔️ Best 3rd Place',
+  group_second: '2️⃣ Group Runner-up', group_winner: '1️⃣ Group Winner',
+  eliminated: '❌ Eliminated'
+};
+
 /* ── Helpers ── */
 const $ = id => document.getElementById(id);
 const app = () => $('app');
@@ -1056,6 +1078,7 @@ function flagCode(team) {
     else if (params.has('wallchart'))  { await renderWallChart();              }
     else if (params.has('comps'))      { await renderComps();                  }
     else if (params.has('scoring'))    { renderScoring(params.get('scoring')); }
+    else if (params.has('busterpicks')) { await renderBusterPicks();              }
     else if (params.has('buster'))     { await renderBuster();                 }
     else if (params.has('review'))     { await renderReview();                 }
     else if (params.has('blog'))       { await renderBlog();                   }
@@ -2489,7 +2512,12 @@ async function renderLeaderboardBuster() {
           </tbody>
         </table>
       </div>
-      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Hover P1–P6 to see team names</p>`;
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Hover P1–P6 to see team names</p>
+      <div style="margin-top:16px">
+        <a href="./?busterpicks=1" class="comp-btn-secondary" style="display:inline-flex;width:auto;padding:10px 20px">
+          👀 View Everyone's Picks
+        </a>
+      </div>`;
   } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
 }
 
@@ -2893,31 +2921,107 @@ async function adminSaveReview() {
   }
 }
 
+/* Reset all predictions for a user */
+async function confirmResetPredictions(userId) {
+  if (!confirm('Are you sure you want to delete ALL your predictions? This cannot be undone.')) return;
+  const ok = await fetch(
+    `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`,
+    { method: 'DELETE', headers: sbHeaders }
+  ).then(r => r.ok);
+  if (ok) {
+    alert('All predictions cleared. The page will now reload.');
+    location.reload();
+  } else {
+    alert('Could not reset predictions. Please try again.');
+  }
+}
+
+/* ============================================================
+   BUSTER ALL PICKS VIEW
+   ============================================================ */
+async function renderBusterPicks() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?leaderboard=buster" style="padding:0;font-size:0.9rem">← Buster Leaderboard</a>
+        <h1 class="page-title">🎲 <span>All Buster Picks</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="all-picks-content">
+        <p style="color:var(--text-muted)">Loading…</p>
+      </div>
+    </div>`;
+
+  try {
+    const [picks, progress] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/buster_picks?select=*,users(username)`, { headers: sbHeaders }).then(r => r.json()),
+      fetch(`${SUPABASE_URL}/rest/v1/team_progress?select=*`, { headers: sbHeaders }).then(r => r.json())
+    ]);
+
+    const progressMap = {};
+    progress.forEach(p => { progressMap[p.team_name] = p.best_stage; });
+
+    const teams = await loadTeams();
+    const flagMap = {};
+    teams.forEach(t => { flagMap[t.name] = t.flag; });
+
+    const stageLabel = s => STAGE_LABELS[s] || s;
+    const stageColour = s => s === 'winner' ? 'var(--gold)' : s === 'eliminated' ? 'var(--text-muted)' : 'var(--teal)';
+
+    $('all-picks-content').innerHTML = picks.map(p => {
+      const username = p.users?.username || '—';
+      const pots = [
+        { label: 'Pot 1 — Elite',       team: p.pot1_team },
+        { label: 'Pot 2 — Contenders',  team: p.pot2_team },
+        { label: 'Pot 3 — Challengers', team: p.pot3_team },
+        { label: 'Pot 4 — Dark Horses', team: p.pot4_team },
+        { label: 'Pot 5 — Underdogs',   team: p.pot5_team },
+        { label: 'Pot 6 — Minnows',     team: p.pot6_team },
+      ];
+      const total = pots.reduce((sum, pot) => {
+        const stage = progressMap[pot.team] || 'eliminated';
+        return sum + (BUSTER_POINTS[stage] || 0);
+      }, 0);
+
+      return `
+        <div class="info-card" style="margin-bottom:16px;padding:20px 24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--purple-dark);letter-spacing:0.04em">
+              ${username}
+            </div>
+            <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--teal)">
+              ${total} pts
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+            ${pots.map(pot => {
+              const stage = progressMap[pot.team] || 'eliminated';
+              const pts = BUSTER_POINTS[stage] || 0;
+              const flag = flagMap[pot.team] || '';
+              return `
+                <div style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
+                  <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">${pot.label}</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                    ${flag ? `<img src="${flag}" width="20" height="14" style="border-radius:2px;border:1px solid var(--border)">` : ''}
+                    <span style="font-weight:700;font-size:0.875rem;color:var(--text-dark)">${pot.team}</span>
+                  </div>
+                  <div style="font-size:0.72rem;color:${stageColour(stage)};font-weight:600">${stageLabel(stage)} · ${pts} pts</div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }).join('') || '<p style="color:var(--text-muted)">No picks yet.</p>';
+  } catch(e) {
+    $('all-picks-content').innerHTML = '<p style="color:var(--text-muted)">Could not load picks.</p>';
+  }
+}
+
 /* ============================================================
    BUSTER COMPETITION
    ============================================================ */
 
-const BUSTER_POTS = [
-  { pot: 1, label: 'Elite',       desc: 'Tournament favourites',              teams: ['France','Brazil','England','Argentina','Spain','Germany','Portugal','Netherlands'] },
-  { pot: 2, label: 'Contenders',  desc: 'Strong teams who could win it',      teams: ['Belgium','Uruguay','Colombia','Morocco','Croatia','United States','Mexico','Japan'] },
-  { pot: 3, label: 'Challengers', desc: 'Quality teams who could go deep',    teams: ['Senegal','Norway','Türkiye','Switzerland','Canada','Korea Republic',"Côte d'Ivoire",'Ecuador'] },
-  { pot: 4, label: 'Dark Horses', desc: 'Teams that could surprise everyone', teams: ['Austria','Algeria','Scotland','Sweden','Australia','Egypt','Ghana','South Africa'] },
-  { pot: 5, label: 'Underdogs',   desc: 'Solid but unlikely to go far',       teams: ['Czechia','Tunisia','Saudi Arabia','IR Iran','Paraguay','Bosnia & Herz.','Cabo Verde','Iraq'] },
-  { pot: 6, label: 'Minnows',     desc: 'Real underdogs and first timers',    teams: ['Curaçao','Haiti','Jordan','Congo DR','Uzbekistan','New Zealand','Panama','Qatar'] },
-];
 
-const BUSTER_POINTS = {
-  winner: 25, final: 17, sf: 12, qf: 8,
-  r16: 5, best_third: 1, group_second: 2, group_winner: 3, eliminated: 0
-};
-
-const STAGE_LABELS = {
-  winner: '🏆 World Cup Winner', final: '🥈 Finalist',
-  sf: '🌟 Semi Final', qf: '⚡ Quarter Final',
-  r16: '🔟 Round of 16', best_third: '✔️ Best 3rd Place',
-  group_second: '2️⃣ Group Runner-up', group_winner: '1️⃣ Group Winner',
-  eliminated: '❌ Eliminated'
-};
 
 async function renderBuster() {
   const session = getSession();
@@ -2927,6 +3031,7 @@ async function renderBuster() {
       <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <a class="back-link" href="./?comps=1" style="padding:0;font-size:0.9rem">← Competition Hub</a>
         <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
+        <button onclick="compLogout()" class="comp-logout-btn" style="margin-left:auto">Log out</button>
       </div>
     </div>
     <div class="section">
@@ -2972,7 +3077,7 @@ async function renderBuster() {
     <div class="info-card" style="margin-bottom:24px;padding:16px 20px;margin-top:16px">
       <p style="font-size:0.875rem;color:var(--text-muted)">
         Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress.
-        ${locked ? '<span style="color:#e63200;font-weight:600"> — Selections are now locked.</span>' : '<span style="color:var(--teal);font-weight:600"> Selections lock 1 hour before kickoff.</span>'}
+        ${locked ? '<span style="color:#e63200;font-weight:600"> — Selections are now locked.</span>' : '<span style="color:var(--teal);font-weight:600"> Selections lock 1 hour before tournament kickoff.</span>'}
       </p>
     </div>
 
