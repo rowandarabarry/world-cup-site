@@ -1055,6 +1055,7 @@ function flagCode(team) {
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
     else if (params.has('wallchart'))  { await renderWallChart();              }
     else if (params.has('comps'))      { await renderComps();                  }
+    else if (params.has('scoring'))    { renderScoring(params.get('scoring')); }
     else if (params.has('buster'))     { await renderBuster();                 }
     else if (params.has('review'))     { await renderReview();                 }
     else if (params.has('blog'))       { await renderBlog();                   }
@@ -2221,36 +2222,21 @@ async function renderComps() {
       <div class="wrap">
         ${compLoginWidget('comps')}
         <!-- Competition Cards -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:28px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:28px">
 
           <!-- Score Predictions Card -->
           <div class="info-card" style="padding:28px">
             <div style="font-size:2rem;margin-bottom:10px">🎯</div>
             <h3 style="margin-bottom:6px">Score Predictions</h3>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
-              Predict every match score through the whole tournament
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Predict every match score from group stage all the way to the final
             </p>
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;font-size:0.82rem">
-              <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-              <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-              <div class="fact-row"><span class="fact-label">Group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4 / 2 pts</span></div>
-              <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·7·10·15·20</span></div>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              ${session ? `
-                <a class="hero-cta" href="./?predict=1"
-                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem">
-                  My Predictions →
-                </a>` : `
-                <a class="hero-cta" href="./?predict=1"
-                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem">
-                  Enter Predictions →
-                </a>`}
-              <a href="./?leaderboard=predictions"
-                style="flex:1;display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:2px solid var(--border);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;transition:var(--transition)"
-                onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
-                🏅 Leaderboard
+            <div class="comp-card-btns">
+              <a class="hero-cta comp-btn-primary" href="./?predict=1">
+                ${session ? 'My Predictions →' : 'Enter →'}
               </a>
+              <a class="comp-btn-secondary" href="./?leaderboard=predictions">🏅 Leaderboard</a>
+              <a class="comp-btn-secondary" href="./?scoring=predictions">📋 How to Score</a>
             </div>
           </div>
 
@@ -2258,33 +2244,108 @@ async function renderComps() {
           <div class="info-card" style="padding:28px">
             <div style="font-size:2rem;margin-bottom:10px">🎲</div>
             <h3 style="margin-bottom:6px">Buster Competition</h3>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
-              Pick one team from each of 6 pots — score as they progress
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Pick one team from each of 6 pots and score as they progress through the tournament
             </p>
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;font-size:0.82rem">
-              <div class="fact-row"><span class="fact-label">Group Win/2nd/3rd</span><span class="fact-value" style="color:var(--teal)">3 / 2 / 1 pts</span></div>
-              <div class="fact-row"><span class="fact-label">R16 · QF · SF</span><span class="fact-value" style="color:var(--teal)">5 · 8 · 12 pts</span></div>
-              <div class="fact-row"><span class="fact-label">Final · Winner</span><span class="fact-value" style="color:var(--gold)">17 · 25 pts</span></div>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              ${session ? `
-                <a class="hero-cta" href="./?buster=1"
-                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem;background:var(--gold);color:var(--navy);box-shadow:none">
-                  My Buster →
-                </a>` : `
-                <a class="hero-cta" href="./?buster=1"
-                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem;background:var(--gold);color:var(--navy);box-shadow:none">
-                  Enter Buster →
-                </a>`}
-              <a href="./?leaderboard=buster"
-                style="flex:1;display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:2px solid var(--border);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;transition:var(--transition)"
-                onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
-                🏅 Leaderboard
+            <div class="comp-card-btns">
+              <a class="hero-cta comp-btn-primary" href="./?buster=1"
+                style="background:var(--gold);color:var(--navy);box-shadow:none">
+                ${session ? 'My Buster →' : 'Enter →'}
               </a>
+              <a class="comp-btn-secondary" href="./?leaderboard=buster">🏅 Leaderboard</a>
+              <a class="comp-btn-secondary" href="./?scoring=buster">📋 How to Score</a>
             </div>
           </div>
 
         </div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   SCORING RULES PAGES
+   ============================================================ */
+function renderScoring(which) {
+  const isPred = which === 'predictions';
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?comps=1" style="padding:0;font-size:0.9rem">← Competition Hub</a>
+        <h1 class="page-title">${isPred ? '🎯 Score <span>Predictions</span>' : '🎲 Buster <span>Competition</span>'} — Scoring</h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" style="max-width:600px">
+        ${isPred ? `
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:14px">Match Predictions</h3>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="fact-row"><span class="fact-label">⚽ Exact correct score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✅ Correct outcome (wrong score)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">❌ Wrong outcome</span><span class="fact-value" style="color:var(--text-muted)">0 pts</span></div>
+          </div>
+        </div>
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:14px">Group Stage Bonuses</h3>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="fact-row"><span class="fact-label">🥇 Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✔️ Correct qualifier (any position)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3 style="margin-bottom:14px">Knockout Stage Bonuses</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Points for each team you correctly predict to reach that stage</p>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🏆 Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+          </div>
+          <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:12px;margin-top:14px;font-size:0.82rem;color:var(--text-mid)">
+            <strong>Example:</strong> Predict Spain to win the World Cup and they do:
+            5 + 7 + 10 + 15 + 20 = <strong style="color:var(--teal)">57 pts</strong> from knockout bonuses alone
+          </div>
+        </div>` : `
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:8px">How the Buster Works</h3>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+            Pick one team from each of 6 pots before the tournament starts.
+            Your Buster Score is the sum of points earned by all 6 teams.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+            ${BUSTER_POTS.map(p => `
+              <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:8px 10px;font-size:0.78rem">
+                <div style="font-weight:700;color:var(--purple-dark)">Pot ${p.pot} — ${p.label}</div>
+                <div style="color:var(--text-muted);margin-top:2px">${p.teams.slice(0,3).join(', ')}…</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:14px">Points per Team</h3>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Only the highest stage reached is scored</p>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
+            <div class="fact-row"><span class="fact-label">2️⃣ Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✔️ Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Finalist</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🏆 World Cup Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3 style="margin-bottom:10px">Tie Break</h3>
+          <ol style="padding-left:18px;color:var(--text-mid);font-size:0.875rem;line-height:1.8">
+            <li>Highest scoring individual Buster team wins</li>
+            <li>If still tied — player with the World Cup winner selected wins</li>
+            <li>If still tied — players share the position</li>
+          </ol>
+          <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:12px;margin-top:14px;font-size:0.82rem;color:var(--text-mid)">
+            <strong>Example total:</strong> SF (12) + QF (8) + R16 (5) + Best 3rd (1) = <strong style="color:var(--teal)">26 pts</strong>
+          </div>
+        </div>`}
       </div>
     </div>`;
 }
@@ -2398,7 +2459,7 @@ async function renderLeaderboardBuster() {
 
     $('buster-lb').innerHTML = `
       <div style="overflow-x:auto">
-        <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:520px">
+        <table class="group-table buster-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:520px">
           <thead><tr>
             <th style="text-align:center;width:48px">Pos</th>
             <th style="text-align:left;padding-left:12px">Player</th>
