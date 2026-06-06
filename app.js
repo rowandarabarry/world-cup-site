@@ -1035,6 +1035,7 @@ function flagCode(team) {
     else if (params.has('predict'))    { await renderPredict();                }
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
     else if (params.has('wallchart'))  { await renderWallChart();              }
+    else if (params.has('comps'))      { await renderComps();                  }
     else if (params.has('review'))     { await renderReview();                 }
     else if (params.has('blog'))       { await renderBlog();                   }
     else if (params.get('team'))       { await renderTeam(params.get('team')); }
@@ -1118,7 +1119,9 @@ function flagCode(team) {
       (page === 'groups'      && params.has('groups')) ||
       (page === 'predict'     && params.has('predict')) ||
       (page === 'leaderboard' && params.has('leaderboard')) ||
-      (page === 'blog'        && params.has('blog'));
+      (page === 'blog'        && params.has('blog')) ||
+      (page === 'comps'       && params.has('comps')) ||
+      (page === 'review'      && params.has('review'));
     if (isActive) item.classList.add('active');
   });
 
@@ -2106,6 +2109,90 @@ async function renderLeaderboard() {
 }
 
 /* ============================================================
+   COMPS PAGE — predictions entry + leaderboard
+   ============================================================ */
+async function renderComps() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">🎯 <span>Competition</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:40px">
+          <div class="info-card" style="text-align:center;padding:32px">
+            <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+            <h3 style="margin-bottom:8px">Enter Your Predictions</h3>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Predict every match score and follow your bracket through the tournament
+            </p>
+            <a class="hero-cta" href="./?predict=1" style="display:inline-flex;justify-content:center;width:100%">
+              Make My Predictions →
+            </a>
+          </div>
+          <div class="info-card" style="padding:24px">
+            <h3 style="margin-bottom:4px">How to Score Points</h3>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+              <div class="fact-row"><span class="fact-label">⚽ Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+              <div class="fact-row"><span class="fact-label">✅ Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+              <div class="fact-row"><span class="fact-label">🥇 Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+              <div class="fact-row"><span class="fact-label">✔️ Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+              <div class="fact-row"><span class="fact-label">🔟 Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+              <div class="fact-row"><span class="fact-label">⚡ Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
+              <div class="fact-row"><span class="fact-label">🌟 Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+              <div class="fact-row"><span class="fact-label">🏅 Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
+              <div class="fact-row"><span class="fact-label">🏆 Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-bottom:20px">🥇 <span>Leaderboard</span></h2>
+        <div id="comps-leaderboard"><p style="color:var(--text-muted)">Loading…</p></div>
+      </div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) {
+      $('comps-leaderboard').innerHTML = '<p style="color:var(--text-muted)">No predictions submitted yet — be the first!</p>';
+      return;
+    }
+
+    $('comps-leaderboard').innerHTML = `
+      <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+        <thead>
+          <tr>
+            <th style="text-align:center;padding-left:16px;width:40px">Pos</th>
+            <th style="text-align:left;padding-left:12px">Player</th>
+            <th>Match Pts</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map((row, i) => `
+            <tr>
+              <td style="padding-left:16px;font-weight:700;font-size:1rem;
+                color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+                ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+              </td>
+              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username || '—'}</td>
+              <td>${row.match_pts}</td>
+              <td class="pts-cell">${row.total_pts}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    $('comps-leaderboard').innerHTML = '<p style="color:var(--text-muted)">Could not load leaderboard.</p>';
+  }
+}
+
+/* ============================================================
    TOURNAMENT REVIEW PAGE — Rowan's opinions
    ============================================================ */
 async function renderReview() {
@@ -2130,13 +2217,13 @@ async function renderReview() {
     const r = data[0] || {};
 
     const fields = [
-      { key:'winner_pick',       label:'🏆 My Winner Pick',       icon:'🏆' },
-      { key:'fav_team',          label:'❤️ Favourite Team',        icon:'❤️' },
-      { key:'player_to_watch',   label:'⭐ Player to Watch',       icon:'⭐' },
-      { key:'team_to_watch',     label:'👀 Team to Watch',         icon:'👀' },
-      { key:'dark_horse',        label:'🐴 Dark Horse',            icon:'🐴' },
-      { key:'early_exit',        label:'😬 Shock Early Exit',      icon:'😬' },
-      { key:'golden_boot',       label:'👟 Golden Boot Pick',      icon:'👟' },
+      { key:'winner_pick',       label:'My Winner Pick',     icon:'🏆', desc:'Who I think will lift the trophy' },
+      { key:'fav_team',          label:'Favourite Team',     icon:'❤️', desc:'The team I\'m supporting' },
+      { key:'player_to_watch',   label:'Player to Watch',    icon:'⭐', desc:'The standout player of the tournament' },
+      { key:'team_to_watch',     label:'Team to Watch',      icon:'👀', desc:'The most exciting team to follow' },
+      { key:'dark_horse',        label:'Dark Horse',         icon:'🐴', desc:'Could go further than anyone expects' },
+      { key:'early_exit',        label:'Shock Early Exit',   icon:'😬', desc:'The big name who won\'t make it far' },
+      { key:'golden_boot',       label:'Golden Boot Pick',   icon:'👟', desc:'Top scorer of the tournament' },
     ];
 
     const hasContent = fields.some(f => r[f.key]);
@@ -2148,16 +2235,19 @@ async function renderReview() {
           <h3>Rowan's review coming soon!</h3>
           <p style="color:var(--text-muted);margin-top:8px">Check back once the tournament gets underway.</p>
         </div>` : `
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:28px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:28px">
           ${fields.filter(f => r[f.key]).map(f => `
             <div class="review-card">
+              <div style="font-size:1.8rem;margin-bottom:8px">${f.icon}</div>
               <span class="review-card-label">${f.label}</span>
               <div class="review-card-value">${r[f.key]}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">${f.desc}</div>
             </div>`).join('')}
         </div>
         ${r.overall_thoughts ? `
         <div class="review-card">
-          <span class="review-card-label">📝 Overall Thoughts</span>
+          <div style="font-size:1.8rem;margin-bottom:8px">📝</div>
+          <span class="review-card-label">Overall Thoughts</span>
           <div class="review-card-text">${r.overall_thoughts}</div>
         </div>` : ''}
       `}`;
