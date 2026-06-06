@@ -1427,10 +1427,10 @@ function generateR16(r32Fixtures, r32Preds) {
 
   function winner(fix) {
     const p = predMap[fix.matchId];
-    if (!p) return `Winner Match ${fix.matchId}`;
+    if (!p) return `⏳ M${fix.matchId} winner`;
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
-    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
     return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
@@ -1459,10 +1459,10 @@ function generateQF(r16Fixtures, r16Preds) {
   r16Preds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
   function winner(fix) {
     const p = predMap[fix.matchId];
-    if (!p) return `Winner Match ${fix.matchId}`;
+    if (!p) return `⏳ M${fix.matchId} winner`;
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
-    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
     return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
@@ -1482,10 +1482,10 @@ function generateSF(qfFixtures, qfPreds) {
   qfPreds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
   function winner(fix) {
     const p = predMap[fix.matchId];
-    if (!p) return `Winner Match ${fix.matchId}`;
+    if (!p) return `⏳ M${fix.matchId} winner`;
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
-    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
     return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
@@ -1502,10 +1502,10 @@ function generateFinal(sfFixtures, sfPreds) {
   sfPreds.forEach(p => { predMap[p.matchId || p.match_id] = p; });
   function winner(fix) {
     const p = predMap[fix.matchId];
-    if (!p) return `Winner Match ${fix.matchId}`;
+    if (!p) return `⏳ M${fix.matchId} winner`;
     const hs = parseInt(p.homeScore ?? p.home_score);
     const as_ = parseInt(p.awayScore ?? p.away_score);
-    if (isNaN(hs) || isNaN(as_)) return `Winner Match ${fix.matchId}`;
+    if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     return hs >= as_ ? fix.home : fix.away;
   }
   return [
@@ -1544,12 +1544,12 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="ph-${fix.matchId}" value="${hScore}"
               ${readOnly ? 'disabled' : ''}
-              oninput="onKnockoutChange(${fix.matchId})">
+              onchange="onKnockoutChange(${fix.matchId})" onblur="onKnockoutChange(${fix.matchId})">
             <span class="admin-vs">–</span>
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="pa-${fix.matchId}" value="${aScore}"
               ${readOnly ? 'disabled' : ''}
-              oninput="onKnockoutChange(${fix.matchId})">
+              onchange="onKnockoutChange(${fix.matchId})" onblur="onKnockoutChange(${fix.matchId})">
           </div>
           <div class="pred-team away">
             <span class="pred-team-name">${awayTeam}</span>
