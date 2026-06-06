@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=32" />
+  <link rel="stylesheet" href="styles.css?v=35" />
 </head>
 <body>
 
@@ -15,17 +15,37 @@
     <div class="header-inner wrap">
       <a class="brand" href="./">
         <span class="brand-icon">⚽</span>
-        <span class="brand-text">ROWAN'S <em>WORLD CUP HUB</em></span>
+        <span class="brand-text">ROWAN'S <em>WORLD CUP ZONE</em></span>
       </a>
       <nav class="tabs" aria-label="Primary navigation">
         <a class="tab" href="./" data-page="home">Home</a>
-        <a class="tab" href="./?teams=1" data-page="teams">Teams</a>
-        <a class="tab" href="./?fixtures=1" data-page="fixtures">Fixtures</a>
-        <a class="tab" href="./?results=1" data-page="results">Results</a>
-        <a class="tab" href="./?groups=1" data-page="groups">Groups</a>
-        <a class="tab" href="./?predict=1" data-page="predict">Predict</a>
-        <a class="tab" href="./?leaderboard=1" data-page="leaderboard">Leaderboard</a>
-        <a class="tab" href="./?about=1" data-page="about">About</a>
+
+        <div class="tab-dropdown">
+          <button class="tab tab-drop-btn" data-group="tournament">Tournament ▾</button>
+          <div class="tab-dropdown-menu">
+            <a class="tab-dropdown-item" href="./?fixtures=1" data-page="fixtures">Fixtures</a>
+            <a class="tab-dropdown-item" href="./?results=1"  data-page="results">Results</a>
+            <a class="tab-dropdown-item" href="./?groups=1"   data-page="groups">Groups</a>
+            <a class="tab-dropdown-item" href="./?teams=1"    data-page="teams">Teams</a>
+            <a class="tab-dropdown-item" href="./?wallchart=1" data-page="wallchart">Wall Chart</a>
+          </div>
+        </div>
+
+        <div class="tab-dropdown">
+          <button class="tab tab-drop-btn" data-group="zone">Rowan's Zone ▾</button>
+          <div class="tab-dropdown-menu">
+            <a class="tab-dropdown-item" href="./?review=1"   data-page="review">Tournament Review</a>
+            <a class="tab-dropdown-item" href="./?blog=1"     data-page="blog">Rowan's Blog</a>
+          </div>
+        </div>
+
+        <div class="tab-dropdown">
+          <button class="tab tab-drop-btn" data-group="competition">Competition ▾</button>
+          <div class="tab-dropdown-menu">
+            <a class="tab-dropdown-item" href="./?predict=1"     data-page="predict">Enter Picks</a>
+            <a class="tab-dropdown-item" href="./?leaderboard=1" data-page="leaderboard">Leaderboard</a>
+          </div>
+        </div>
       </nav>
       <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -39,7 +59,7 @@
 
   <footer>
     <div class="wrap footer-inner">
-      <span class="footer-brand">⚽ Rowan's World Cup Hub</span>
+      <span class="footer-brand">⚽ Rowan's World Cup Zone</span>
       <div class="footer-views">
         <span class="views-label">Site Views</span>
         <span class="views-count" id="site-views">—</span>
@@ -67,6 +87,6 @@
   </script>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=35"></script>
 </body>
 </html>
