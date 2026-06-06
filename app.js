@@ -1534,93 +1534,13 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
    PREDICTIONS PAGE
    ============================================================ */
 async function renderPredict() {
-  const params = new URLSearchParams(location.search);
-  const token = params.get('token');
-
-  /* ── Step 1: Registration / Login ── */
-  if (!token) {
-    app().innerHTML = `
-      <div class="page-title-bar">
-        <div class="wrap">
-          <h1 class="page-title">Make Your <span>Predictions</span></h1>
-        </div>
-      </div>
-      <div class="section">
-        <div class="wrap">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:700px;margin:0 auto">
-
-            <!-- Register -->
-            <div class="info-card">
-              <h3 style="margin-bottom:6px">New? Register</h3>
-              <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">
-                Pick a username (one word, unique) and a password.
-                You'll get a personal link to bookmark.
-              </p>
-              <div style="display:flex;flex-direction:column;gap:12px">
-                <div>
-                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Username</label>
-                  <input class="search" id="reg-username" placeholder="e.g. johndec" style="padding:11px 14px" autocomplete="off">
-                </div>
-                <div>
-                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Password</label>
-                  <input class="search" id="reg-password" type="password" placeholder="Choose a password" style="padding:11px 14px">
-                </div>
-                <button onclick="handleRegister()" class="hero-cta" style="width:100%;justify-content:center">
-                  Register →
-                </button>
-                <p id="reg-error" style="color:#e63200;font-size:0.82rem;display:none;text-align:center"></p>
-              </div>
-            </div>
-
-            <!-- Login -->
-            <div class="info-card">
-              <h3 style="margin-bottom:6px">Already registered?</h3>
-              <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">
-                Enter your username and password to get back to your predictions.
-              </p>
-              <div style="display:flex;flex-direction:column;gap:12px">
-                <div>
-                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Username</label>
-                  <input class="search" id="login-username" placeholder="Your username" style="padding:11px 14px" autocomplete="off">
-                </div>
-                <div>
-                  <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px">Password</label>
-                  <input class="search" id="login-password" type="password" placeholder="Your password" style="padding:11px 14px">
-                </div>
-                <button onclick="handleLogin()" class="hero-cta" style="width:100%;justify-content:center;background:var(--purple-mid)">
-                  Login →
-                </button>
-                <p id="login-error" style="color:#e63200;font-size:0.82rem;display:none;text-align:center"></p>
-              </div>
-            </div>
-
-          </div>
-          <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:20px">
-            Forgotten your password? Contact the admin to reset it.
-          </p>
-        </div>
-      </div>`;
-
-    /* Enter key support */
-    setTimeout(() => {
-      $('reg-password')?.addEventListener('keydown', e => { if(e.key==='Enter') handleRegister(); });
-      $('login-password')?.addEventListener('keydown', e => { if(e.key==='Enter') handleLogin(); });
-    }, 100);
+  /* ── Check session ── */
+  const session = getSession();
+  if (!session) {
+    renderCompLogin('predict');
     return;
   }
-
-  /* ── Step 2: Load user from token ── */
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?token=eq.${token}&select=*`,
-    { headers: sbHeaders }
-  ).then(r => r.json());
-
-  if (!userRes.length) {
-    app().innerHTML = `<div class="wrap" style="padding:2rem"><p>Invalid prediction link. Please <a href="?predict=1">register again</a>.</p></div>`;
-    return;
-  }
-
-  const user = userRes[0];
+  const user = session;
   const savedPreds = await loadUserPredictions(user.id);
   const teams = await loadTeams();
   const results = await sbGet('results');
@@ -2127,8 +2047,87 @@ async function renderLeaderboard() {
 }
 
 /* ============================================================
-   COMP LOGIN WIDGET — shared across comps pages
+   UNIVERSAL COMP LOGIN PAGE
    ============================================================ */
+function renderCompLogin(redirectPage = 'comps') {
+  const pageLabels = {
+    predict: 'Score Predictions', buster: 'Buster Competition', comps: 'Competition Hub'
+  };
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">🎯 <span>${pageLabels[redirectPage] || 'Competition'}</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+        <div class="info-card comp-login-card">
+          <h3 style="margin-bottom:4px">Login or Register</h3>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+            One login for all competitions — use the same username and password everywhere.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div>
+              <label class="form-label">Username</label>
+              <input class="form-input" id="comp-username" placeholder="yourname" autocomplete="off"
+                onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+            </div>
+            <div>
+              <label class="form-label">Password</label>
+              <input class="form-input" id="comp-password" type="password" placeholder="••••"
+                onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="hero-cta" onclick="compLogin('${redirectPage}')" style="flex:1;justify-content:center">
+              Login →
+            </button>
+            <button class="admin-save-btn" onclick="compRegister('${redirectPage}')"
+              style="flex:1;padding:14px;font-size:1rem">
+              Register
+            </button>
+          </div>
+          <p id="comp-login-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
+          <p style="color:var(--text-muted);font-size:0.78rem;margin-top:12px;text-align:center">
+            Forgotten your password? Contact the admin to reset it.
+          </p>
+        </div>
+
+        <!-- Scoring rules for this competition -->
+        ${redirectPage === 'predict' ? `
+        <div class="info-card" style="max-width:560px;margin:20px auto 0">
+          <h3 style="margin-bottom:14px">🎯 How Score Predictions Works</h3>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+          </div>
+        </div>` : redirectPage === 'buster' ? `
+        <div class="info-card" style="max-width:560px;margin:20px auto 0">
+          <h3 style="margin-bottom:14px">🎲 How the Buster Works</h3>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">
+            Pick one team from each of 6 pots. Score points based on how far each team goes.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="fact-row"><span class="fact-label">Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
 function compLoginWidget(redirectPage = 'comps') {
   const session = getSession();
   if (session) {
@@ -2179,7 +2178,9 @@ async function compLogin(redirectPage) {
   try {
     const user = await loginUser(username, password);
     setSession(user);
-    location.reload();
+    const dest = redirectPage === 'predict' ? '?predict=1' :
+                 redirectPage === 'buster'  ? '?buster=1'  : '?comps=1';
+    location.href = dest;
   } catch(e) {
     err.textContent = e.message || 'Incorrect username or password.';
     err.style.display = 'block';
@@ -2196,7 +2197,9 @@ async function compRegister(redirectPage) {
   try {
     const user = await registerUser_db(username, password);
     setSession(user);
-    location.reload();
+    const dest = redirectPage === 'predict' ? '?predict=1' :
+                 redirectPage === 'buster'  ? '?buster=1'  : '?comps=1';
+    location.href = dest;
   } catch(e) {
     err.textContent = e.message || 'Username already taken — try another.';
     err.style.display = 'block';
@@ -2885,17 +2888,7 @@ async function renderBuster() {
 
   /* Need to be logged in */
   if (!session) {
-    $('buster-content').innerHTML = `
-      <div class="info-card" style="max-width:480px;margin:0 auto;text-align:center;padding:32px">
-        <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
-        <h3 style="margin-bottom:8px">Login Required</h3>
-        <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
-          Please login via the Competition Hub to enter the Buster competition.
-        </p>
-        <a class="hero-cta" href="./?comps=1" style="display:inline-flex;justify-content:center;width:100%">
-          Go to Competition Hub →
-        </a>
-      </div>`;
+    renderCompLogin('buster');
     return;
   }
 
@@ -2926,9 +2919,10 @@ async function renderBuster() {
   };
 
   $('buster-content').innerHTML = `
-    <div class="info-card" style="margin-bottom:24px;padding:16px 20px">
+    ${compLoginWidget('buster')}
+    <div class="info-card" style="margin-bottom:24px;padding:16px 20px;margin-top:16px">
       <p style="font-size:0.875rem;color:var(--text-muted)">
-        Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress through the tournament.
+        Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress.
         ${locked ? '<span style="color:#e63200;font-weight:600"> — Selections are now locked.</span>' : '<span style="color:var(--teal);font-weight:600"> Selections lock 1 hour before kickoff.</span>'}
       </p>
     </div>
