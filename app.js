@@ -1892,37 +1892,38 @@ function onPredChange() {
   /* Will be expanded to cascade through rounds */
 }
 
-/* Show/hide ET winner picker when knockout score changes */
-function onKnockoutChange(matchId, homeTeam, awayTeam) {
-  const hVal = parseInt($(`ph-${matchId}`)?.value ?? 0);
-  const aVal = parseInt($(`pa-${matchId}`)?.value ?? 0);
-  const etRow = $(`et-${matchId}`);
-  const etSel = $(`et-sel-${matchId}`);
-  if (!etRow) return;
-  if (hVal === aVal) {
-    etRow.style.display = 'flex';
-    /* Update options in case team names changed */
-    etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam;
-    etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam;
-  } else {
-    etRow.style.display = 'none';
-    etSel.value = '';
-  }
-}
-
 /* Full cascade — regenerate all knockout rounds from current page inputs */
 function cascadeKnockouts() {
   if (!window._predTeams || !window._results || !window._r32Fixtures) return;
 
-  const getPred = (matchId) => ({
-    matchId, match_id: matchId,
-    home_score: parseInt($(`ph-${matchId}`)?.value ?? 0),
-    away_score: parseInt($(`pa-${matchId}`)?.value ?? 0),
-    et_winner:  $(`et-sel-${matchId}`)?.value || null,
-    homeScore:  parseInt($(`ph-${matchId}`)?.value ?? 0),
-    awayScore:  parseInt($(`pa-${matchId}`)?.value ?? 0),
-    etWinner:   $(`et-sel-${matchId}`)?.value || null,
-  });
+  /* Build pred map: DOM inputs take priority, fall back to saved preds */
+  const savedMap = {};
+  (window._savedPreds || []).forEach(p => { savedMap[p.match_id] = p; });
+
+  const getPred = (matchId) => {
+    const domH = $(`ph-${matchId}`);
+    const domA = $(`pa-${matchId}`);
+    const domET = $(`et-sel-${matchId}`);
+    /* If the input is on the page, use its current value */
+    if (domH) {
+      const hs = parseInt(domH.value ?? 0);
+      const as_ = parseInt(domA?.value ?? 0);
+      return {
+        matchId, match_id: matchId,
+        homeScore: hs, awayScore: as_,
+        home_score: hs, away_score: as_,
+        etWinner: domET?.value || null,
+        et_winner: domET?.value || null,
+      };
+    }
+    /* Otherwise use saved pred */
+    const s = savedMap[matchId];
+    if (s) return { matchId, match_id: matchId,
+      homeScore: s.home_score, awayScore: s.away_score,
+      home_score: s.home_score, away_score: s.away_score,
+      etWinner: s.et_winner, et_winner: s.et_winner };
+    return { matchId, match_id: matchId, homeScore:0, awayScore:0, home_score:0, away_score:0 };
+  };
 
   const r32Preds    = window._r32Fixtures.map(f => getPred(f.matchId));
   const r16Fixtures = generateR16(window._r32Fixtures, r32Preds);
@@ -2039,7 +2040,12 @@ async function saveSection(stage) {
       if (standingsEl) standingsEl.innerHTML = renderPredStandings(standings);
     }
 
-    /* Cascade all knockout rounds */
+    /* Update saved preds cache then cascade */
+    const fresh = await fetch(
+      `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${user.id}&select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json()).catch(() => window._savedPreds || []);
+    window._savedPreds = fresh;
     cascadeKnockouts();
 
   } catch(e) {
