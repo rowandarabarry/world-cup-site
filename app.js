@@ -935,7 +935,8 @@ async function loadAdminPanel() {
 
     /* Add blog management section */
     const blogHtml = await renderAdminBlog();
-    document.getElementById('admin-content').innerHTML += blogHtml;
+    const busterHtml = await renderAdminBuster();
+    document.getElementById('admin-content').innerHTML += blogHtml + busterHtml;
 
   } catch(e) {
     document.getElementById('admin-content').innerHTML =
@@ -1036,6 +1037,7 @@ function flagCode(team) {
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
     else if (params.has('wallchart'))  { await renderWallChart();              }
     else if (params.has('comps'))      { await renderComps();                  }
+    else if (params.has('buster'))     { await renderBuster();                 }
     else if (params.has('review'))     { await renderReview();                 }
     else if (params.has('blog'))       { await renderBlog();                   }
     else if (params.get('team'))       { await renderTeam(params.get('team')); }
@@ -2124,12 +2126,22 @@ async function renderComps() {
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:40px">
           <div class="info-card" style="text-align:center;padding:32px">
             <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
-            <h3 style="margin-bottom:8px">Enter Your Predictions</h3>
+            <h3 style="margin-bottom:8px">Score Predictions</h3>
             <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
               Predict every match score and follow your bracket through the tournament
             </p>
             <a class="hero-cta" href="./?predict=1" style="display:inline-flex;justify-content:center;width:100%">
               Make My Predictions →
+            </a>
+          </div>
+          <div class="info-card" style="text-align:center;padding:32px">
+            <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
+            <h3 style="margin-bottom:8px">Buster Competition</h3>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Pick one team from each of 6 pots and score points as they progress
+            </p>
+            <a class="hero-cta" id="buster-link" href="./?buster=1" style="display:inline-flex;justify-content:center;width:100%;background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.3)">
+              Enter Buster →
             </a>
           </div>
           <div class="info-card" style="padding:24px">
@@ -2161,6 +2173,8 @@ async function renderComps() {
 
     if (!data.length) {
       $('comps-leaderboard').innerHTML = '<p style="color:var(--text-muted)">No predictions submitted yet — be the first!</p>';
+    const tkn = new URLSearchParams(location.search).get('token');
+    if (tkn && $('buster-link')) $('buster-link').href = `./?buster=1&token=${tkn}`;
       return;
     }
 
@@ -2590,4 +2604,299 @@ async function adminSaveReview() {
     $('review-save-msg').style.display = 'inline';
     setTimeout(() => $('review-save-msg').style.display = 'none', 3000);
   }
+}
+
+/* ============================================================
+   BUSTER COMPETITION
+   ============================================================ */
+
+const BUSTER_POTS = [
+  { pot: 1, label: 'Elite',       desc: 'Tournament favourites',              teams: ['France','Brazil','England','Argentina','Spain','Germany','Portugal','Netherlands'] },
+  { pot: 2, label: 'Contenders',  desc: 'Strong teams who could win it',      teams: ['Belgium','Uruguay','Colombia','Morocco','Croatia','United States','Mexico','Japan'] },
+  { pot: 3, label: 'Challengers', desc: 'Quality teams who could go deep',    teams: ['Senegal','Norway','Türkiye','Switzerland','Canada','Korea Republic',"Côte d'Ivoire",'Ecuador'] },
+  { pot: 4, label: 'Dark Horses', desc: 'Teams that could surprise everyone', teams: ['Austria','Algeria','Scotland','Sweden','Australia','Egypt','Ghana','South Africa'] },
+  { pot: 5, label: 'Underdogs',   desc: 'Solid but unlikely to go far',       teams: ['Czechia','Tunisia','Saudi Arabia','IR Iran','Paraguay','Bosnia & Herz.','Cabo Verde','Iraq'] },
+  { pot: 6, label: 'Minnows',     desc: 'Real underdogs and first timers',    teams: ['Curaçao','Haiti','Jordan','Congo DR','Uzbekistan','New Zealand','Panama','Qatar'] },
+];
+
+const BUSTER_POINTS = {
+  winner: 25, final: 17, sf: 12, qf: 8,
+  r16: 5, best_third: 1, group_second: 2, group_winner: 3, eliminated: 0
+};
+
+const STAGE_LABELS = {
+  winner: '🏆 World Cup Winner', final: '🥈 Finalist',
+  sf: '🌟 Semi Final', qf: '⚡ Quarter Final',
+  r16: '🔟 Round of 16', best_third: '✔️ Best 3rd Place',
+  group_second: '2️⃣ Group Runner-up', group_winner: '1️⃣ Group Winner',
+  eliminated: '❌ Eliminated'
+};
+
+async function renderBuster() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="buster-content">
+        <p style="color:var(--text-muted)">Loading…</p>
+      </div>
+    </div>`;
+
+  /* Need to be logged in */
+  if (!token) {
+    $('buster-content').innerHTML = `
+      <div class="info-card" style="max-width:480px;margin:0 auto;text-align:center;padding:32px">
+        <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
+        <h3 style="margin-bottom:8px">Buster Competition</h3>
+        <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
+          Pick one team from each of the 6 pots. Score points as your teams progress through the tournament!
+        </p>
+        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+          You need to be logged in via the Predictions page first to enter.
+        </p>
+        <a class="hero-cta" href="./?predict=1" style="display:inline-flex;justify-content:center;width:100%">
+          Login via Predictions →
+        </a>
+      </div>`;
+    return;
+  }
+
+  /* Load user */
+  const userRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?token=eq.${token}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+
+  if (!userRes.length) {
+    $('buster-content').innerHTML = `<p>Invalid link. <a href="?predict=1">Login again</a>.</p>`;
+    return;
+  }
+
+  const user = userRes[0];
+  const locked = isPastCutoff();
+
+  /* Load existing picks */
+  const existingPicks = await fetch(
+    `${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${user.id}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+
+  const picks = existingPicks[0] || {};
+
+  /* Load team progress */
+  const progress = await fetch(
+    `${SUPABASE_URL}/rest/v1/team_progress?select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json());
+
+  const progressMap = {};
+  progress.forEach(p => { progressMap[p.team_name] = p.best_stage; });
+
+  /* Get flag for team */
+  const teamFlag = name => {
+    const team = (window._predTeams || []).find(t => t.name === name);
+    return team ? `<img src="${team.flag}" width="20" height="14" style="border-radius:2px;border:1px solid var(--border);vertical-align:middle;margin-right:4px">` : '';
+  };
+
+  $('buster-content').innerHTML = `
+    <div class="info-card" style="margin-bottom:24px;padding:16px 20px">
+      <p style="font-size:0.875rem;color:var(--text-muted)">
+        Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress through the tournament.
+        ${locked ? '<span style="color:#e63200;font-weight:600"> — Selections are now locked.</span>' : '<span style="color:var(--teal);font-weight:600"> Selections lock 1 hour before kickoff.</span>'}
+      </p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px">
+      ${BUSTER_POTS.map(pot => {
+        const savedPick = picks[`pot${pot.pot}_team`] || '';
+        return `
+          <div class="group-card">
+            <div class="group-card-header">
+              <div>
+                <div class="group-letter" style="font-size:1.2rem">Pot ${pot.pot}</div>
+                <div style="color:var(--white);font-weight:700;font-size:0.95rem">${pot.label}</div>
+                <div class="group-label">${pot.desc}</div>
+              </div>
+            </div>
+            <div style="padding:12px">
+              ${locked && savedPick ? `
+                <div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(0,180,180,0.1);border-radius:var(--radius-sm);border:1px solid var(--teal)">
+                  ${teamFlag(savedPick)}
+                  <span style="font-weight:700;color:var(--purple-dark)">${savedPick}</span>
+                  <span style="margin-left:auto;font-size:0.75rem;color:var(--teal)">${STAGE_LABELS[progressMap[savedPick]||'eliminated']}</span>
+                </div>` : `
+              <select class="form-select" id="buster-pot${pot.pot}" ${locked ? 'disabled' : ''}>
+                <option value="">— Pick a team —</option>
+                ${pot.teams.map(team => `
+                  <option value="${team}" ${savedPick === team ? 'selected' : ''}>
+                    ${team} ${progressMap[team] && progressMap[team] !== 'eliminated' ? '· ' + STAGE_LABELS[progressMap[team]] : ''}
+                  </option>`).join('')}
+              </select>`}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    ${!locked ? `
+    <div style="text-align:center;margin-bottom:40px">
+      <button class="hero-cta" onclick="saveBusterPicks('${user.id}')" id="buster-save-btn">
+        💾 Save My Buster Picks
+      </button>
+      <p id="buster-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-top:10px">✅ Picks saved!</p>
+    </div>` : ''}
+
+    <h2 class="section-title" style="margin-bottom:20px">🎲 <span>Buster Leaderboard</span></h2>
+    <div id="buster-leaderboard"><p style="color:var(--text-muted)">Loading…</p></div>`;
+
+  /* Load teams for flags */
+  if (!window._predTeams) {
+    window._predTeams = await loadTeams();
+  }
+
+  /* Load leaderboard */
+  loadBusterLeaderboard();
+}
+
+async function saveBusterPicks(userId) {
+  const btn = $('buster-save-btn');
+  const msg = $('buster-save-msg');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const picks = {};
+  let valid = true;
+  for (let i = 1; i <= 6; i++) {
+    const val = $(`buster-pot${i}`)?.value;
+    if (!val) {
+      alert(`Please pick a team from Pot ${i}`);
+      btn.textContent = '💾 Save My Buster Picks'; btn.disabled = false;
+      valid = false; break;
+    }
+    picks[`pot${i}_team`] = val;
+  }
+  if (!valid) return;
+
+  picks.user_id = userId;
+  picks.updated_at = new Date().toISOString();
+
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(picks)
+  }).then(r => r.ok);
+
+  btn.textContent = '💾 Save My Buster Picks'; btn.disabled = false;
+  if (ok) {
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  } else {
+    alert('Could not save picks. Please try again.');
+  }
+}
+
+async function loadBusterLeaderboard() {
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) {
+      $('buster-leaderboard').innerHTML = '<p style="color:var(--text-muted)">No entries yet — be the first!</p>';
+      return;
+    }
+
+    /* Calculate totals and sort */
+    const rows = data.map(r => ({
+      ...r,
+      total: r.pot1_pts + r.pot2_pts + r.pot3_pts + r.pot4_pts + r.pot5_pts + r.pot6_pts,
+      best: Math.max(r.pot1_pts, r.pot2_pts, r.pot3_pts, r.pot4_pts, r.pot5_pts, r.pot6_pts)
+    })).sort((a,b) => b.total - a.total || b.best - a.best);
+
+    $('buster-leaderboard').innerHTML = `
+      <div style="overflow-x:auto">
+        <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:500px">
+          <thead>
+            <tr>
+              <th style="text-align:center;width:40px">Pos</th>
+              <th style="text-align:left;padding-left:12px">Player</th>
+              <th title="Pot 1">P1</th><th title="Pot 2">P2</th>
+              <th title="Pot 3">P3</th><th title="Pot 4">P4</th>
+              <th title="Pot 5">P5</th><th title="Pot 6">P6</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row, i) => `
+              <tr>
+                <td style="text-align:center;font-weight:700;
+                  color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+                  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+                </td>
+                <td style="text-align:left;padding-left:12px;font-weight:600">${row.username}</td>
+                <td title="${row.pot1_team}">${row.pot1_pts}</td>
+                <td title="${row.pot2_team}">${row.pot2_pts}</td>
+                <td title="${row.pot3_team}">${row.pot3_pts}</td>
+                <td title="${row.pot4_team}">${row.pot4_pts}</td>
+                <td title="${row.pot5_team}">${row.pot5_pts}</td>
+                <td title="${row.pot6_team}">${row.pot6_pts}</td>
+                <td class="pts-cell">${row.total}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Hover over P1-P6 columns to see team names</p>`;
+  } catch(e) {
+    $('buster-leaderboard').innerHTML = '<p style="color:var(--text-muted)">Could not load leaderboard.</p>';
+  }
+}
+
+/* Admin — update team progress */
+async function renderAdminBuster() {
+  const progress = await fetch(
+    `${SUPABASE_URL}/rest/v1/team_progress?select=*&order=team_name`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  const stages = [
+    { value:'eliminated',   label:'Eliminated' },
+    { value:'group_winner', label:'Group Winner' },
+    { value:'group_second', label:'Group Runner-up' },
+    { value:'best_third',   label:'Best 3rd Place' },
+    { value:'r16',          label:'Round of 16' },
+    { value:'qf',           label:'Quarter Final' },
+    { value:'sf',           label:'Semi Final' },
+    { value:'final',        label:'Finalist' },
+    { value:'winner',       label:'🏆 World Cup Winner' },
+  ];
+
+  return `
+    <h2 class="section-title" style="margin:40px 0 16px">🎲 <span>Buster — Team Progress</span></h2>
+    <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+      Update each team's furthest stage reached. Buster scores update automatically.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+      ${progress.map(p => `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;gap:8px">
+          <span style="font-weight:600;font-size:0.875rem;flex:1;color:var(--text-dark)">${p.team_name}</span>
+          <select class="form-select" id="prog-${p.team_name.replace(/[^a-z]/gi,'_')}"
+            style="flex:1;padding:6px 8px;font-size:0.78rem"
+            onchange="updateTeamProgress('${p.team_name}', this.value)">
+            ${stages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function updateTeamProgress(teamName, stage) {
+  await fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(teamName)}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ best_stage: stage, updated_at: new Date().toISOString() })
+  });
 }
