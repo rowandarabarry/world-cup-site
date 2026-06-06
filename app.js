@@ -2361,7 +2361,7 @@ async function compRegister(redirectPage) {
   if (!password || password.length < 4) { err.textContent = 'Password must be at least 4 characters.'; err.style.display='block'; return; }
   if (/\s/.test(username)) { err.textContent = 'Username cannot contain spaces.'; err.style.display='block'; return; }
   try {
-    const user = await registerUser_db(username, password);
+    const user = await registerUser(username, password);
     setSession(user);
     const dest = redirectPage === 'predict' ? '?predict=1' :
                  redirectPage === 'buster'  ? '?buster=1'  : '?comps=1';
