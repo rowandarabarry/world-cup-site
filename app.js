@@ -1075,25 +1075,38 @@ function flagCode(team) {
     toggle.setAttribute('aria-expanded', open);
   });
 
-  /* Dropdown nav — highlight parent when child is active */
+  /* Dropdown nav — click to toggle, close on outside click */
   document.querySelectorAll('.tab-dropdown').forEach(dd => {
-    const items = dd.querySelectorAll('.tab-dropdown-item');
-    items.forEach(item => {
-      const page = item.dataset.page;
-      if (page && params.has(page)) {
-        dd.querySelector('.tab-drop-btn')?.classList.add('active');
+    const btn  = dd.querySelector('.tab-drop-btn');
+    const menu = dd.querySelector('.tab-dropdown-menu');
+
+    /* Highlight parent when child page is active */
+    dd.querySelectorAll('.tab-dropdown-item').forEach(item => {
+      if (item.dataset.page && params.has(item.dataset.page)) {
+        btn?.classList.add('active');
         item.classList.add('active');
       }
     });
+
+    /* Toggle on button click */
+    btn?.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      /* Close all dropdowns first */
+      document.querySelectorAll('.tab-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+      /* Open this one if it was closed */
+      if (!isOpen) menu.classList.add('open');
+    });
   });
 
-  /* Close dropdown on click outside */
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.tab-dropdown')) {
-      document.querySelectorAll('.tab-dropdown-menu').forEach(m => {
-        m.style.display = '';
-      });
-    }
+  /* Close all dropdowns when clicking anywhere outside */
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.tab-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+  });
+
+  /* Prevent clicks inside menu from closing it */
+  document.querySelectorAll('.tab-dropdown-menu').forEach(m => {
+    m.addEventListener('click', e => e.stopPropagation());
   });
 
   /* Scroll shadow on header */
