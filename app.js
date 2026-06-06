@@ -1109,6 +1109,19 @@ function flagCode(team) {
     m.addEventListener('click', e => e.stopPropagation());
   });
 
+  /* Bottom nav active state */
+  document.querySelectorAll('.bottom-nav-item').forEach(item => {
+    const page = item.dataset.page;
+    const isActive =
+      (page === 'home'        && !params.has('results') && !params.has('groups') && !params.has('predict') && !params.has('leaderboard') && !params.has('blog') && !params.has('fixtures') && !params.has('teams') && !params.has('review') && !params.has('wallchart') && !params.get('team')) ||
+      (page === 'results'     && params.has('results')) ||
+      (page === 'groups'      && params.has('groups')) ||
+      (page === 'predict'     && params.has('predict')) ||
+      (page === 'leaderboard' && params.has('leaderboard')) ||
+      (page === 'blog'        && params.has('blog'));
+    if (isActive) item.classList.add('active');
+  });
+
   /* Scroll shadow on header */
   const header = document.querySelector('.site-header');
   window.addEventListener('scroll', () => {
