@@ -976,7 +976,8 @@ async function loadAdminPanel() {
     /* Add blog management section */
     const blogHtml = await renderAdminBlog();
     const busterHtml = await renderAdminBuster();
-    document.getElementById('admin-content').innerHTML += blogHtml + busterHtml;
+    const utilsHtml = await renderAdminUtilities();
+    document.getElementById('admin-content').innerHTML += blogHtml + busterHtml + utilsHtml;
 
   } catch(e) {
     document.getElementById('admin-content').innerHTML =
@@ -1020,7 +1021,7 @@ async function saveResult(matchId) {
 }
 
 async function adminResetPassword(userId, username) {
-  const input = $(`pw-${userId}`);
+  const input = $(`newpw-${userId}`);
   const msg   = $(`pw-msg-${userId}`);
   const newPw = input?.value.trim();
 
@@ -1188,6 +1189,16 @@ function isPastCutoff() {
 
 /* Hash a string with SHA-256 */
 async function sha256(str) {
+  /* crypto.subtle requires HTTPS — fallback to simple hash for HTTP */
+  if (!crypto?.subtle) {
+    /* Simple fallback hash */
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16).padStart(8,'0').repeat(8).slice(0,64);
+  }
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
@@ -2710,6 +2721,12 @@ async function renderReview() {
           <span class="review-card-label">Overall Thoughts</span>
           <div class="review-card-text">${r.overall_thoughts}</div>
         </div>` : ''}
+        ${r.rowan_comments ? `
+        <div class="review-card" style="margin-top:8px">
+          <div style="font-size:1.8rem;margin-bottom:8px">💬</div>
+          <span class="review-card-label">Rowan's Comments</span>
+          <div class="review-card-text">${r.rowan_comments}</div>
+        </div>` : ''}
       `}`;
   } catch(e) {
     $('review-content').innerHTML = '<p style="color:var(--text-muted)">Could not load review.</p>';
@@ -3002,8 +3019,120 @@ async function renderReviewAdminForm() {
       <label class="form-label">Overall Thoughts</label>
       <textarea class="form-textarea" id="rev-overall_thoughts" rows="5">${r.overall_thoughts || ''}</textarea>
     </div>
+    <div class="form-group">
+      <label class="form-label">Rowan's Comments (free text — shown publicly on Review page)</label>
+      <textarea class="form-textarea" id="rev-rowan_comments" rows="8" placeholder="Write anything here — tournament diary, match thoughts, reactions as the tournament unfolds…">${r.rowan_comments || ''}</textarea>
+    </div>
     <button class="admin-save-btn" onclick="adminSaveReview()">Save Review</button>
     <span id="review-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:12px">✅ Saved!</span>`;
+}
+
+/* ============================================================
+   ADMIN UTILITIES — Cancel results, Reset predictions, Delete users
+   ============================================================ */
+async function renderAdminUtilities() {
+  const users = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?select=id,username,created_at&order=created_at`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  return `
+    <h2 class="section-title" style="margin:40px 0 16px">⚙️ <span>Admin Utilities</span></h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px">
+
+      <div class="admin-blog-form">
+        <h3>🗑️ Cancel a Result</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+          Reset a match back to Upcoming and clear the score.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Match ID (1–72)</label>
+          <input class="form-input" id="cancel-match-id" type="number" min="1" max="72" placeholder="e.g. 1">
+        </div>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminCancelResult()">Cancel Result</button>
+        <span id="cancel-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
+      </div>
+
+      <div class="admin-blog-form">
+        <h3>🔄 Reset User Predictions</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+          Wipe all predictions for a specific user.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Select User</label>
+          <select class="form-select" id="reset-pred-user">
+            <option value="">— pick user —</option>
+            ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+          </select>
+        </div>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminResetUserPredictions()">Reset Predictions</button>
+        <span id="reset-pred-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
+      </div>
+
+      <div class="admin-blog-form">
+        <h3>❌ Delete User</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+          Permanently delete a user and all their data.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Select User</label>
+          <select class="form-select" id="delete-user-select">
+            <option value="">— pick user —</option>
+            ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+          </select>
+        </div>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminDeleteUser()">Delete User</button>
+        <span id="delete-user-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
+      </div>
+
+    </div>
+
+    <h2 class="section-title" style="margin:24px 0 16px">👥 <span>All Users</span></h2>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${users.map(u => `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-weight:600">${u.username}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:0.75rem;color:var(--text-muted)">${new Date(u.created_at).toLocaleDateString('en-GB')}</span>
+            <input class="form-input" id="newpw-${u.id}" placeholder="New password" style="width:130px;padding:6px 10px;font-size:0.8rem">
+            <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')" style="padding:6px 12px">Reset PW</button>
+            <span id="pw-msg-${u.id}" style="display:none;color:var(--teal);font-size:0.78rem">✅</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function adminCancelResult() {
+  const matchId = parseInt($('cancel-match-id')?.value);
+  if (!matchId || matchId < 1 || matchId > 72) { alert('Please enter a valid match ID (1–72)'); return; }
+  if (!confirm(`Reset match ${matchId} to Upcoming?`)) return;
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=eq.${matchId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ home_score: null, away_score: null, status: 'Upcoming' })
+  }).then(r => r.ok);
+  if (ok) { $('cancel-msg').style.display='inline'; setTimeout(()=>$('cancel-msg').style.display='none',3000); }
+}
+
+async function adminResetUserPredictions() {
+  const userId = $('reset-pred-user')?.value;
+  if (!userId) { alert('Please select a user'); return; }
+  if (!confirm('Reset all predictions for this user?')) return;
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`, {
+    method: 'DELETE', headers: sbHeaders
+  }).then(r => r.ok);
+  if (ok) { $('reset-pred-msg').style.display='inline'; setTimeout(()=>$('reset-pred-msg').style.display='none',3000); }
+}
+
+async function adminDeleteUser() {
+  const userId = $('delete-user-select')?.value;
+  if (!userId) { alert('Please select a user'); return; }
+  if (!confirm('Permanently delete this user and ALL their data? This cannot be undone.')) return;
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'DELETE', headers: sbHeaders
+  }).then(r => r.ok);
+  if (ok) { alert('User deleted.'); loadAdminPanel(); }
 }
 
 async function adminSaveBlogPost() {
@@ -3036,7 +3165,7 @@ async function adminDeletePost(id) {
 
 async function adminSaveReview() {
   const fields = ['winner_pick','fav_team','player_to_watch','team_to_watch',
-                  'dark_horse','early_exit','golden_boot','overall_thoughts'];
+                  'dark_horse','early_exit','golden_boot','overall_thoughts','rowan_comments'];
   const data = {};
   fields.forEach(f => { data[f] = $(`rev-${f}`)?.value.trim() || null; });
 
