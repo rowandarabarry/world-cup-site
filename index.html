@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=53" />
+  <link rel="stylesheet" href="styles.css?v=54" />
 </head>
 <body>
 
@@ -42,6 +42,7 @@
         <div class="tab-dropdown">
           <button class="tab tab-drop-btn" data-group="competition">Competition ▾</button>
           <div class="tab-dropdown-menu">
+            <a class="tab-dropdown-item" href="./?comps=1"       data-page="comps">Competition Hub</a>
             <a class="tab-dropdown-item" href="./?predict=1"     data-page="predict">Enter Picks</a>
             <a class="tab-dropdown-item" href="./?leaderboard=1" data-page="leaderboard">Leaderboard</a>
           </div>
@@ -75,13 +76,16 @@
     /* Fetch total site views using GoatCounter visitor counter */
     async function loadViews() {
       try {
+        /* GoatCounter visitor counter — requires "Allow adding visitor counts"
+           to be enabled in GoatCounter Settings and site added to allowlist */
         const res = await fetch('https://deccy7.goatcounter.com/counter/%2F.json');
         if (!res.ok) return;
-        const data = await res.json();
+        const text = await res.text();
+        const data = JSON.parse(text);
         if (data && data.count !== undefined) {
           document.getElementById('site-views').textContent = Number(data.count).toLocaleString();
         }
-      } catch(e) { /* silently fail */ }
+      } catch(e) { /* silently fail until allowlist is set */ }
     }
     loadViews();
   </script>
@@ -100,13 +104,13 @@
       <span class="nav-icon">🏆</span>
       <span>Groups</span>
     </a>
-    <a class="bottom-nav-item" href="./?predict=1" data-page="predict">
+    <a class="bottom-nav-item" href="./?comps=1" data-page="comps">
       <span class="nav-icon">🎯</span>
-      <span>Predict</span>
+      <span>Comps</span>
     </a>
-    <a class="bottom-nav-item" href="./?leaderboard=1" data-page="leaderboard">
-      <span class="nav-icon">🥇</span>
-      <span>Leaders</span>
+    <a class="bottom-nav-item" href="./?review=1" data-page="review">
+      <span class="nav-icon">⭐</span>
+      <span>Review</span>
     </a>
     <a class="bottom-nav-item" href="./?blog=1" data-page="blog">
       <span class="nav-icon">✍️</span>
@@ -115,6 +119,6 @@
   </nav>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=53"></script>
+  <script src="app.js?v=54"></script>
 </body>
 </html>
