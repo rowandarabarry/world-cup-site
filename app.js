@@ -7,6 +7,8 @@
    3. Add an `if (params.has('yourpage'))` block in init()
    ============================================================ */
 
+const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match
+
 /* ── Helpers ── */
 const $ = id => document.getElementById(id);
 const app = () => $('app');
@@ -1156,8 +1158,6 @@ function flagCode(team) {
    PREDICTIONS — helper functions
    ============================================================ */
 
-const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match (15:00 UTC)
-
 function isPastCutoff() {
   return new Date() > CUTOFF;
 }
@@ -2220,82 +2220,70 @@ async function renderComps() {
     <div class="section">
       <div class="wrap">
         ${compLoginWidget('comps')}
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:28px">
-          <div class="info-card" style="text-align:center;padding:32px">
-            <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
-            <h3 style="margin-bottom:8px">Score Predictions</h3>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+        <!-- Competition Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:28px">
+
+          <!-- Score Predictions Card -->
+          <div class="info-card" style="padding:28px">
+            <div style="font-size:2rem;margin-bottom:10px">🎯</div>
+            <h3 style="margin-bottom:6px">Score Predictions</h3>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
               Predict every match score through the whole tournament
             </p>
-            ${session ? `
-              <a class="hero-cta" href="./?predict=1&token=${session.token}"
-                style="display:inline-flex;justify-content:center;width:100%">
-                My Predictions →
-              </a>` : `
-              <button class="hero-cta" style="width:100%;justify-content:center;opacity:0.5;cursor:not-allowed" disabled>
-                Login to Enter
-              </button>`}
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;font-size:0.82rem">
+              <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+              <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+              <div class="fact-row"><span class="fact-label">Group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4 / 2 pts</span></div>
+              <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·7·10·15·20</span></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${session ? `
+                <a class="hero-cta" href="./?predict=1"
+                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem">
+                  My Predictions →
+                </a>` : `
+                <a class="hero-cta" href="./?predict=1"
+                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem">
+                  Enter Predictions →
+                </a>`}
+              <a href="./?leaderboard=predictions"
+                style="flex:1;display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:2px solid var(--border);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;transition:var(--transition)"
+                onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+                🏅 Leaderboard
+              </a>
+            </div>
           </div>
-          <div class="info-card" style="text-align:center;padding:32px">
-            <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
-            <h3 style="margin-bottom:8px">Buster Competition</h3>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-              Pick one team from each of 6 pots and score as they progress
-            </p>
-            ${session ? `
-              <a class="hero-cta" href="./?buster=1"
-                style="display:inline-flex;justify-content:center;width:100%;background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.3)">
-                My Buster Picks →
-              </a>` : `
-              <button class="hero-cta" style="width:100%;justify-content:center;opacity:0.5;cursor:not-allowed;background:var(--gold);color:var(--navy)" disabled>
-                Login to Enter
-              </button>`}
-          </div>
-          <div class="info-card" style="text-align:center;padding:32px">
-            <div style="font-size:2.5rem;margin-bottom:12px">🏅</div>
-            <h3 style="margin-bottom:8px">Leaderboards</h3>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-              See how everyone is doing across all competitions
-            </p>
-            <a class="hero-cta" href="./?leaderboard=1"
-              style="display:inline-flex;justify-content:center;width:100%;background:var(--purple-mid);box-shadow:0 4px 20px rgba(45,42,138,0.3)">
-              View Leaderboards →
-            </a>
-          </div>
-        </div>
 
-        <div style="margin-top:40px">
-          <h2 class="section-title" style="margin-bottom:6px">How to <span>Score Points</span></h2>
-          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">Quick reference for both competitions</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div class="info-card">
-              <h3 style="margin-bottom:14px">🎯 Score Predictions</h3>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
-              </div>
+          <!-- Buster Card -->
+          <div class="info-card" style="padding:28px">
+            <div style="font-size:2rem;margin-bottom:10px">🎲</div>
+            <h3 style="margin-bottom:6px">Buster Competition</h3>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+              Pick one team from each of 6 pots — score as they progress
+            </p>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;font-size:0.82rem">
+              <div class="fact-row"><span class="fact-label">Group Win/2nd/3rd</span><span class="fact-value" style="color:var(--teal)">3 / 2 / 1 pts</span></div>
+              <div class="fact-row"><span class="fact-label">R16 · QF · SF</span><span class="fact-value" style="color:var(--teal)">5 · 8 · 12 pts</span></div>
+              <div class="fact-row"><span class="fact-label">Final · Winner</span><span class="fact-value" style="color:var(--gold)">17 · 25 pts</span></div>
             </div>
-            <div class="info-card">
-              <h3 style="margin-bottom:14px">🎲 Buster</h3>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <div class="fact-row"><span class="fact-label">Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
-                <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
-                <div class="fact-row"><span class="fact-label">Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
-              </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${session ? `
+                <a class="hero-cta" href="./?buster=1"
+                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem;background:var(--gold);color:var(--navy);box-shadow:none">
+                  My Buster →
+                </a>` : `
+                <a class="hero-cta" href="./?buster=1"
+                  style="flex:1;justify-content:center;padding:10px 16px;font-size:0.875rem;background:var(--gold);color:var(--navy);box-shadow:none">
+                  Enter Buster →
+                </a>`}
+              <a href="./?leaderboard=buster"
+                style="flex:1;display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:2px solid var(--border);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;transition:var(--transition)"
+                onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+                🏅 Leaderboard
+              </a>
             </div>
           </div>
+
         </div>
       </div>
     </div>`;
