@@ -747,6 +747,22 @@ async function sbGet(table, params = '') {
   return res.json();
 }
 
+
+/* ============================================================
+   SESSION — stores user token in sessionStorage
+   ============================================================ */
+function getSession() {
+  try {
+    const s = sessionStorage.getItem('wc_user');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+function setSession(user) {
+  try { sessionStorage.setItem('wc_user', JSON.stringify(user)); } catch(e) {}
+}
+function clearSession() {
+  try { sessionStorage.removeItem('wc_user'); } catch(e) {}
+}
 async function sbUpdate(table, match_id, data) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?match_id=eq.${match_id}`, {
     method: 'PATCH',
@@ -2111,58 +2127,226 @@ async function renderLeaderboard() {
 }
 
 /* ============================================================
-   COMPS PAGE — predictions entry + leaderboard
+   COMP LOGIN WIDGET — shared across comps pages
+   ============================================================ */
+function compLoginWidget(redirectPage = 'comps') {
+  const session = getSession();
+  if (session) {
+    return `
+      <div class="comp-session-bar">
+        <span>👋 Logged in as <strong>${session.username}</strong></span>
+        <button class="comp-logout-btn" onclick="compLogout()">Log out</button>
+      </div>`;
+  }
+  return `
+    <div class="info-card comp-login-card">
+      <h3 style="margin-bottom:16px">Login to Enter Competitions</h3>
+      <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+        Use your username and password — or register if you haven't already.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <label class="form-label">Username</label>
+          <input class="form-input" id="comp-username" placeholder="yourname">
+        </div>
+        <div>
+          <label class="form-label">Password</label>
+          <input class="form-input" id="comp-password" type="password" placeholder="••••">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="hero-cta" onclick="compLogin('${redirectPage}')" style="flex:1;justify-content:center">
+          Login →
+        </button>
+        <button class="admin-save-btn" onclick="compRegister('${redirectPage}')" style="flex:1">
+          Register
+        </button>
+      </div>
+      <p id="comp-login-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
+    </div>`;
+}
+
+function compLogout() {
+  clearSession();
+  location.reload();
+}
+
+async function compLogin(redirectPage) {
+  const username = $('comp-username')?.value.trim();
+  const password = $('comp-password')?.value.trim();
+  const err = $('comp-login-error');
+  if (!username || !password) { err.textContent = 'Please enter username and password.'; err.style.display='block'; return; }
+  try {
+    const user = await loginUser(username, password);
+    setSession(user);
+    location.reload();
+  } catch(e) {
+    err.textContent = e.message || 'Incorrect username or password.';
+    err.style.display = 'block';
+  }
+}
+
+async function compRegister(redirectPage) {
+  const username = $('comp-username')?.value.trim();
+  const password = $('comp-password')?.value.trim();
+  const err = $('comp-login-error');
+  if (!username || username.length < 3) { err.textContent = 'Username must be at least 3 characters, no spaces.'; err.style.display='block'; return; }
+  if (!password || password.length < 4) { err.textContent = 'Password must be at least 4 characters.'; err.style.display='block'; return; }
+  if (/\s/.test(username)) { err.textContent = 'Username cannot contain spaces.'; err.style.display='block'; return; }
+  try {
+    const user = await registerUser_db(username, password);
+    setSession(user);
+    location.reload();
+  } catch(e) {
+    err.textContent = e.message || 'Username already taken — try another.';
+    err.style.display = 'block';
+  }
+}
+
+/* ============================================================
+   COMPS HUB PAGE
    ============================================================ */
 async function renderComps() {
+  const session = getSession();
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap">
-        <h1 class="page-title">🎯 <span>Competition</span></h1>
+        <h1 class="page-title">🎯 <span>Competition Hub</span></h1>
       </div>
     </div>
     <div class="section">
       <div class="wrap">
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:40px">
+        ${compLoginWidget('comps')}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:28px">
           <div class="info-card" style="text-align:center;padding:32px">
             <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
             <h3 style="margin-bottom:8px">Score Predictions</h3>
             <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-              Predict every match score and follow your bracket through the tournament
+              Predict every match score through the whole tournament
             </p>
-            <a class="hero-cta" href="./?predict=1" style="display:inline-flex;justify-content:center;width:100%">
-              Make My Predictions →
-            </a>
+            ${session ? `
+              <a class="hero-cta" href="./?predict=1&token=${session.token}"
+                style="display:inline-flex;justify-content:center;width:100%">
+                My Predictions →
+              </a>` : `
+              <button class="hero-cta" style="width:100%;justify-content:center;opacity:0.5;cursor:not-allowed" disabled>
+                Login to Enter
+              </button>`}
           </div>
           <div class="info-card" style="text-align:center;padding:32px">
             <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
             <h3 style="margin-bottom:8px">Buster Competition</h3>
             <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-              Pick one team from each of 6 pots and score points as they progress
+              Pick one team from each of 6 pots and score as they progress
             </p>
-            <a class="hero-cta" id="buster-link" href="./?buster=1" style="display:inline-flex;justify-content:center;width:100%;background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.3)">
-              Enter Buster →
-            </a>
+            ${session ? `
+              <a class="hero-cta" href="./?buster=1"
+                style="display:inline-flex;justify-content:center;width:100%;background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.3)">
+                My Buster Picks →
+              </a>` : `
+              <button class="hero-cta" style="width:100%;justify-content:center;opacity:0.5;cursor:not-allowed;background:var(--gold);color:var(--navy)" disabled>
+                Login to Enter
+              </button>`}
           </div>
-          <div class="info-card" style="padding:24px">
-            <h3 style="margin-bottom:4px">How to Score Points</h3>
-            <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
-              <div class="fact-row"><span class="fact-label">⚽ Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-              <div class="fact-row"><span class="fact-label">✅ Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-              <div class="fact-row"><span class="fact-label">🥇 Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
-              <div class="fact-row"><span class="fact-label">✔️ Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-              <div class="fact-row"><span class="fact-label">🔟 Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-              <div class="fact-row"><span class="fact-label">⚡ Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
-              <div class="fact-row"><span class="fact-label">🌟 Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-              <div class="fact-row"><span class="fact-label">🏅 Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
-              <div class="fact-row"><span class="fact-label">🏆 Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
-            </div>
+          <div class="info-card" style="text-align:center;padding:32px">
+            <div style="font-size:2.5rem;margin-bottom:12px">🏅</div>
+            <h3 style="margin-bottom:8px">Leaderboards</h3>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              See how everyone is doing across all competitions
+            </p>
+            <a class="hero-cta" href="./?leaderboard=1"
+              style="display:inline-flex;justify-content:center;width:100%;background:var(--purple-mid);box-shadow:0 4px 20px rgba(45,42,138,0.3)">
+              View Leaderboards →
+            </a>
           </div>
         </div>
 
-        <h2 class="section-title" style="margin-bottom:20px">🥇 <span>Leaderboard</span></h2>
-        <div id="comps-leaderboard"><p style="color:var(--text-muted)">Loading…</p></div>
+        <div style="margin-top:40px">
+          <h2 class="section-title" style="margin-bottom:6px">How to <span>Score Points</span></h2>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">Quick reference for both competitions</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="info-card">
+              <h3 style="margin-bottom:14px">🎯 Score Predictions</h3>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+              </div>
+            </div>
+            <div class="info-card">
+              <h3 style="margin-bottom:14px">🎲 Buster</h3>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div class="fact-row"><span class="fact-label">Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
+                <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
+                <div class="fact-row"><span class="fact-label">Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>`;
+}
+
+/* ============================================================
+   LEADERBOARD HUB
+   ============================================================ */
+async function renderLeaderboard() {
+  const params = new URLSearchParams(location.search);
+  const which = params.get('leaderboard');
+
+  if (which === 'predictions') { await renderLeaderboardPredictions(); return; }
+  if (which === 'buster')      { await renderLeaderboardBuster();      return; }
+
+  /* Hub */
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">🏅 <span>Leaderboards</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
+          <a href="./?leaderboard=predictions" style="text-decoration:none">
+            <div class="card" style="padding:28px;text-align:center;cursor:pointer">
+              <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+              <div class="quick-card-title">Score Predictions</div>
+              <p class="quick-card-desc">Full leaderboard for the score predictions competition</p>
+            </div>
+          </a>
+          <a href="./?leaderboard=buster" style="text-decoration:none">
+            <div class="card" style="padding:28px;text-align:center;cursor:pointer">
+              <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
+              <div class="quick-card-title">Buster Competition</div>
+              <p class="quick-card-desc">Full leaderboard for the Buster team picks competition</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function renderLeaderboardPredictions() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
+        <h1 class="page-title">🎯 <span>Score Predictions</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="pred-lb"><p style="color:var(--text-muted)">Loading…</p></div>
     </div>`;
 
   try {
@@ -2171,39 +2355,90 @@ async function renderComps() {
       { headers: sbHeaders }
     ).then(r => r.json());
 
-    if (!data.length) {
-      $('comps-leaderboard').innerHTML = '<p style="color:var(--text-muted)">No predictions submitted yet — be the first!</p>';
-    const tkn = new URLSearchParams(location.search).get('token');
-    if (tkn && $('buster-link')) $('buster-link').href = `./?buster=1&token=${tkn}`;
-      return;
-    }
+    if (!data.length) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
 
-    $('comps-leaderboard').innerHTML = `
+    $('pred-lb').innerHTML = `
       <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
-        <thead>
-          <tr>
-            <th style="text-align:center;padding-left:16px;width:40px">Pos</th>
-            <th style="text-align:left;padding-left:12px">Player</th>
-            <th>Match Pts</th>
-            <th>Total</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="text-align:center;width:48px">Pos</th>
+          <th style="text-align:left;padding-left:12px">Player</th>
+          <th>Match Pts</th><th>Total</th>
+        </tr></thead>
         <tbody>
-          ${data.map((row, i) => `
+          ${data.map((row,i) => `
             <tr>
-              <td style="padding-left:16px;font-weight:700;font-size:1rem;
-                color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
                 ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
               </td>
-              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username || '—'}</td>
+              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
               <td>${row.match_pts}</td>
               <td class="pts-cell">${row.total_pts}</td>
             </tr>`).join('')}
         </tbody>
       </table>`;
-  } catch(e) {
-    $('comps-leaderboard').innerHTML = '<p style="color:var(--text-muted)">Could not load leaderboard.</p>';
-  }
+  } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
+}
+
+async function renderLeaderboardBuster() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
+        <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="buster-lb"><p style="color:var(--text-muted)">Loading…</p></div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+
+    const rows = data.map(r => ({
+      ...r,
+      total: r.pot1_pts+r.pot2_pts+r.pot3_pts+r.pot4_pts+r.pot5_pts+r.pot6_pts,
+      best: Math.max(r.pot1_pts,r.pot2_pts,r.pot3_pts,r.pot4_pts,r.pot5_pts,r.pot6_pts)
+    })).sort((a,b) => b.total-a.total || b.best-a.best);
+
+    $('buster-lb').innerHTML = `
+      <div style="overflow-x:auto">
+        <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:520px">
+          <thead><tr>
+            <th style="text-align:center;width:48px">Pos</th>
+            <th style="text-align:left;padding-left:12px">Player</th>
+            <th title="Pot 1 — Elite">P1</th>
+            <th title="Pot 2 — Contenders">P2</th>
+            <th title="Pot 3 — Challengers">P3</th>
+            <th title="Pot 4 — Dark Horses">P4</th>
+            <th title="Pot 5 — Underdogs">P5</th>
+            <th title="Pot 6 — Minnows">P6</th>
+            <th>Total</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map((row,i) => `
+              <tr>
+                <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+                  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+                </td>
+                <td style="font-weight:600;text-align:left;padding-left:12px">${row.username}</td>
+                <td title="${row.pot1_team}">${row.pot1_pts}</td>
+                <td title="${row.pot2_team}">${row.pot2_pts}</td>
+                <td title="${row.pot3_team}">${row.pot3_pts}</td>
+                <td title="${row.pot4_team}">${row.pot4_pts}</td>
+                <td title="${row.pot5_team}">${row.pot5_pts}</td>
+                <td title="${row.pot6_team}">${row.pot6_pts}</td>
+                <td class="pts-cell">${row.total}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Hover P1–P6 to see team names</p>`;
+  } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
 }
 
 /* ============================================================
@@ -2633,12 +2868,12 @@ const STAGE_LABELS = {
 };
 
 async function renderBuster() {
-  const params = new URLSearchParams(location.search);
-  const token = params.get('token');
+  const session = getSession();
 
   app().innerHTML = `
     <div class="page-title-bar">
-      <div class="wrap">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?comps=1" style="padding:0;font-size:0.9rem">← Competition Hub</a>
         <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
       </div>
     </div>
@@ -2649,36 +2884,22 @@ async function renderBuster() {
     </div>`;
 
   /* Need to be logged in */
-  if (!token) {
+  if (!session) {
     $('buster-content').innerHTML = `
       <div class="info-card" style="max-width:480px;margin:0 auto;text-align:center;padding:32px">
         <div style="font-size:2.5rem;margin-bottom:12px">🎲</div>
-        <h3 style="margin-bottom:8px">Buster Competition</h3>
+        <h3 style="margin-bottom:8px">Login Required</h3>
         <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.9rem">
-          Pick one team from each of the 6 pots. Score points as your teams progress through the tournament!
+          Please login via the Competition Hub to enter the Buster competition.
         </p>
-        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-          You need to be logged in via the Predictions page first to enter.
-        </p>
-        <a class="hero-cta" href="./?predict=1" style="display:inline-flex;justify-content:center;width:100%">
-          Login via Predictions →
+        <a class="hero-cta" href="./?comps=1" style="display:inline-flex;justify-content:center;width:100%">
+          Go to Competition Hub →
         </a>
       </div>`;
     return;
   }
 
-  /* Load user */
-  const userRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?token=eq.${token}&select=*`,
-    { headers: sbHeaders }
-  ).then(r => r.json());
-
-  if (!userRes.length) {
-    $('buster-content').innerHTML = `<p>Invalid link. <a href="?predict=1">Login again</a>.</p>`;
-    return;
-  }
-
-  const user = userRes[0];
+  const user = session;
   const locked = isPastCutoff();
 
   /* Load existing picks */
