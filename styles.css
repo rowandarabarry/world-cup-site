@@ -197,7 +197,9 @@ a { color: inherit; }
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 20%;
+    object-position: center center;
+    transform: scale(1.3) translate(-5%, -8%);
+    transform-origin: center center;
   }
 }
 .hero-site-name span { color: var(--teal); }
