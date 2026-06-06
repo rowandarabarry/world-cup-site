@@ -1527,9 +1527,8 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
     const aFlag    = flagCode(fix.away_team || fix.away);
     const homeTeam = fix.home_team || fix.home;
     const awayTeam = fix.away_team || fix.away;
-    /* Only show ET picker if there's actually a score entered (non-zero sum or explicit draw) */
-    const hasScore = saved != null;
-    const isDraw   = hasScore && parseInt(hScore) === parseInt(aScore);
+    /* Always show ET picker — 0-0 is a valid score */
+    const isDraw = true;
 
     return `
       <div class="pred-match-card" id="pred-${fix.matchId}"
@@ -1901,32 +1900,39 @@ function onPredChange() {
 function cascadeKnockouts() {
   if (!window._predTeams || !window._results || !window._r32Fixtures) return;
 
-  /* Build pred map: DOM inputs take priority, fall back to saved preds */
+  /* Capture ALL current DOM scores into a unified pred map */
+  const domPreds = [];
+  document.querySelectorAll('.pred-match-card[id^="pred-"]').forEach(card => {
+    const matchId = parseInt(card.id.replace('pred-', ''));
+    if (isNaN(matchId)) return;
+    const hInput = document.getElementById(`ph-${matchId}`);
+    const aInput = document.getElementById(`pa-${matchId}`);
+    const etSel  = document.getElementById(`et-sel-${matchId}`);
+    if (hInput) {
+      domPreds.push({
+        match_id: matchId, matchId,
+        home_score: parseInt(hInput.value ?? 0),
+        away_score: parseInt(aInput?.value ?? 0),
+        homeScore:  parseInt(hInput.value ?? 0),
+        awayScore:  parseInt(aInput?.value ?? 0),
+        et_winner:  etSel?.value || null,
+        etWinner:   etSel?.value || null,
+      });
+    }
+  });
+
+  /* Merge DOM preds with saved preds (DOM takes priority) */
   const savedMap = {};
   (window._savedPreds || []).forEach(p => { savedMap[p.match_id] = p; });
+  domPreds.forEach(p => { savedMap[p.matchId] = p; });
+  const allPreds = Object.values(savedMap);
 
   const getPred = (matchId) => {
-    const domH = $(`ph-${matchId}`);
-    const domA = $(`pa-${matchId}`);
-    const domET = $(`et-sel-${matchId}`);
-    /* If the input is on the page, use its current value */
-    if (domH) {
-      const hs = parseInt(domH.value ?? 0);
-      const as_ = parseInt(domA?.value ?? 0);
-      return {
-        matchId, match_id: matchId,
-        homeScore: hs, awayScore: as_,
-        home_score: hs, away_score: as_,
-        etWinner: domET?.value || null,
-        et_winner: domET?.value || null,
-      };
-    }
-    /* Otherwise use saved pred */
-    const s = savedMap[matchId];
-    if (s) return { matchId, match_id: matchId,
-      homeScore: s.home_score, awayScore: s.away_score,
-      home_score: s.home_score, away_score: s.away_score,
-      etWinner: s.et_winner, et_winner: s.et_winner };
+    const p = savedMap[matchId];
+    if (p) return { ...p, matchId, match_id: matchId,
+      homeScore: p.home_score ?? p.homeScore ?? 0,
+      awayScore: p.away_score ?? p.awayScore ?? 0,
+      etWinner: p.et_winner ?? p.etWinner ?? null };
     return { matchId, match_id: matchId, homeScore:0, awayScore:0, home_score:0, away_score:0 };
   };
 
@@ -1952,12 +1958,10 @@ function cascadeKnockouts() {
   const sfEl   = $('sf-matches');
   const finEl  = $('final-matches');
 
-  /* Pass saved preds so previously entered scores are preserved */
-  const saved = window._savedPreds || [];
-  if (r16El)  r16El.innerHTML  = renderPredictionSection(r16Fixtures,   saved, locked);
-  if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    saved, locked);
-  if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    saved, locked);
-  if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, saved, locked);
+  if (r16El)  r16El.innerHTML  = renderPredictionSection(r16Fixtures,   allPreds, locked);
+  if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    allPreds, locked);
+  if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    allPreds, locked);
+  if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, allPreds, locked);
 }
 
 /* onPredChange — cascade knockout fixtures when any knockout score changes */
@@ -1967,25 +1971,29 @@ function onPredChange() {
 
 /* Show/hide ET winner picker when knockout score changes */
 function onKnockoutChange(matchId) {
-  const hVal = parseInt($(`ph-${matchId}`)?.value ?? '');
-  const aVal = parseInt($(`pa-${matchId}`)?.value ?? '');
-  const etRow = $(`et-${matchId}`);
-  const etSel = $(`et-sel-${matchId}`);
-  const card  = document.getElementById(`pred-${matchId}`);
+  const hInput = $(`ph-${matchId}`);
+  const aInput = $(`pa-${matchId}`);
+  const etRow  = $(`et-${matchId}`);
+  const etSel  = $(`et-sel-${matchId}`);
+  const card   = document.getElementById(`pred-${matchId}`);
   if (!etRow || !card) return;
+
+  const hVal = parseInt(hInput?.value ?? '');
+  const aVal = parseInt(aInput?.value ?? '');
 
   const homeTeam = card.dataset.home || '';
   const awayTeam = card.dataset.away || '';
 
-  /* Update team names in ET picker in case they changed */
+  /* Update team names in ET picker */
   if (etSel.options[1]) { etSel.options[1].value = homeTeam; etSel.options[1].text = homeTeam; }
   if (etSel.options[2]) { etSel.options[2].value = awayTeam; etSel.options[2].text = awayTeam; }
 
-  if (!isNaN(hVal) && !isNaN(aVal) && hVal === aVal) {
-    etRow.style.display = 'flex';
-  } else {
+  /* Show ET picker only when score is a draw */
+  if (!isNaN(hVal) && !isNaN(aVal) && hVal !== aVal) {
     etRow.style.display = 'none';
     etSel.value = '';
+  } else {
+    etRow.style.display = 'flex';
   }
   cascadeKnockouts();
 }
