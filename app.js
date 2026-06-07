@@ -9,6 +9,19 @@
 
 const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match
 
+
+/* Convert UTC time string to Irish Standard Time (UTC+1 in summer) */
+function toIST(utcTimeStr) {
+  const timeMap = {
+    '12pm': '1pm', '1pm': '2pm', '2pm': '3pm', '3pm': '4pm',
+    '4pm': '5pm', '5pm': '6pm', '6pm': '7pm', '7pm': '8pm',
+    '8pm': '9pm', '9pm': '10pm', '10pm': '11pm', '11pm': '12am',
+    '12am': '1am', '1am': '2am', '2am': '3am', '3am': '4am',
+    '4am': '5am', '5am': '6am', '6am': '7am', '7am': '8am',
+    '8am': '9am', '9am': '10am', '10am': '11am', '11am': '12pm',
+  };
+  return timeMap[utcTimeStr?.toLowerCase()] || utcTimeStr;
+}
 const BUSTER_POTS = [
   { pot: 1, label: 'Elite',       desc: 'Tournament favourites',              teams: ['France','Brazil','England','Argentina','Spain','Germany','Portugal','Netherlands'] },
   { pot: 2, label: 'Contenders',  desc: 'Strong teams who could win it',      teams: ['Belgium','Uruguay','Colombia','Morocco','Croatia','United States','Mexico','Japan'] },
@@ -931,14 +944,18 @@ async function loadAdminPanel() {
           <div class="admin-match-teams">
             <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
             <span class="admin-team-name">${m.home_team}</span>
-            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="0">
+            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="${m.home_score ?? 0}" style="${m.status==='Played'?'border-color:var(--teal)':''}">
             <span class="admin-vs">–</span>
-            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="0">
+            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="${m.away_score ?? 0}" style="${m.status==='Played'?'border-color:var(--teal)':''}">
             <span class="admin-team-name">${m.away_team}</span>
             <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
           <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
-          <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span><button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
+          <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span>
+          <button class="admin-save-btn" onclick="saveResult(${m.match_id})"
+            style="${m.status==='Played'?'background:var(--teal-dark)':''}">
+            ${m.status==='Played'?'Update':'Save'} Result
+          </button>
           <span class="admin-saved" id="saved-${m.match_id}" style="display:none">✅ Saved!</span>
         </div>`).join('')}
 
@@ -1178,6 +1195,7 @@ function flagCode(team) {
     else if (params.has('buster'))     { await renderBuster();                 }
     else if (params.has('review'))     { await renderReview();                 }
     else if (params.has('blog'))       { await renderBlog();                   }
+    else if (params.has('about'))      { await renderAbout();                  }
     else if (params.get('team'))       { await renderTeam(params.get('team')); }
     else if (params.has('teams'))      { await renderList();                   }
     else                               { renderHome();                         }
@@ -1261,7 +1279,8 @@ function flagCode(team) {
       (page === 'leaderboard' && params.has('leaderboard')) ||
       (page === 'blog'        && params.has('blog')) ||
       (page === 'comps'       && params.has('comps')) ||
-      (page === 'review'      && params.has('review'));
+      (page === 'review'      && params.has('review')) ||
+      (page === 'about'       && params.has('about'));
     if (isActive) item.classList.add('active');
   });
 
@@ -1304,7 +1323,7 @@ async function usernameToToken(username) {
 }
 
 /* Register a new user */
-async function registerUser(username, password) {
+async function registerUser(username, password, name = '') {
   const token         = await usernameToToken(username);
   const password_hash = await sha256(password + 'wc2026pw');
 
@@ -1318,7 +1337,7 @@ async function registerUser(username, password) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
     method: 'POST',
     headers: { ...sbHeaders, 'Prefer': 'return=representation' },
-    body: JSON.stringify({ username, password_hash, token })
+    body: JSON.stringify({ username, password_hash, token, name: name || username })
   });
   const data = await res.json();
   if (!data[0]) throw new Error('Registration failed — please try again.');
@@ -1725,21 +1744,32 @@ async function renderPredict() {
     .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
   const finalFixtures = generateFinal(sfFixtures, sfPreds);
 
-  const cutoffStr = CUTOFF.toLocaleDateString('en-GB', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+  const cutoffDate = new Date(CUTOFF.getTime() + 60*60*1000); // +1hr for IST
+    const cutoffStr = cutoffDate.toLocaleDateString('en-GB', { day:'numeric', month:'long' }) + ' at ' +
+      cutoffDate.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) + ' (Irish time)';
 
   app().innerHTML = `
     <div class="page-title-bar">
-      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div class="wrap">
         <h1 class="page-title">🎯 <span>${user.username}'s</span> Predictions</h1>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      </div>
+    </div>
+    <div class="${locked ? 'comp-status-bar locked' : 'comp-status-bar'}">
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 0">
+        <div style="display:flex;align-items:center;gap:10px">
           ${locked
-            ? `<span class="tag" style="background:#e63200;color:#fff;font-size:0.85rem">Locked</span>`
-            : `<span style="font-size:0.8rem;color:rgba(255,255,255,0.6)">Locks ${cutoffStr}</span>`}
-          ${!locked ? `<button onclick="confirmResetPredictions('${user.id}')"
-            style="padding:7px 14px;border:2px solid #e63200;border-radius:999px;background:none;color:#e63200;font-weight:700;font-size:0.75rem;cursor:pointer;font-family:var(--font-body)">
-            🗑️ Reset
+            ? `<span style="font-size:1.1rem">🔒</span><strong style="font-size:0.95rem">Predictions are locked</strong>`
+            : `<span style="font-size:1.1rem">⏰</span><strong style="font-size:0.95rem">Locks ${cutoffStr}</strong>`}
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          ${!locked ? `
+          <button onclick="confirmResetPredictions('${user.id}')"
+            class="comp-action-btn danger">
+            🗑️ Reset My Predictions
           </button>` : ''}
-          <button onclick="compLogout()" class="comp-logout-btn">Log out</button>
+          <button onclick="compLogout()" class="comp-action-btn">
+            👋 Log Out
+          </button>
         </div>
       </div>
     </div>
@@ -2315,12 +2345,31 @@ async function renderLeaderboard() {
 }
 
 /* ============================================================
-   UNIVERSAL COMP LOGIN PAGE
+   UNIVERSAL COMP LOGIN PAGE — tabbed Login / Register
    ============================================================ */
 function renderCompLogin(redirectPage = 'comps') {
   const pageLabels = {
-    predict: 'Score Predictions', buster: 'Buster Competition', comps: 'Competition Hub'
+    predict: 'Score Predictions', buster: 'Busters Comp', comps: 'Competition Hub'
   };
+  const scoring = redirectPage === 'predict' ? `
+    <div class="info-card" style="max-width:560px;margin:20px auto 0">
+      <h3 style="margin-bottom:14px">🎯 How Score Predictions Works</h3>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Correct group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4/2 pts</span></div>
+        <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·7·10·15·20</span></div>
+      </div>
+    </div>` : redirectPage === 'buster' ? `
+    <div class="info-card" style="max-width:560px;margin:20px auto 0">
+      <h3 style="margin-bottom:14px">🎲 How the Busters Comp Works</h3>
+      <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">Pick one team from each of 6 pots. Score points based on how far each team goes.</p>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="fact-row"><span class="fact-label">Group Winner / 2nd / 3rd</span><span class="fact-value" style="color:var(--teal)">3/2/1 pts</span></div>
+        <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·8·12·17·25</span></div>
+      </div>
+    </div>` : '';
+
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap">
@@ -2330,114 +2379,76 @@ function renderCompLogin(redirectPage = 'comps') {
     <div class="section">
       <div class="wrap">
         <div class="info-card comp-login-card">
-          <h3 style="margin-bottom:4px">Login or Register</h3>
-          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-            One login for all competitions — use the same username and password everywhere.
-          </p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-            <div>
-              <label class="form-label">Username</label>
-              <input class="form-input" id="comp-username" placeholder="yourname" autocomplete="off"
-                onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+          <div class="comp-login-tabs">
+            <button class="comp-tab active" id="tab-login" onclick="switchCompTab('login')">Login</button>
+            <button class="comp-tab" id="tab-register" onclick="switchCompTab('register')">Register</button>
+          </div>
+
+          <!-- Login Panel -->
+          <div id="panel-login">
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+              Welcome back — enter your details to access your picks.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div>
+                <label class="form-label">Username</label>
+                <input class="form-input" id="comp-username" placeholder="yourname" autocomplete="off"
+                  onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+              </div>
+              <div>
+                <label class="form-label">Password</label>
+                <input class="form-input" id="comp-password" type="password" placeholder="••••"
+                  onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+              </div>
             </div>
-            <div>
+            <button class="hero-cta" onclick="compLogin('${redirectPage}')" style="width:100%;justify-content:center">Login →</button>
+            <p style="color:var(--text-muted);font-size:0.78rem;margin-top:12px;text-align:center">
+              Forgotten your password? Contact the admin to reset it.
+            </p>
+          </div>
+
+          <!-- Register Panel -->
+          <div id="panel-register" style="display:none">
+            <p style="color:var(--teal);font-size:0.875rem;font-weight:700;margin-bottom:4px">✅ No email address required</p>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:18px">
+              Just pick a username and password to get started.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label class="form-label">Your Name</label>
+                <input class="form-input" id="comp-name" placeholder="e.g. John Barry" autocomplete="off">
+              </div>
+              <div>
+                <label class="form-label">Username <span style="font-weight:400;color:var(--text-muted)">(one word)</span></label>
+                <input class="form-input" id="comp-reg-username" placeholder="e.g. johnb" autocomplete="off">
+              </div>
+            </div>
+            <div style="margin-bottom:14px">
               <label class="form-label">Password</label>
-              <input class="form-input" id="comp-password" type="password" placeholder="••••"
-                onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
+              <input class="form-input" id="comp-reg-password" type="password" placeholder="At least 4 characters"
+                onkeydown="if(event.key==='Enter') compRegister('${redirectPage}')">
             </div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="hero-cta" onclick="compLogin('${redirectPage}')" style="flex:1;justify-content:center">
-              Login →
-            </button>
-            <button class="admin-save-btn" onclick="compRegister('${redirectPage}')"
-              style="flex:1;padding:14px;font-size:1rem">
-              Register
+            <button class="hero-cta" onclick="compRegister('${redirectPage}')" style="width:100%;justify-content:center">
+              Create Account →
             </button>
           </div>
+
           <p id="comp-login-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
-          <p style="color:var(--text-muted);font-size:0.78rem;margin-top:12px;text-align:center">
-            Forgotten your password? Contact the admin to reset it.
-          </p>
         </div>
-
-        <!-- Scoring rules for this competition -->
-        ${redirectPage === 'predict' ? `
-        <div class="info-card" style="max-width:560px;margin:20px auto 0">
-          <h3 style="margin-bottom:14px">🎯 How Score Predictions Works</h3>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Correct qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
-          </div>
-        </div>` : redirectPage === 'buster' ? `
-        <div class="info-card" style="max-width:560px;margin:20px auto 0">
-          <h3 style="margin-bottom:14px">🎲 How the Buster Works</h3>
-          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">
-            Pick one team from each of 6 pots. Score points based on how far each team goes.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div class="fact-row"><span class="fact-label">Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
-            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
-          </div>
-        </div>` : ''}
+        ${scoring}
       </div>
     </div>`;
 }
-function compLoginWidget(redirectPage = 'comps') {
-  const session = getSession();
-  if (session) {
-    return `
-      <div class="comp-session-bar">
-        <span>👋 Logged in as <strong>${session.username}</strong></span>
-        <button class="comp-logout-btn" onclick="compLogout()">Log out</button>
-      </div>`;
-  }
-  return `
-    <div class="info-card comp-login-card">
-      <h3 style="margin-bottom:16px">Login to Enter Competitions</h3>
-      <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-        Use your username and password — or register if you haven't already.
-      </p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-        <div>
-          <label class="form-label">Username</label>
-          <input class="form-input" id="comp-username" placeholder="yourname">
-        </div>
-        <div>
-          <label class="form-label">Password</label>
-          <input class="form-input" id="comp-password" type="password" placeholder="••••">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="hero-cta" onclick="compLogin('${redirectPage}')" style="flex:1;justify-content:center">
-          Login →
-        </button>
-        <button class="admin-save-btn" onclick="compRegister('${redirectPage}')" style="flex:1">
-          Register
-        </button>
-      </div>
-      <p id="comp-login-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
-    </div>`;
-}
 
-function compLogout() {
-  clearSession();
-  location.reload();
+function switchCompTab(tab) {
+  const err = document.getElementById('comp-login-error');
+  if (err) err.style.display = 'none';
+  const isLogin = tab === 'login';
+  document.getElementById('panel-login').style.display    = isLogin ? '' : 'none';
+  document.getElementById('panel-register').style.display = isLogin ? 'none' : '';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-register').classList.toggle('active', !isLogin);
 }
-
 async function compLogin(redirectPage) {
   const username = $('comp-username')?.value.trim();
   const password = $('comp-password')?.value.trim();
@@ -2456,14 +2467,16 @@ async function compLogin(redirectPage) {
 }
 
 async function compRegister(redirectPage) {
-  const username = $('comp-username')?.value.trim();
-  const password = $('comp-password')?.value.trim();
-  const err = $('comp-login-error');
+  const name     = $('comp-name')?.value.trim();
+  const username = $('comp-reg-username')?.value.trim();
+  const password = $('comp-reg-password')?.value.trim();
+  const err      = $('comp-login-error');
+  if (!name) { err.textContent = 'Please enter your name.'; err.style.display='block'; return; }
   if (!username || username.length < 3) { err.textContent = 'Username must be at least 3 characters, no spaces.'; err.style.display='block'; return; }
-  if (!password || password.length < 4) { err.textContent = 'Password must be at least 4 characters.'; err.style.display='block'; return; }
   if (/\s/.test(username)) { err.textContent = 'Username cannot contain spaces.'; err.style.display='block'; return; }
+  if (!password || password.length < 4) { err.textContent = 'Password must be at least 4 characters.'; err.style.display='block'; return; }
   try {
-    const user = await registerUser(username, password);
+    const user = await registerUser(username, password, name);
     setSession(user);
     const dest = redirectPage === 'predict' ? '?predict=1' :
                  redirectPage === 'buster'  ? '?buster=1'  : '?comps=1';
@@ -2618,6 +2631,129 @@ function renderScoring(which) {
 }
 
 /* ============================================================
+   ABOUT PAGE
+   ============================================================ */
+async function renderAbout() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap">
+        <h1 class="page-title">About <span>This Site</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" style="max-width:680px">
+
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:12px">⚽ What is Rowan's World Cup Zone?</h3>
+          <p style="color:var(--text-mid);line-height:1.8;font-size:0.95rem">
+            This is a family and friends hub for the FIFA World Cup 2026, built so everyone
+            can follow the tournament together, enter friendly competitions, and keep up with
+            Rowan's match-by-match thoughts and predictions.
+          </p>
+          <p style="color:var(--text-mid);line-height:1.8;font-size:0.95rem;margin-top:12px">
+            The site covers all 48 teams, 104 matches across the group stage and knockout rounds,
+            live standings, a score predictions competition, the Busters team picks competition,
+            and Rowan's own tournament reviews and blog.
+          </p>
+        </div>
+
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:14px">🛠️ Built With</h3>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="fact-row">
+              <span class="fact-label">Frontend</span>
+              <span class="fact-value" style="color:var(--text-mid)">HTML, CSS, Vanilla JavaScript</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Hosting</span>
+              <span class="fact-value" style="color:var(--text-mid)">GitHub Pages</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Database</span>
+              <span class="fact-value" style="color:var(--text-mid)">Supabase (PostgreSQL)</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Analytics</span>
+              <span class="fact-value" style="color:var(--text-mid)">GoatCounter</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Maps</span>
+              <span class="fact-value" style="color:var(--text-mid)">Leaflet.js</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Built with</span>
+              <span class="fact-value" style="color:var(--text-mid)">Claude AI (Anthropic)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h3 style="margin-bottom:14px">💬 Feedback</h3>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
+            Found a bug? Have an idea? Just want to say something? Let us know!
+          </p>
+          <div class="form-group">
+            <label class="form-label">Your Name</label>
+            <input class="form-input" id="fb-name" placeholder="e.g. John Barry">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="fb-type">
+              <option value="feedback">💬 General Feedback</option>
+              <option value="bug">🐛 Bug Report</option>
+              <option value="idea">💡 Idea / Suggestion</option>
+              <option value="other">📝 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-textarea" id="fb-message" rows="4" placeholder="Tell us what's on your mind…"></textarea>
+          </div>
+          <button class="hero-cta" onclick="submitFeedback()" style="width:100%;justify-content:center">
+            Send Feedback →
+          </button>
+          <p id="fb-success" style="display:none;color:var(--teal);font-weight:600;margin-top:12px;text-align:center">
+            ✅ Thanks for your feedback!
+          </p>
+          <p id="fb-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function submitFeedback() {
+  const name    = $('fb-name')?.value.trim();
+  const type    = $('fb-type')?.value;
+  const message = $('fb-message')?.value.trim();
+  const err     = $('fb-error');
+
+  if (!name)    { err.textContent = 'Please enter your name.';    err.style.display='block'; return; }
+  if (!message) { err.textContent = 'Please enter a message.';    err.style.display='block'; return; }
+
+  /* Save to Supabase blog_posts table as a feedback entry */
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({
+      title: `[FEEDBACK] ${type} from ${name}`,
+      content: message,
+      post_type: 'general',
+      published: false  /* not shown publicly */
+    })
+  }).then(r => r.ok).catch(() => false);
+
+  if (ok) {
+    $('fb-name').value = '';
+    $('fb-message').value = '';
+    err.style.display = 'none';
+    $('fb-success').style.display = 'block';
+  } else {
+    err.textContent = 'Could not send feedback. Please try again.';
+    err.style.display = 'block';
+  }
+}
+
+/* ============================================================
    LEADERBOARD HUB
    ============================================================ */
 async function renderLeaderboard() {
@@ -2686,7 +2822,7 @@ async function renderLeaderboardPredictions() {
         <tbody>
           ${data.map((row,i) => `
             <tr>
-              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
                 ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
               </td>
               <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
@@ -2790,13 +2926,13 @@ async function renderReview() {
     const r = data[0] || {};
 
     const fields = [
-      { key:'winner_pick',       label:'My Winner Pick',     icon:'🏆', desc:'Who I think will lift the trophy' },
-      { key:'fav_team',          label:'Favourite Team',     icon:'❤️', desc:'The team I\'m supporting' },
-      { key:'player_to_watch',   label:'Player to Watch',    icon:'⭐', desc:'The standout player of the tournament' },
-      { key:'team_to_watch',     label:'Team to Watch',      icon:'👀', desc:'The most exciting team to follow' },
-      { key:'dark_horse',        label:'Dark Horse',         icon:'🐴', desc:'Could go further than anyone expects' },
-      { key:'early_exit',        label:'Shock Early Exit',   icon:'😬', desc:'The big name who won\'t make it far' },
-      { key:'golden_boot',       label:'Golden Boot Pick',   icon:'👟', desc:'Top scorer of the tournament' },
+      { key:'winner_pick',       label:'My Winner Pick',     icon:'🏆', desc:'Who I think will lift the trophy',         notesKey:'winner_notes'  },
+      { key:'fav_team',          label:'Favourite Team',     icon:'❤️', desc:'The team I\'m supporting',                 notesKey:'fav_notes'     },
+      { key:'player_to_watch',   label:'Player to Watch',    icon:'⭐', desc:'The standout player of the tournament',    notesKey:'player_notes'  },
+      { key:'team_to_watch',     label:'Team to Watch',      icon:'👀', desc:'The most exciting team to follow',         notesKey:'team_notes'    },
+      { key:'dark_horse',        label:'Dark Horse',         icon:'🐴', desc:'Could go further than anyone expects',     notesKey:'horse_notes'   },
+      { key:'early_exit',        label:'Shock Early Exit',   icon:'😬', desc:'The big name who won\'t make it far',      notesKey:'exit_notes'    },
+      { key:'golden_boot',       label:'Golden Boot Pick',   icon:'👟', desc:'Top scorer of the tournament',            notesKey:'boot_notes'    },
     ];
 
     const hasContent = fields.some(f => r[f.key]);
@@ -2815,6 +2951,7 @@ async function renderReview() {
               <span class="review-card-label">${f.label}</span>
               <div class="review-card-value">${r[f.key]}</div>
               <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">${f.desc}</div>
+              ${r[f.notesKey] ? `<div style="font-size:0.875rem;color:var(--text-mid);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);line-height:1.6;white-space:pre-wrap">${r[f.notesKey]}</div>` : ''}
             </div>`).join('')}
         </div>
         ${r.overall_thoughts ? `
@@ -3102,28 +3239,26 @@ async function renderReviewAdminForm() {
   const r = data[0] || {};
 
   const fields = [
-    { key:'winner_pick',     label:'Winner Pick'       },
-    { key:'fav_team',        label:'Favourite Team'    },
-    { key:'player_to_watch', label:'Player to Watch'   },
-    { key:'team_to_watch',   label:'Team to Watch'     },
-    { key:'dark_horse',      label:'Dark Horse'        },
-    { key:'early_exit',      label:'Shock Early Exit'  },
-    { key:'golden_boot',     label:'Golden Boot Pick'  },
+    { key:'winner_pick',     label:'Winner Pick',       notesKey:'winner_notes'  },
+    { key:'fav_team',        label:'Favourite Team',    notesKey:'fav_notes'     },
+    { key:'player_to_watch', label:'Player to Watch',   notesKey:'player_notes'  },
+    { key:'team_to_watch',   label:'Team to Watch',     notesKey:'team_notes'    },
+    { key:'dark_horse',      label:'Dark Horse',        notesKey:'horse_notes'   },
+    { key:'early_exit',      label:'Shock Early Exit',  notesKey:'exit_notes'    },
+    { key:'golden_boot',     label:'Golden Boot Pick',  notesKey:'boot_notes'    },
   ];
 
   return `
     ${fields.map(f => `
-      <div class="form-group">
-        <label class="form-label">${f.label}</label>
-        <input class="form-input" id="rev-${f.key}" value="${r[f.key] || ''}" placeholder="${f.label}">
+      <div class="form-group" style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+        <label class="form-label" style="font-size:0.9rem;color:var(--purple-dark)">${f.label}</label>
+        <input class="form-input" id="rev-${f.key}" value="${r[f.key] || ''}" placeholder="e.g. France" style="margin-bottom:8px">
+        <textarea class="form-textarea" id="rev-${f.notesKey}" rows="3"
+          placeholder="Rowan's thoughts on this pick…" style="min-height:70px">${r[f.notesKey] || ''}</textarea>
       </div>`).join('')}
     <div class="form-group">
       <label class="form-label">Overall Thoughts</label>
       <textarea class="form-textarea" id="rev-overall_thoughts" rows="5">${r.overall_thoughts || ''}</textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Rowan's Comments (free text — shown publicly on Review page)</label>
-      <textarea class="form-textarea" id="rev-rowan_comments" rows="8" placeholder="Write anything here — tournament diary, match thoughts, reactions as the tournament unfolds…">${r.rowan_comments || ''}</textarea>
     </div>
     <button class="admin-save-btn" onclick="adminSaveReview()">Save Review</button>
     <span id="review-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:12px">✅ Saved!</span>`;
@@ -3267,7 +3402,9 @@ async function adminDeletePost(id) {
 
 async function adminSaveReview() {
   const fields = ['winner_pick','fav_team','player_to_watch','team_to_watch',
-                  'dark_horse','early_exit','golden_boot','overall_thoughts','rowan_comments'];
+                  'dark_horse','early_exit','golden_boot','overall_thoughts',
+                  'winner_notes','fav_notes','player_notes','team_notes',
+                  'horse_notes','exit_notes','boot_notes'];
   const data = {};
   fields.forEach(f => { data[f] = $(`rev-${f}`)?.value.trim() || null; });
 
@@ -3392,8 +3529,17 @@ async function renderBuster() {
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <a class="back-link" href="./?comps=1" style="padding:0;font-size:0.9rem">← Competition Hub</a>
-        <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
-        <button onclick="compLogout()" class="comp-logout-btn" style="margin-left:auto">Log out</button>
+        <h1 class="page-title">🎲 <span>Busters Comp</span></h1>
+      </div>
+    </div>
+    <div class="${locked ? 'comp-status-bar locked' : 'comp-status-bar'}">
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 0">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${locked
+            ? `<span style="font-size:1.1rem">🔒</span><strong style="font-size:0.95rem">Buster picks are locked</strong>`
+            : `<span style="font-size:1.1rem">⏰</span><strong style="font-size:0.95rem">Locks 1 hour before tournament kickoff (Irish time)</strong>`}
+        </div>
+        <button onclick="compLogout()" class="comp-action-btn">👋 Log Out</button>
       </div>
     </div>
     <div class="section">
@@ -3609,10 +3755,11 @@ async function renderAdminBuster() {
 
   return `
     <h2 class="section-title" style="margin:40px 0 16px">🎲 <span>Buster — Team Progress</span></h2>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:8px">Update stages manually or use the auto-calculation from results. Click Save All when done.</p>
     <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
       Update each team's furthest stage reached. Buster scores update automatically.
     </p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px">
       ${progress.map(p => `
         <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;gap:8px">
           <span style="font-weight:600;font-size:0.875rem;flex:1;color:var(--text-dark)">${p.team_name}</span>
@@ -3622,7 +3769,29 @@ async function renderAdminBuster() {
             ${stages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
           </select>
         </div>`).join('')}
+    </div>
+    <div style="margin-top:16px">
+      <button class="hero-cta" id="buster-save-all-btn" onclick="adminSaveAllBusterProgress()"
+        style="background:var(--gold);color:var(--navy);box-shadow:none;padding:12px 32px">
+        💾 Save All Progress
+      </button>
     </div>`;
+}
+
+async function adminSaveAllBusterProgress() {
+  const btn = $('buster-save-all-btn');
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  const selects = document.querySelectorAll('[id^="prog-"]');
+  const updates = Array.from(selects).map(sel => {
+    const teamName = sel.id.replace('prog-','').replace(/_/g,' ');
+    return fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(teamName)}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ best_stage: sel.value, updated_at: new Date().toISOString() })
+    });
+  });
+  await Promise.all(updates);
+  if (btn) { btn.textContent = '✅ All Saved!'; setTimeout(() => { btn.textContent = '💾 Save All Progress'; btn.disabled = false; }, 2000); }
 }
 
 async function updateTeamProgress(teamName, stage) {
