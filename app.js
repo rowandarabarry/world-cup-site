@@ -33,7 +33,7 @@ const BUSTER_POTS = [
 
 const BUSTER_POINTS = {
   winner: 25, final: 17, sf: 12, qf: 8,
-  r16: 5, best_third: 1, group_second: 2, group_winner: 3, eliminated: 0
+  r16: 5, best_third: 1, group_second: 2, group_winner: 4, eliminated: 0
 };
 
 const STAGE_LABELS = {
@@ -2369,7 +2369,7 @@ function renderCompLogin(redirectPage = 'comps') {
       <h3 style="margin-bottom:14px">🎲 How the Busters Comp Works</h3>
       <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">Pick one team from each of 6 pots. Score points based on how far each team goes.</p>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="fact-row"><span class="fact-label">Group Winner / 2nd / 3rd</span><span class="fact-value" style="color:var(--teal)">3/2/1 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Group Winner / 2nd / 3rd</span><span class="fact-value" style="color:var(--teal)">4/2/1 pts</span></div>
         <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·8·12·17·25</span></div>
       </div>
     </div>` : '';
@@ -2599,21 +2599,26 @@ function renderScoring(which) {
         <div class="info-card" style="margin-bottom:20px">
           <h3 style="margin-bottom:14px">Match Predictions</h3>
           <div style="display:flex;flex-direction:column;gap:0">
-            <div class="fact-row"><span class="fact-label">⚽ Exact correct score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">✅ Correct outcome (wrong score)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">⚽ Exact score — same teams, same scoreline</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✅ Correct outcome — right team wins/draws/loses</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
             <div class="fact-row"><span class="fact-label">❌ Wrong outcome</span><span class="fact-value" style="color:var(--text-muted)">0 pts</span></div>
+          </div>
+          <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;font-size:0.82rem;color:var(--text-mid)">
+            In knockout rounds — 2pts if the team you predicted to win actually progresses, regardless of who they played or how they qualified.
           </div>
         </div>
         <div class="info-card" style="margin-bottom:20px">
           <h3 style="margin-bottom:14px">Group Stage Bonuses</h3>
           <div style="display:flex;flex-direction:column;gap:0">
             <div class="fact-row"><span class="fact-label">🥇 Correct group winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
-            <div class="fact-row"><span class="fact-label">✔️ Correct qualifier (any position)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✔️ Correct qualifier (any position — 1st, 2nd or best 3rd)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
           </div>
         </div>
         <div class="info-card">
-          <h3 style="margin-bottom:14px">Knockout Stage Bonuses</h3>
-          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Points for each team you correctly predict to reach that stage</p>
+          <h3 style="margin-bottom:14px">Knockout Progression Bonuses</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">
+            Points awarded if a team you predicted reaches that stage — regardless of the route they took to get there.
+          </p>
           <div style="display:flex;flex-direction:column;gap:0">
             <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
             <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
@@ -2622,8 +2627,7 @@ function renderScoring(which) {
             <div class="fact-row"><span class="fact-label">🏆 Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
           </div>
           <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:12px;margin-top:14px;font-size:0.82rem;color:var(--text-mid)">
-            <strong>Example:</strong> Predict Spain to win the World Cup and they do:
-            5 + 7 + 10 + 15 + 20 = <strong style="color:var(--teal)">57 pts</strong> from knockout bonuses alone
+            <strong>Example:</strong> You predicted Spain to win the World Cup. They qualify as runners-up but go all the way — you still get: 5+7+10+15+20 = <strong style="color:var(--teal)">57 pts</strong>
           </div>
         </div>` : `
         <div class="info-card" style="margin-bottom:20px">
@@ -2644,9 +2648,9 @@ function renderScoring(which) {
           <h3 style="margin-bottom:14px">Points per Team</h3>
           <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Only the highest stage reached is scored</p>
           <div style="display:flex;flex-direction:column;gap:0">
-            <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">3 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
             <div class="fact-row"><span class="fact-label">2️⃣ Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">✔️ Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
+            <div class="fact-row"><span class="fact-label">✔️ Qualifies as Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
             <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
             <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
             <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
@@ -2694,30 +2698,11 @@ async function renderAbout() {
         <div class="info-card" style="margin-bottom:20px">
           <h3 style="margin-bottom:14px">🛠️ Built With</h3>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="fact-row">
-              <span class="fact-label">Frontend</span>
-              <span class="fact-value" style="color:var(--text-mid)">HTML, CSS, Vanilla JavaScript</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-label">Hosting</span>
-              <span class="fact-value" style="color:var(--text-mid)">GitHub Pages</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-label">Database</span>
-              <span class="fact-value" style="color:var(--text-mid)">Supabase (PostgreSQL)</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-label">Analytics</span>
-              <span class="fact-value" style="color:var(--text-mid)">GoatCounter</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-label">Maps</span>
-              <span class="fact-value" style="color:var(--text-mid)">Leaflet.js</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-label">Built with</span>
-              <span class="fact-value" style="color:var(--text-mid)">Claude AI (Anthropic)</span>
-            </div>
+            <div class="fact-row"><span class="fact-label">Frontend</span><span class="fact-value" style="color:var(--text-mid)">HTML, CSS, JavaScript</span></div>
+            <div class="fact-row"><span class="fact-label">Hosting</span><span class="fact-value" style="color:var(--text-mid)">GitHub</span></div>
+            <div class="fact-row"><span class="fact-label">Database</span><span class="fact-value" style="color:var(--text-mid)">PostgreSQL</span></div>
+            <div class="fact-row"><span class="fact-label">Analytics</span><span class="fact-value" style="color:var(--text-mid)">GoatCounter</span></div>
+            <div class="fact-row"><span class="fact-label">Maps</span><span class="fact-value" style="color:var(--text-mid)">Leaflet.js</span></div>
           </div>
         </div>
 
