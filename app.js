@@ -2320,7 +2320,7 @@ async function renderLeaderboard() {
     }
 
     $('leaderboard-content').innerHTML = `
-      <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
         <thead>
           <tr>
             <th style="text-align:left;padding-left:16px">Pos</th>
@@ -2358,7 +2358,11 @@ function renderCompLogin(redirectPage = 'comps') {
         <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
         <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
         <div class="fact-row"><span class="fact-label">Correct group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4/2 pts</span></div>
-        <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·7·10·15·20</span></div>
+        <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
       </div>
     </div>` : redirectPage === 'buster' ? `
     <div class="info-card" style="max-width:560px;margin:20px auto 0">
@@ -2419,7 +2423,7 @@ function renderCompLogin(redirectPage = 'comps') {
                 <input class="form-input" id="comp-name" placeholder="e.g. John Barry" autocomplete="off">
               </div>
               <div>
-                <label class="form-label">Username <span style="font-weight:400;color:var(--text-muted)">(one word)</span></label>
+                <label class="form-label">Username</label>
                 <input class="form-input" id="comp-reg-username" placeholder="e.g. johnb" autocomplete="off">
               </div>
             </div>
@@ -2504,7 +2508,38 @@ async function renderComps() {
           <div class="comp-session-bar">
             <span>👋 Logged in as <strong>${getSession().username}</strong></span>
             <button class="comp-action-btn" onclick="compLogout()">👋 Log Out</button>
-          </div>` : ''}
+          </div>` : `
+          <div class="info-card comp-login-card" style="max-width:560px;margin:0 auto 24px">
+            <div class="comp-login-tabs">
+              <button class="comp-tab active" id="tab-login" onclick="switchCompTab('login')">Login</button>
+              <button class="comp-tab" id="tab-register" onclick="switchCompTab('register')">Register</button>
+            </div>
+            <div id="panel-login">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                <div><label class="form-label">Username</label>
+                  <input class="form-input" id="comp-username" placeholder="yourname"
+                    onkeydown="if(event.key==='Enter') compLogin('comps')"></div>
+                <div><label class="form-label">Password</label>
+                  <input class="form-input" id="comp-password" type="password" placeholder="••••"
+                    onkeydown="if(event.key==='Enter') compLogin('comps')"></div>
+              </div>
+              <button class="hero-cta" onclick="compLogin('comps')" style="width:100%;justify-content:center">Login →</button>
+            </div>
+            <div id="panel-register" style="display:none">
+              <p style="color:var(--teal);font-size:0.82rem;font-weight:700;margin-bottom:12px">✅ No email address required</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                <div><label class="form-label">Your Name</label>
+                  <input class="form-input" id="comp-name" placeholder="e.g. John Barry"></div>
+                <div><label class="form-label">Username</label>
+                  <input class="form-input" id="comp-reg-username" placeholder="one word, no spaces"></div>
+              </div>
+              <div style="margin-bottom:14px"><label class="form-label">Password</label>
+                <input class="form-input" id="comp-reg-password" type="password" placeholder="At least 4 characters"
+                  onkeydown="if(event.key==='Enter') compRegister('comps')"></div>
+              <button class="hero-cta" onclick="compRegister('comps')" style="width:100%;justify-content:center">Create Account →</button>
+            </div>
+            <p id="comp-login-error" style="display:none;color:#e63200;font-size:0.85rem;margin-top:10px;text-align:center"></p>
+          </div>`}
         <!-- Competition Cards -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:28px">
 
@@ -2812,7 +2847,7 @@ async function renderLeaderboardPredictions() {
     if (!data.length) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
 
     $('pred-lb').innerHTML = `
-      <table class="group-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
         <thead><tr>
           <th style="text-align:center;width:48px">Pos</th>
           <th style="text-align:left;padding-left:12px">Player</th>
@@ -2829,7 +2864,7 @@ async function renderLeaderboardPredictions() {
               <td class="pts-cell">${row.total_pts}</td>
             </tr>`).join('')}
         </tbody>
-      </table>`;
+      </table></div>`;
   } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
 }
 
@@ -2860,7 +2895,7 @@ async function renderLeaderboardBuster() {
     })).sort((a,b) => b.total-a.total || b.best-a.best);
 
     $('buster-lb').innerHTML = `
-      <div style="overflow-x:auto">
+      <div class="lb-scroll-wrap">
         <table class="group-table buster-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:520px">
           <thead><tr>
             <th style="text-align:center;width:48px">Pos</th>
@@ -3523,6 +3558,7 @@ async function renderBusterPicks() {
 
 async function renderBuster() {
   const session = getSession();
+  const locked  = isPastCutoff();
 
   app().innerHTML = `
     <div class="page-title-bar">
@@ -3554,7 +3590,6 @@ async function renderBuster() {
   }
 
   const user = session;
-  const locked = isPastCutoff();
 
   /* Load existing picks */
   const existingPicks = await fetch(
