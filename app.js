@@ -2500,7 +2500,11 @@ async function renderComps() {
     </div>
     <div class="section">
       <div class="wrap">
-        ${compLoginWidget('comps')}
+        ${getSession() ? `
+          <div class="comp-session-bar">
+            <span>👋 Logged in as <strong>${getSession().username}</strong></span>
+            <button class="comp-action-btn" onclick="compLogout()">👋 Log Out</button>
+          </div>` : ''}
         <!-- Competition Cards -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:28px">
 
@@ -2644,16 +2648,11 @@ async function renderAbout() {
       <div class="wrap" style="max-width:680px">
 
         <div class="info-card" style="margin-bottom:20px">
-          <h3 style="margin-bottom:12px">⚽ What is Rowan's World Cup Zone?</h3>
+          <h3 style="margin-bottom:12px">Why Rowan's World Cup Zone?</h3>
           <p style="color:var(--text-mid);line-height:1.8;font-size:0.95rem">
-            This is a family and friends hub for the FIFA World Cup 2026, built so everyone
-            can follow the tournament together, enter friendly competitions, and keep up with
-            Rowan's match-by-match thoughts and predictions.
-          </p>
-          <p style="color:var(--text-mid);line-height:1.8;font-size:0.95rem;margin-top:12px">
-            The site covers all 48 teams, 104 matches across the group stage and knockout rounds,
-            live standings, a score predictions competition, the Busters team picks competition,
-            and Rowan's own tournament reviews and blog.
+            I wanted one place to find all the info for the World Cup, run a fun competition
+            for friends and family, and share some interesting facts about the countries involved.
+            That's it — hope you enjoy it! ⚽
           </p>
         </div>
 
@@ -3581,7 +3580,7 @@ async function renderBuster() {
   };
 
   $('buster-content').innerHTML = `
-    ${compLoginWidget('buster')}
+
     <div class="info-card" style="margin-bottom:24px;padding:16px 20px;margin-top:16px">
       <p style="font-size:0.875rem;color:var(--text-muted)">
         Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress.
