@@ -1544,3 +1544,24 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 @media (min-width: 600px) {
   .lb-pos { font-size: 1.4rem; }
 }
+
+/* ============================================================
+   MOBILE LEADERBOARD FIX
+   ============================================================ */
+@media (max-width: 600px) {
+  /* Predictions leaderboard - hide match pts on mobile */
+  .pred-lb-table th:nth-child(3),
+  .pred-lb-table td:nth-child(3) { display: none; }
+
+  /* Buster leaderboard - hide all pot columns on mobile, show name + total only */
+  .buster-lb-table th:nth-child(n+3):nth-child(-n+8),
+  .buster-lb-table td:nth-child(n+3):nth-child(-n+8) { display: none; }
+
+  /* General leaderboard table fixes */
+  .group-table { font-size: 0.8rem; }
+  .group-table th, .group-table td { padding: 8px 6px; white-space: nowrap; }
+  .group-table th:first-child, .group-table td:first-child { padding-left: 8px; }
+
+  /* Overflow scroll wrapper */
+  .lb-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
