@@ -938,7 +938,7 @@ async function loadAdminPanel() {
             <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
           </div>
           <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
-          <button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
+          <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span><button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
           <span class="admin-saved" id="saved-${m.match_id}" style="display:none">✅ Saved!</span>
         </div>`).join('')}
 
@@ -1010,6 +1010,8 @@ async function saveResult(matchId) {
       document.getElementById(`saved-${matchId}`).style.display = 'inline';
       btn.style.display = 'none';
       document.getElementById(`match-${matchId}`).style.opacity = '0.6';
+      /* Auto-update team progress for buster scoring */
+      await autoUpdateTeamProgress();
     } else {
       throw new Error('Update failed');
     }
@@ -1020,13 +1022,106 @@ async function saveResult(matchId) {
   }
 }
 
+/* Auto-calculate team progress from results for Buster scoring */
+async function autoUpdateTeamProgress() {
+  try {
+    const results = await sbGet('results');
+    const played  = results.filter(r => r.status === 'Played');
+
+    /* Build group standings from played results */
+    const teams = await loadTeams();
+    const standings = {};
+    teams.forEach(t => {
+      if (!standings[t.group]) standings[t.group] = {};
+      standings[t.group][t.name] = { p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+    });
+
+    played.filter(r => r.match_id <= 72).forEach(r => {
+      const g = r.group_name.replace('Group ','');
+      if (!standings[g]) return;
+      const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+      const home = standings[g][normName(r.home_team)];
+      const away = standings[g][normName(r.away_team)];
+      if (!home || !away) return;
+      home.p++; away.p++;
+      home.gf += r.home_score; home.ga += r.away_score;
+      away.gf += r.away_score; away.ga += r.home_score;
+      if (r.home_score > r.away_score)      { home.w++; home.pts+=3; away.l++; }
+      else if (r.home_score < r.away_score) { away.w++; away.pts+=3; home.l++; }
+      else                                  { home.d++; home.pts++; away.d++; away.pts++; }
+    });
+
+    /* Determine stage for each team based on how far they've gone */
+    const teamStage = {};
+
+    /* Check group stage completion per group */
+    Object.entries(standings).forEach(([g, teams]) => {
+      const sorted = Object.entries(teams).sort(([,a],[,b]) =>
+        b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf
+      );
+      /* Only assign group stage if group is complete (6 matches played) */
+      const groupPlayed = played.filter(r => r.match_id <= 72 && r.group_name === `Group ${g}`).length;
+      if (groupPlayed === 6) {
+        sorted.forEach(([name], i) => {
+          if (i === 0) teamStage[name] = 'group_winner';
+          else if (i === 1) teamStage[name] = 'group_second';
+          else if (!teamStage[name]) teamStage[name] = 'eliminated';
+        });
+      }
+    });
+
+    /* Knockout stage progression */
+    const koStages = [
+      { matchIds: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88], stage: 'r16'    },
+      { matchIds: [89,90,91,92,93,94,95,96],                          stage: 'qf'     },
+      { matchIds: [97,98,99,100],                                      stage: 'sf'     },
+      { matchIds: [101,102],                                           stage: 'final'  },
+      { matchIds: [103,104],                                           stage: 'winner' },
+    ];
+
+    koStages.forEach(({ matchIds, stage }) => {
+      played.filter(r => matchIds.includes(r.match_id)).forEach(r => {
+        /* Both teams reached this stage */
+        const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+        const home = normName(r.home_team);
+        const away = normName(r.away_team);
+        const stageOrder = ['eliminated','group_second','best_third','group_winner','r16','qf','sf','final','winner'];
+        const upgrade = (name, newStage) => {
+          const curr = teamStage[name] || 'eliminated';
+          if (stageOrder.indexOf(newStage) > stageOrder.indexOf(curr)) teamStage[name] = newStage;
+        };
+        upgrade(home, stage);
+        upgrade(away, stage);
+        /* Winner goes to next stage, loser stays */
+        if (stage === 'final' || stage === 'winner') {
+          const winner = r.home_score > r.away_score ? home : r.home_score < r.away_score ? away : null;
+          if (winner) upgrade(winner, 'winner');
+        }
+      });
+    });
+
+    /* Batch update all team progress */
+    const updates = Object.entries(teamStage).map(([team_name, best_stage]) =>
+      fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(team_name)}`, {
+        method: 'PATCH',
+        headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ best_stage, updated_at: new Date().toISOString() })
+      })
+    );
+    await Promise.all(updates);
+  } catch(e) {
+    console.warn('Auto team progress update failed:', e);
+  }
+}
+
 async function adminResetPassword(userId, username) {
   const input = $(`newpw-${userId}`);
   const msg   = $(`pw-msg-${userId}`);
   const newPw = input?.value.trim();
+  console.log('Reset pw length:', newPw?.length, 'value:', newPw);
 
   if (!newPw || newPw.length < 4) {
-    alert('Password must be at least 4 characters.');
+    alert(`Password must be at least 4 characters (you entered ${newPw?.length || 0}).`);
     return;
   }
 
@@ -1635,10 +1730,17 @@ async function renderPredict() {
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <h1 class="page-title">🏆 <span>${user.username}'s</span> Predictions</h1>
-        ${locked
-          ? `<span class="tag" style="background:#e63200;color:#fff;font-size:0.85rem">Predictions Locked</span>`
-          : `<span style="font-size:0.85rem;color:rgba(255,255,255,0.6)">Locks ${cutoffStr}</span>`}
+        <h1 class="page-title">🎯 <span>${user.username}'s</span> Predictions</h1>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${locked
+            ? `<span class="tag" style="background:#e63200;color:#fff;font-size:0.85rem">Locked</span>`
+            : `<span style="font-size:0.8rem;color:rgba(255,255,255,0.6)">Locks ${cutoffStr}</span>`}
+          ${!locked ? `<button onclick="confirmResetPredictions('${user.id}')"
+            style="padding:7px 14px;border:2px solid #e63200;border-radius:999px;background:none;color:#e63200;font-weight:700;font-size:0.75rem;cursor:pointer;font-family:var(--font-body)">
+            🗑️ Reset
+          </button>` : ''}
+          <button onclick="compLogout()" class="comp-logout-btn">Log out</button>
+        </div>
       </div>
     </div>
 
@@ -3374,7 +3476,8 @@ async function renderBuster() {
 
     ${!locked ? `
     <div style="text-align:center;margin-bottom:40px">
-      <button class="hero-cta" onclick="saveBusterPicks('${user.id}')" id="buster-save-btn">
+      <button class="hero-cta" onclick="saveBusterPicks('${user.id}')" id="buster-save-btn"
+        style="min-width:260px;justify-content:center;font-size:1.1rem;padding:16px 32px;background:var(--gold);color:var(--navy);box-shadow:0 4px 24px rgba(245,194,0,0.4)">
         💾 Save My Buster Picks
       </button>
       <p id="buster-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-top:10px">✅ Picks saved!</p>
