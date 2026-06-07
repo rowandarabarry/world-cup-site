@@ -1621,3 +1621,44 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   .buster-lb-table th:nth-child(n+3):nth-child(-n+8),
   .buster-lb-table td:nth-child(n+3):nth-child(-n+8) { display: none; }
 }
+
+/* Fix player name truncation on mobile leaderboard */
+.pred-lb-table td:nth-child(2),
+.buster-lb-table td:nth-child(2) {
+  max-width: none !important;
+  width: auto;
+}
+.pred-lb-table,
+.buster-lb-table {
+  table-layout: auto !important;
+}
+
+/* Leaderboard column sizing fix */
+.pred-lb-table,
+.buster-lb-table {
+  table-layout: auto !important;
+}
+.pred-lb-table td:first-child,
+.pred-lb-table th:first-child,
+.buster-lb-table td:first-child,
+.buster-lb-table th:first-child {
+  width: 36px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+  padding: 8px 6px !important;
+}
+.pred-lb-table td:first-child .lb-pos,
+.buster-lb-table td:first-child .lb-pos {
+  font-size: 1.3rem;
+}
+.pred-lb-table td:nth-child(2),
+.buster-lb-table td:nth-child(2) {
+  max-width: none !important;
+  width: auto;
+}
+.pred-lb-table td:last-child,
+.pred-lb-table th:last-child,
+.buster-lb-table td:last-child,
+.buster-lb-table th:last-child {
+  width: 48px !important;
+}
