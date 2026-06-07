@@ -1,434 +1,914 @@
 [
   {
-    "code": "MEX", "name": "Mexico", "group": "A",
+    "code": "MEX",
+    "name": "Mexico",
+    "group": "A",
     "flag": "https://flagcdn.com/w80/mx.png",
     "blurb": "Co-hosts with passionate fans and decades of World Cup experience.",
-    "players": ["Hirving Lozano", "Raúl Jiménez", "Alexis Vega"],
-    "capital": "Mexico City", "population": "128 million",
-    "bestFinish": "Quarter Final (1970, 1986)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Hirving Lozano",
+      "Raúl Jiménez",
+      "Alexis Vega"
+    ],
+    "capital": "Mexico City",
+    "population": "128 million",
+    "bestFinish": "Quarter Final (1970, 1986)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Mexico will be the first nation to host the World Cup 3 times!",
+    "fact2": "Mexico City is one of the largest cities in the world with over 21 million people"
   },
   {
-    "code": "RSA", "name": "South Africa", "group": "A",
+    "code": "RSA",
+    "name": "South Africa",
+    "group": "A",
     "flag": "https://flagcdn.com/w80/za.png",
     "blurb": "Bafana Bafana back on the world stage with pace and flair.",
-    "players": ["Percy Tau", "Bongani Zungu", "Ronwen Williams"],
-    "capital": "Pretoria", "population": "60 million",
-    "bestFinish": "Group Stage (1998, 2002, 2010)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Percy Tau",
+      "Bongani Zungu",
+      "Ronwen Williams"
+    ],
+    "capital": "Pretoria",
+    "population": "60 million",
+    "bestFinish": "Group Stage (1998, 2002, 2010)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "South Africa is the only African nation to host the World Cup",
+    "fact2": "South Africa has 11 official languages"
   },
   {
-    "code": "KOR", "name": "Korea Republic", "group": "A",
+    "code": "KOR",
+    "name": "Korea Republic",
+    "group": "A",
     "flag": "https://flagcdn.com/w80/kr.png",
     "blurb": "Taegeuk Warriors with intensity, fitness and a flair for the dramatic.",
-    "players": ["Son Heung-min", "Lee Kang-in", "Kim Min-jae"],
-    "capital": "Seoul", "population": "52 million",
-    "bestFinish": "4th Place (2002)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Son Heung-min",
+      "Lee Kang-in",
+      "Kim Min-jae"
+    ],
+    "capital": "Seoul",
+    "population": "52 million",
+    "bestFinish": "4th Place (2002)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Korea Republic reached the semi-finals on home soil in 2002",
+    "fact2": "4 is considered unlucky in Korea because it looks like the symbol for death"
   },
   {
-    "code": "CZE", "name": "Czechia", "group": "A",
+    "code": "CZE",
+    "name": "Czechia",
+    "group": "A",
     "flag": "https://flagcdn.com/w80/cz.png",
     "blurb": "Technically gifted with a proud footballing history in Central Europe.",
-    "players": ["Patrik Schick", "Tomáš Souček", "Ladislav Krejčí"],
-    "capital": "Prague", "population": "11 million",
-    "bestFinish": "Runners Up (1934, 1962 — as Czechoslovakia)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Patrik Schick",
+      "Tomáš Souček",
+      "Ladislav Krejčí"
+    ],
+    "capital": "Prague",
+    "population": "11 million",
+    "bestFinish": "Runners Up (1934, 1962 — as Czechoslovakia)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Antonín Panenka from Czechia invented the famous chipped penalty kick",
+    "fact2": "Czechia produces more beer per person than any other country in the world"
   },
   {
-    "code": "CAN", "name": "Canada", "group": "B",
+    "code": "CAN",
+    "name": "Canada",
+    "group": "B",
     "flag": "https://flagcdn.com/w80/ca.png",
     "blurb": "Co-hosts making their mark after decades away from the World Cup.",
-    "players": ["Alphonso Davies", "Jonathan David", "Milan Borjan"],
-    "capital": "Ottawa", "population": "38 million",
-    "bestFinish": "Group Stage (1986)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Alphonso Davies",
+      "Jonathan David",
+      "Milan Borjan"
+    ],
+    "capital": "Ottawa",
+    "population": "38 million",
+    "bestFinish": "Group Stage (1986)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Canada's manager Jesse Marsch is actually from the USA",
+    "fact2": "Canada is the second largest country in the world by area"
   },
   {
-    "code": "BIH", "name": "Bosnia & Herz.", "group": "B",
+    "code": "BIH",
+    "name": "Bosnia & Herz.",
+    "group": "B",
     "flag": "https://flagcdn.com/w80/ba.png",
     "blurb": "The Dragons with attacking flair and a passionate support.",
-    "players": ["Edin Džeko", "Miralem Pjanić", "Jasmin Handanović"],
-    "capital": "Sarajevo", "population": "3.5 million",
-    "bestFinish": "Group Stage (2014)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Edin Džeko",
+      "Miralem Pjanić",
+      "Jasmin Handanović"
+    ],
+    "capital": "Sarajevo",
+    "population": "3.5 million",
+    "bestFinish": "Group Stage (2014)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Bosnia & Herzegovina qualified for their first ever World Cup in 2014",
+    "fact2": "As well as Bosnian, people there also speak Croatian and Serbian"
   },
   {
-    "code": "QAT", "name": "Qatar", "group": "B",
+    "code": "QAT",
+    "name": "Qatar",
+    "group": "B",
     "flag": "https://flagcdn.com/w80/qa.png",
     "blurb": "The 2022 hosts now competing as a regular tournament side.",
-    "players": ["Akram Afif", "Almoez Ali", "Meshaal Barsham"],
-    "capital": "Doha", "population": "2.9 million",
-    "bestFinish": "Group Stage (2022)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Akram Afif",
+      "Almoez Ali",
+      "Meshaal Barsham"
+    ],
+    "capital": "Doha",
+    "population": "2.9 million",
+    "bestFinish": "Group Stage (2022)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Qatar is the only country beginning with the letter Q",
+    "fact2": "Qatar hosted the 2022 World Cup, the first in the Middle East"
   },
   {
-    "code": "SUI", "name": "Switzerland", "group": "B",
+    "code": "SUI",
+    "name": "Switzerland",
+    "group": "B",
     "flag": "https://flagcdn.com/w80/ch.png",
     "blurb": "Quietly one of the most reliable and organised teams in world football.",
-    "players": ["Granit Xhaka", "Xherdan Shaqiri", "Gregor Kobel"],
-    "capital": "Bern", "population": "8.7 million",
-    "bestFinish": "Quarter Final (1934, 1938, 1954)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Granit Xhaka",
+      "Xherdan Shaqiri",
+      "Gregor Kobel"
+    ],
+    "capital": "Bern",
+    "population": "8.7 million",
+    "bestFinish": "Quarter Final (1934, 1938, 1954)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Switzerland have never won the World Cup but have hosted it twice",
+    "fact2": "In 1908 Toblerone chocolate was founded in Switzerland"
   },
   {
-    "code": "BRA", "name": "Brazil", "group": "C",
+    "code": "BRA",
+    "name": "Brazil",
+    "group": "C",
     "flag": "https://flagcdn.com/w80/br.png",
     "blurb": "Samba flair and five stars — always the team everyone watches.",
-    "players": ["Vinicius Jr.", "Raphinha", "Alisson Becker"],
-    "capital": "Brasília", "population": "215 million",
-    "bestFinish": "Winners (1958, 1962, 1970, 1994, 2002)", "worldCupWins": 5,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Vinicius Jr.",
+      "Raphinha",
+      "Alisson Becker"
+    ],
+    "capital": "Brasília",
+    "population": "215 million",
+    "bestFinish": "Winners (1958, 1962, 1970, 1994, 2002)",
+    "worldCupWins": 5,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Brazilian player Pelé won 3 World Cups, more than anyone in history",
+    "fact2": "Brazil is home to the Amazon rainforest, the largest in the world"
   },
   {
-    "code": "MAR", "name": "Morocco", "group": "C",
+    "code": "MAR",
+    "name": "Morocco",
+    "group": "C",
     "flag": "https://flagcdn.com/w80/ma.png",
     "blurb": "The Lions of Atlas dazzled the world in 2022 and want even more.",
-    "players": ["Achraf Hakimi", "Youssef En Nesyri", "Yassine Bounou"],
-    "capital": "Rabat", "population": "37 million",
-    "bestFinish": "4th Place (2022)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Achraf Hakimi",
+      "Youssef En Nesyri",
+      "Yassine Bounou"
+    ],
+    "capital": "Rabat",
+    "population": "37 million",
+    "bestFinish": "4th Place (2022)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In 2022 Morocco became the first African team to reach a World Cup semi-final",
+    "fact2": "Morocco is in Africa but you can see Spain from its northern coast"
   },
   {
-    "code": "HAI", "name": "Haiti", "group": "C",
+    "code": "HAI",
+    "name": "Haiti",
+    "group": "C",
     "flag": "https://flagcdn.com/w80/ht.png",
     "blurb": "Les Grenadiers on the world stage for the first time in decades.",
-    "players": ["Duckens Nazon", "Frantzdy Pierrot", "Wilson Isidor"],
-    "capital": "Port-au-Prince", "population": "11.5 million",
-    "bestFinish": "Group Stage (1974)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Duckens Nazon",
+      "Frantzdy Pierrot",
+      "Wilson Isidor"
+    ],
+    "capital": "Port-au-Prince",
+    "population": "11.5 million",
+    "bestFinish": "Group Stage (1974)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Haiti were the first Caribbean nation to qualify for the World Cup in 1974",
+    "fact2": "Haiti is home to the Citadelle Laferrière, one of the largest fortresses in the Americas"
   },
   {
-    "code": "SCO", "name": "Scotland", "group": "C",
+    "code": "SCO",
+    "name": "Scotland",
+    "group": "C",
     "flag": "https://flagcdn.com/w80/gb-sct.png",
     "blurb": "The Tartan Army back on the world stage with pride and passion.",
-    "players": ["Andrew Robertson", "Scott McTominay", "John Mcginn"],
-    "capital": "Edinburgh", "population": "5.5 million",
-    "bestFinish": "Group Stage (1974, 1978, 1982, 1986, 1990, 1998)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Andrew Robertson",
+      "Scott McTominay",
+      "John Mcginn"
+    ],
+    "capital": "Edinburgh",
+    "population": "5.5 million",
+    "bestFinish": "Group Stage (1974, 1978, 1982, 1986, 1990, 1998)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Scotland were the first ever international football team, playing England in 1872",
+    "fact2": "Scotland has over 790 islands around its coast"
   },
   {
-    "code": "USA", "name": "United States", "group": "D",
+    "code": "USA",
+    "name": "United States",
+    "group": "D",
     "flag": "https://flagcdn.com/w80/us.png",
     "blurb": "Host nation with a rising generation hungry to impress on home soil.",
-    "players": ["Christian Pulisic", "Tyler Adams", "Folarin Balogun"],
-    "capital": "Washington D.C.", "population": "335 million",
-    "bestFinish": "3rd Place (1930)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Christian Pulisic",
+      "Tyler Adams",
+      "Folarin Balogun"
+    ],
+    "capital": "Washington D.C.",
+    "population": "335 million",
+    "bestFinish": "3rd Place (1930)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "The USA hosted the World Cup in 1994 and averaged over 68,000 fans per game",
+    "fact2": "The USA has more donut shops per person than any other country"
   },
   {
-    "code": "PAR", "name": "Paraguay", "group": "D",
+    "code": "PAR",
+    "name": "Paraguay",
+    "group": "D",
     "flag": "https://flagcdn.com/w80/py.png",
     "blurb": "La Albirroja with grit, resilience and South American heart.",
-    "players": ["Miguel Almirón", "Ángel Romero", "Antony Silva"],
-    "capital": "Asunción", "population": "7.4 million",
-    "bestFinish": "Quarter Final (1954, 2010)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Miguel Almirón",
+      "Ángel Romero",
+      "Antony Silva"
+    ],
+    "capital": "Asunción",
+    "population": "7.4 million",
+    "bestFinish": "Quarter Final (1954, 2010)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Paraguay have won the Copa América twice",
+    "fact2": "Paraguay is one of only two landlocked countries in South America"
   },
   {
-    "code": "AUS", "name": "Australia", "group": "D",
+    "code": "AUS",
+    "name": "Australia",
+    "group": "D",
     "flag": "https://flagcdn.com/w80/au.png",
     "blurb": "The Socceroos punch above their weight with pace and determination.",
-    "players": ["Mathew Ryan", "Harry Souttar", "Mitchell Duke"],
-    "capital": "Canberra", "population": "26 million",
-    "bestFinish": "4th Place (2023 — Women's; Men's best: Round of 16 2006, 2022)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Mathew Ryan",
+      "Harry Souttar",
+      "Mitchell Duke"
+    ],
+    "capital": "Canberra",
+    "population": "26 million",
+    "bestFinish": "4th Place (2023 — Women's; Men's best: Round of 16 2006, 2022)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Australia's football team is called the Socceroos in men's and the Matildas in women's",
+    "fact2": "Australia is the only country that is also a continent"
   },
   {
-    "code": "TUR", "name": "Türkiye", "group": "D",
+    "code": "TUR",
+    "name": "Türkiye",
+    "group": "D",
     "flag": "https://flagcdn.com/w80/tr.png",
     "blurb": "The Crescents with passion, quality and a knack for the dramatic.",
-    "players": ["Hakan Çalhanoğlu", "Arda Güler", "Kenan Yildiz"],
-    "capital": "Ankara", "population": "85 million",
-    "bestFinish": "3rd Place (2002)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Hakan Çalhanoğlu",
+      "Arda Güler",
+      "Kenan Yildiz"
+    ],
+    "capital": "Ankara",
+    "population": "85 million",
+    "bestFinish": "3rd Place (2002)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Türkiye finished 3rd in the 2002 World Cup, their best ever result",
+    "fact2": "Istanbul in Türkiye is the only city in the world that sits on two continents"
   },
   {
-    "code": "GER", "name": "Germany", "group": "E",
+    "code": "GER",
+    "name": "Germany",
+    "group": "E",
     "flag": "https://flagcdn.com/w80/de.png",
     "blurb": "A classic powerhouse rebuilt and hungry to reclaim past glories.",
-    "players": ["Florian Wirtz", "Jamal Musiala", "Antonio Rüdiger"],
-    "capital": "Berlin", "population": "84 million",
-    "bestFinish": "Winners (1954, 1974, 1990, 2014)", "worldCupWins": 4,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Florian Wirtz",
+      "Jamal Musiala",
+      "Antonio Rüdiger"
+    ],
+    "capital": "Berlin",
+    "population": "84 million",
+    "bestFinish": "Winners (1954, 1974, 1990, 2014)",
+    "worldCupWins": 4,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Miroslav Klose is the World Cup all-time top goalscorer with 16 goals",
+    "fact2": "Germany is home to over 1,500 different types of beer"
   },
   {
-    "code": "CUW", "name": "Curaçao", "group": "E",
+    "code": "CUW",
+    "name": "Curaçao",
+    "group": "E",
     "flag": "https://flagcdn.com/w80/cw.png",
     "blurb": "The island nation making history on the world's biggest stage.",
-    "players": ["Cuco Martina", "Leandro Bacuna", "Eloy Room"],
-    "capital": "Willemstad", "population": "191,000",
-    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Cuco Martina",
+      "Leandro Bacuna",
+      "Eloy Room"
+    ],
+    "capital": "Willemstad",
+    "population": "191,000",
+    "bestFinish": "First ever World Cup appearance (2026)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Curaçao has its own football team despite being owned by the Netherlands",
+    "fact2": "Curaçao is famous for its bright blue liqueur used in cocktails around the world"
   },
   {
-    "code": "CIV", "name": "Côte d'Ivoire", "group": "E",
+    "code": "CIV",
+    "name": "Côte d'Ivoire",
+    "group": "E",
     "flag": "https://flagcdn.com/w80/ci.png",
     "blurb": "The Elephants charge with pace, power and a proud football tradition.",
-    "players": ["Sébastien Haller", "Franck Kessié", "Amad Diallo"],
-    "capital": "Yamoussoukro", "population": "27 million",
-    "bestFinish": "Group Stage (2006, 2010, 2014)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Sébastien Haller",
+      "Franck Kessié",
+      "Amad Diallo"
+    ],
+    "capital": "Yamoussoukro",
+    "population": "27 million",
+    "bestFinish": "Group Stage (2006, 2010, 2014)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Côte d'Ivoire reached the World Cup in 2006, 2010 and 2014",
+    "fact2": "Côte d'Ivoire is one of the world's biggest producers of cocoa"
   },
   {
-    "code": "ECU", "name": "Ecuador", "group": "E",
+    "code": "ECU",
+    "name": "Ecuador",
+    "group": "E",
     "flag": "https://flagcdn.com/w80/ec.png",
     "blurb": "La Tricolor bring passion and ambition from South America.",
-    "players": ["Willian Pacho", "Moisés Caicedo", "Piero Hincapié"],
-    "capital": "Quito", "population": "18 million",
-    "bestFinish": "Round of 16 (2006)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Willian Pacho",
+      "Moisés Caicedo",
+      "Piero Hincapié"
+    ],
+    "capital": "Quito",
+    "population": "18 million",
+    "bestFinish": "Round of 16 (2006)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Ecuador qualified for three consecutive World Cups between 2002 and 2014",
+    "fact2": "Ecuador sits right on the equator — that's actually what Ecuador means in Spanish!"
   },
   {
-    "code": "NED", "name": "Netherlands", "group": "F",
+    "code": "NED",
+    "name": "Netherlands",
+    "group": "F",
     "flag": "https://flagcdn.com/w80/nl.png",
     "blurb": "Oranje are back in style with a thrilling blend of youth and experience.",
-    "players": ["Virgil van Dijk", "Memphis Depay", "Frenkie de Jong"],
-    "capital": "Amsterdam", "population": "17.9 million",
-    "bestFinish": "Runners Up (1974, 1978, 2010)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Virgil van Dijk",
+      "Memphis Depay",
+      "Frenkie de Jong"
+    ],
+    "capital": "Amsterdam",
+    "population": "17.9 million",
+    "bestFinish": "Runners Up (1974, 1978, 2010)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "The Netherlands have reached three World Cup finals but never won it",
+    "fact2": "The Netherlands wear orange even though their flag doesn't have orange in it"
   },
   {
-    "code": "JPN", "name": "Japan", "group": "F",
+    "code": "JPN",
+    "name": "Japan",
+    "group": "F",
     "flag": "https://flagcdn.com/w80/jp.png",
     "blurb": "Blue Samurai with remarkable technical quality and tireless work rate.",
-    "players": ["Takefusa Kubo", "Ritsu Doan", "Junya Ito"],
-    "capital": "Tokyo", "population": "125 million",
-    "bestFinish": "Round of 16 (2002, 2010, 2018, 2022)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Takefusa Kubo",
+      "Ritsu Doan",
+      "Junya Ito"
+    ],
+    "capital": "Tokyo",
+    "population": "125 million",
+    "bestFinish": "Round of 16 (2002, 2010, 2018, 2022)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Japan reached the last 16 at the 2022 World Cup, beating Germany and Spain",
+    "fact2": "Japan created Nintendo, Pokémon and some of the world's best-selling cars"
   },
   {
-    "code": "SWE", "name": "Sweden", "group": "F",
+    "code": "SWE",
+    "name": "Sweden",
+    "group": "F",
     "flag": "https://flagcdn.com/w80/se.png",
     "blurb": "Organised and physically powerful with quality in key positions.",
-    "players": ["Alexander Isak", "Dejan Kulusevski", "Viktor Gyökeres"],
-    "capital": "Stockholm", "population": "10.5 million",
-    "bestFinish": "3rd Place (1950, 1994)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Alexander Isak",
+      "Dejan Kulusevski",
+      "Viktor Gyökeres"
+    ],
+    "capital": "Stockholm",
+    "population": "10.5 million",
+    "bestFinish": "3rd Place (1950, 1994)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In 1958 Sweden got to the World Cup final, losing to Brazil",
+    "fact2": "Sweden is home to IKEA, Spotify and Minecraft"
   },
   {
-    "code": "TUN", "name": "Tunisia", "group": "F",
+    "code": "TUN",
+    "name": "Tunisia",
+    "group": "F",
     "flag": "https://flagcdn.com/w80/tn.png",
     "blurb": "The Eagles of Carthage representing Africa with pride and skill.",
-    "players": ["Wahbi Khazri", "Youssef Msakni", "Farouk Ben Mustapha"],
-    "capital": "Tunis", "population": "12 million",
-    "bestFinish": "Group Stage (best finish)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Wahbi Khazri",
+      "Youssef Msakni",
+      "Farouk Ben Mustapha"
+    ],
+    "capital": "Tunis",
+    "population": "12 million",
+    "bestFinish": "Group Stage (best finish)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Tunisia were the first African team to win a World Cup match, beating Mexico in 1978",
+    "fact2": "Tunisia is home to some of the best preserved Roman ruins in the world"
   },
   {
-    "code": "BEL", "name": "Belgium", "group": "G",
+    "code": "BEL",
+    "name": "Belgium",
+    "group": "G",
     "flag": "https://flagcdn.com/w80/be.png",
     "blurb": "A new golden generation emerging after the famous class of 2018.",
-    "players": ["Romelu Lukaku", "Kevin De Bruyne", "Thibaut Courtois"],
-    "capital": "Brussels", "population": "11.6 million",
-    "bestFinish": "3rd Place (2018)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Romelu Lukaku",
+      "Kevin De Bruyne",
+      "Thibaut Courtois"
+    ],
+    "capital": "Brussels",
+    "population": "11.6 million",
+    "bestFinish": "3rd Place (2018)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Belgium were ranked number 1 in the world for a record 5 years",
+    "fact2": "Belgium actually invented French fries, not France!"
   },
   {
-    "code": "EGY", "name": "Egypt", "group": "G",
+    "code": "EGY",
+    "name": "Egypt",
+    "group": "G",
     "flag": "https://flagcdn.com/w80/eg.png",
     "blurb": "The Pharaohs powered by one of the world's most clinical forwards.",
-    "players": ["Mohamed Salah", "Mohamed Elneny", "Ahmed El-Shenawy"],
-    "capital": "Cairo", "population": "105 million",
-    "bestFinish": "Group Stage (1934, 1990)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Mohamed Salah",
+      "Mohamed Elneny",
+      "Ahmed El-Shenawy"
+    ],
+    "capital": "Cairo",
+    "population": "105 million",
+    "bestFinish": "Group Stage (1934, 1990)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Egypt have qualified for the World Cup 4 times",
+    "fact2": "In 2018 Mohamed Salah won the Puskás Award for his goal against Chelsea"
   },
   {
-    "code": "IRN", "name": "IR Iran", "group": "G",
+    "code": "IRN",
+    "name": "IR Iran",
+    "group": "G",
     "flag": "https://flagcdn.com/w80/ir.png",
     "blurb": "Team Melli with discipline, organisation and a knack for resilience.",
-    "players": ["Mehdi Taremi", "Sardar Azmoun", "Alireza Beiranvand"],
-    "capital": "Tehran", "population": "87 million",
-    "bestFinish": "Group Stage (1978, 1998, 2006, 2014, 2018, 2022)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Mehdi Taremi",
+      "Sardar Azmoun",
+      "Alireza Beiranvand"
+    ],
+    "capital": "Tehran",
+    "population": "87 million",
+    "bestFinish": "Group Stage (1978, 1998, 2006, 2014, 2018, 2022)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Iran have qualified for 7 World Cups",
+    "fact2": "Iran is one of the oldest civilisations in the world, dating back over 7,000 years"
   },
   {
-    "code": "NZL", "name": "New Zealand", "group": "G",
+    "code": "NZL",
+    "name": "New Zealand",
+    "group": "G",
     "flag": "https://flagcdn.com/w80/nz.png",
     "blurb": "The All Whites making the most of their Pacific football journey.",
-    "players": ["Chris Wood", "Clayton Lewis", "Joe Bell"],
-    "capital": "Wellington", "population": "5.1 million",
-    "bestFinish": "Group Stage (1982, 2010)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Chris Wood",
+      "Clayton Lewis",
+      "Joe Bell"
+    ],
+    "capital": "Wellington",
+    "population": "5.1 million",
+    "bestFinish": "Group Stage (1982, 2010)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "New Zealand are known as the All Blacks in rugby but the All Whites in football",
+    "fact2": "New Zealand was the first country in the world to give women the right to vote"
   },
   {
-    "code": "ESP", "name": "Spain", "group": "H",
+    "code": "ESP",
+    "name": "Spain",
+    "group": "H",
     "flag": "https://flagcdn.com/w80/es.png",
     "blurb": "La Roja reborn with a brilliant new crop of technically gifted players.",
-    "players": ["Pedri", "Gavi", "Unai Simón"],
-    "capital": "Madrid", "population": "47.4 million",
-    "bestFinish": "Winners (2010)", "worldCupWins": 1,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Pedri",
+      "Gavi",
+      "Unai Simón"
+    ],
+    "capital": "Madrid",
+    "population": "47.4 million",
+    "bestFinish": "Winners (2010)",
+    "worldCupWins": 1,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Despite having amazing teams, Spain have only won the World Cup once, in 2010",
+    "fact2": "Spain has the most UNESCO World Heritage Sites in Europe"
   },
   {
-    "code": "CPV", "name": "Cabo Verde", "group": "H",
+    "code": "CPV",
+    "name": "Cabo Verde",
+    "group": "H",
     "flag": "https://flagcdn.com/w80/cv.png",
     "blurb": "The Blue Sharks punching well above their weight on the world stage.",
-    "players": ["Garry Rodrigues", "Ryan Mendes", "Vítor Baia"],
-    "capital": "Praia", "population": "560,000",
-    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Garry Rodrigues",
+      "Ryan Mendes",
+      "Vítor Baia"
+    ],
+    "capital": "Praia",
+    "population": "560,000",
+    "bestFinish": "First ever World Cup appearance (2026)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Cabo Verde are making their World Cup debut in 2026",
+    "fact2": "Cabo Verde is a group of volcanic islands off the west coast of Africa"
   },
   {
-    "code": "KSA", "name": "Saudi Arabia", "group": "H",
+    "code": "KSA",
+    "name": "Saudi Arabia",
+    "group": "H",
     "flag": "https://flagcdn.com/w80/sa.png",
     "blurb": "The Green Falcons who shocked Argentina in 2022 are back for more.",
-    "players": ["Salem Al-Dawsari", "Mohammed Al-Owais", "Yasser Al-Shahrani"],
-    "capital": "Riyadh", "population": "35 million",
-    "bestFinish": "Round of 16 (1994)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Salem Al-Dawsari",
+      "Mohammed Al-Owais",
+      "Yasser Al-Shahrani"
+    ],
+    "capital": "Riyadh",
+    "population": "35 million",
+    "bestFinish": "Round of 16 (1994)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In 2022 Saudi Arabia's captain Aldawsari scored the winner as they beat Argentina 2-1",
+    "fact2": "Saudi Arabia is home to the world's largest oil company, Aramco"
   },
   {
-    "code": "URU", "name": "Uruguay", "group": "H",
+    "code": "URU",
+    "name": "Uruguay",
+    "group": "H",
     "flag": "https://flagcdn.com/w80/uy.png",
     "blurb": "Garra Charrúa — fighting spirit and world-class quality combined.",
-    "players": ["Darwin Núñez", "Federico Valverde", "José María Giménez"],
-    "capital": "Montevideo", "population": "3.5 million",
-    "bestFinish": "Winners (1930, 1950)", "worldCupWins": 2,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Darwin Núñez",
+      "Federico Valverde",
+      "José María Giménez"
+    ],
+    "capital": "Montevideo",
+    "population": "3.5 million",
+    "bestFinish": "Winners (1930, 1950)",
+    "worldCupWins": 2,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Uruguay hosted and won the very first World Cup in 1930",
+    "fact2": "Uruguay was the first country in South America to legalise football on Sundays"
   },
   {
-    "code": "FRA", "name": "France", "group": "I",
+    "code": "FRA",
+    "name": "France",
+    "group": "I",
     "flag": "https://flagcdn.com/w80/fr.png",
     "blurb": "Depth in every position with electric attacking talent throughout.",
-    "players": ["Kylian Mbappé", "Antoine Griezmann", "Mike Maignan"],
-    "capital": "Paris", "population": "68 million",
-    "bestFinish": "Winners (1998, 2018)", "worldCupWins": 2,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Kylian Mbappé",
+      "Antoine Griezmann",
+      "Mike Maignan"
+    ],
+    "capital": "Paris",
+    "population": "68 million",
+    "bestFinish": "Winners (1998, 2018)",
+    "worldCupWins": 2,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "France have won the World Cup twice, in 1998 at home and 2018 in Russia",
+    "fact2": "France is the most visited country in the world"
   },
   {
-    "code": "SEN", "name": "Senegal", "group": "I",
+    "code": "SEN",
+    "name": "Senegal",
+    "group": "I",
     "flag": "https://flagcdn.com/w80/sn.png",
     "blurb": "African champions with power, pace and a world-class frontline.",
-    "players": ["Sadio Mané", "Kalidou Koulibaly", "Édouard Mendy"],
-    "capital": "Dakar", "population": "17 million",
-    "bestFinish": "Quarter Final (2002)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Sadio Mané",
+      "Kalidou Koulibaly",
+      "Édouard Mendy"
+    ],
+    "capital": "Dakar",
+    "population": "17 million",
+    "bestFinish": "Quarter Final (2002)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Senegal knocked out defending champions France in the 2002 World Cup group stage",
+    "fact2": "Senegal is home to Lake Retba, a lake that is naturally pink in colour"
   },
   {
-    "code": "IRQ", "name": "Iraq", "group": "I",
+    "code": "IRQ",
+    "name": "Iraq",
+    "group": "I",
     "flag": "https://flagcdn.com/w80/iq.png",
     "blurb": "The Lions of Mesopotamia with a passionate fanbase behind them.",
-    "players": ["Mohanad Ali", "Amjad Attwan", "Jalal Hassan"],
-    "capital": "Baghdad", "population": "42 million",
-    "bestFinish": "Group Stage (1986)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Mohanad Ali",
+      "Amjad Attwan",
+      "Jalal Hassan"
+    ],
+    "capital": "Baghdad",
+    "population": "42 million",
+    "bestFinish": "Group Stage (1986)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Iraq qualified for the 2026 World Cup for only the second time in their history",
+    "fact2": "Iraq is home to the ancient city of Babylon, one of the seven wonders of the ancient world"
   },
   {
-    "code": "NOR", "name": "Norway", "group": "I",
+    "code": "NOR",
+    "name": "Norway",
+    "group": "I",
     "flag": "https://flagcdn.com/w80/no.png",
     "blurb": "The rising force of European football built around a generational striker.",
-    "players": ["Erling Haaland", "Martin Ødegaard", "Ørjan Nyland"],
-    "capital": "Oslo", "population": "5.4 million",
-    "bestFinish": "Quarter Final (1938)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Erling Haaland",
+      "Martin Ødegaard",
+      "Ørjan Nyland"
+    ],
+    "capital": "Oslo",
+    "population": "5.4 million",
+    "bestFinish": "Quarter Final (1938)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Erling Haaland is from Norway and is one of the best strikers in the world",
+    "fact2": "Norway is one of only a handful of countries where you can see the Northern Lights"
   },
   {
-    "code": "ARG", "name": "Argentina", "group": "J",
+    "code": "ARG",
+    "name": "Argentina",
+    "group": "J",
     "flag": "https://flagcdn.com/w80/ar.png",
     "blurb": "Defending champions with magic in their boots and fire in their hearts.",
-    "players": ["Lionel Messi", "Ángel Di María", "Emiliano Martínez"],
-    "capital": "Buenos Aires", "population": "46 million",
-    "bestFinish": "Winners (1978, 1986, 2022)", "worldCupWins": 3,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Lionel Messi",
+      "Ángel Di María",
+      "Emiliano Martínez"
+    ],
+    "capital": "Buenos Aires",
+    "population": "46 million",
+    "bestFinish": "Winners (1978, 1986, 2022)",
+    "worldCupWins": 3,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In 1986 Diego Maradona scored the famous Hand of God goal for Argentina",
+    "fact2": "Argentina is home to the widest avenue in the world, Avenida 9 de Julio in Buenos Aires"
   },
   {
-    "code": "ALG", "name": "Algeria", "group": "J",
+    "code": "ALG",
+    "name": "Algeria",
+    "group": "J",
     "flag": "https://flagcdn.com/w80/dz.png",
     "blurb": "The Desert Foxes with flair, pace and a fiercely loyal fanbase.",
-    "players": ["Riyad Mahrez", "Islam Slimani", "Rais M'Bolhi"],
-    "capital": "Algiers", "population": "45 million",
-    "bestFinish": "Round of 16 (2014)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Riyad Mahrez",
+      "Islam Slimani",
+      "Rais M'Bolhi"
+    ],
+    "capital": "Algiers",
+    "population": "45 million",
+    "bestFinish": "Round of 16 (2014)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Algeria qualified for five World Cups and reached the last 16 in 2014",
+    "fact2": "Algeria is the largest country in Africa"
   },
   {
-    "code": "AUT", "name": "Austria", "group": "J",
+    "code": "AUT",
+    "name": "Austria",
+    "group": "J",
     "flag": "https://flagcdn.com/w80/at.png",
     "blurb": "Das Team — technically strong and full of Bundesliga quality.",
-    "players": ["David Alaba", "Marcel Sabitzer", "Alexander Schlager"],
-    "capital": "Vienna", "population": "9.1 million",
-    "bestFinish": "3rd Place (1954)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "David Alaba",
+      "Marcel Sabitzer",
+      "Alexander Schlager"
+    ],
+    "capital": "Vienna",
+    "population": "9.1 million",
+    "bestFinish": "3rd Place (1954)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Austria got 4th in the 1934 World Cup and 3rd in 1954",
+    "fact2": "Austria is the birthplace of Mozart, one of the greatest composers who ever lived"
   },
   {
-    "code": "JOR", "name": "Jordan", "group": "J",
+    "code": "JOR",
+    "name": "Jordan",
+    "group": "J",
     "flag": "https://flagcdn.com/w80/jo.png",
     "blurb": "The Nashama making their World Cup debut with pride and determination.",
-    "players": ["Yazan Al-Naimat", "Musa Al-Taamari", "Amer Shafi"],
-    "capital": "Amman", "population": "10.2 million",
-    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Yazan Al-Naimat",
+      "Musa Al-Taamari",
+      "Amer Shafi"
+    ],
+    "capital": "Amman",
+    "population": "10.2 million",
+    "bestFinish": "First ever World Cup appearance (2026)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Jordan qualified for the 2026 World Cup with a 3-0 win over Oman",
+    "fact2": "The ancient city of Petra in Jordan was carved directly into rose-red rock over 2,000 years ago"
   },
   {
-    "code": "POR", "name": "Portugal", "group": "K",
+    "code": "POR",
+    "name": "Portugal",
+    "group": "K",
     "flag": "https://flagcdn.com/w80/pt.png",
     "blurb": "More than one superstar — a genuinely deep squad ready to compete.",
-    "players": ["Cristiano Ronaldo", "Bruno Fernandes", "Rúben Dias"],
-    "capital": "Lisbon", "population": "10.3 million",
-    "bestFinish": "3rd Place (1966)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Cristiano Ronaldo",
+      "Bruno Fernandes",
+      "Rúben Dias"
+    ],
+    "capital": "Lisbon",
+    "population": "10.3 million",
+    "bestFinish": "3rd Place (1966)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Portugal have never reached a World Cup final despite producing Eusébio and Cristiano Ronaldo",
+    "fact2": "Portugal is the oldest country in Europe with the same borders since 1139"
   },
   {
-    "code": "COD", "name": "Congo DR", "group": "K",
+    "code": "COD",
+    "name": "Congo DR",
+    "group": "K",
     "flag": "https://flagcdn.com/w80/cd.png",
     "blurb": "The Leopards — Africa's giant with raw talent and unstoppable energy.",
-    "players": ["Cédric Bakambu", "Chancel Mbemba", "Ley Matampi"],
-    "capital": "Kinshasa", "population": "100 million",
-    "bestFinish": "Group Stage (1974 — as Zaire)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Cédric Bakambu",
+      "Chancel Mbemba",
+      "Ley Matampi"
+    ],
+    "capital": "Kinshasa",
+    "population": "100 million",
+    "bestFinish": "Group Stage (1974 — as Zaire)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Congo DR used to be called Zaire and played in the 1974 World Cup",
+    "fact2": "Congo DR is home to the second largest rainforest in the world"
   },
   {
-    "code": "UZB", "name": "Uzbekistan", "group": "K",
+    "code": "UZB",
+    "name": "Uzbekistan",
+    "group": "K",
     "flag": "https://flagcdn.com/w80/uz.png",
     "blurb": "The White Wolves making a remarkable debut on the world stage.",
-    "players": ["Eldor Shomurodov", "Otabek Shukurov", "Ismoil Arabov"],
-    "capital": "Tashkent", "population": "36 million",
-    "bestFinish": "First ever World Cup appearance (2026)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Eldor Shomurodov",
+      "Otabek Shukurov",
+      "Ismoil Arabov"
+    ],
+    "capital": "Tashkent",
+    "population": "36 million",
+    "bestFinish": "First ever World Cup appearance (2026)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In 2025 Abdulkodir Khusanov became the first Uzbek player in the Premier League when he signed for Manchester City",
+    "fact2": "Uzbekistan is home to the ancient Silk Road city of Samarkand"
   },
   {
-    "code": "COL", "name": "Colombia", "group": "K",
+    "code": "COL",
+    "name": "Colombia",
+    "group": "K",
     "flag": "https://flagcdn.com/w80/co.png",
     "blurb": "Los Cafeteros with flair, creativity and passionate backing.",
-    "players": ["James Rodríguez", "Luis Díaz", "Falcao"],
-    "capital": "Bogotá", "population": "52 million",
-    "bestFinish": "Quarter Final (2014)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "James Rodríguez",
+      "Luis Díaz",
+      "Falcao"
+    ],
+    "capital": "Bogotá",
+    "population": "52 million",
+    "bestFinish": "Quarter Final (2014)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Colombia have qualified for seven World Cups and reached the quarter-finals in 2014",
+    "fact2": "Colombia has more species of birds than any other country in the world"
   },
   {
-    "code": "ENG", "name": "England", "group": "L",
+    "code": "ENG",
+    "name": "England",
+    "group": "L",
     "flag": "https://flagcdn.com/w80/gb-eng.png",
     "blurb": "Young Lions determined to finally bring football home.",
-    "players": ["Jude Bellingham", "Harry Kane", "Phil Foden"],
-    "capital": "London", "population": "56 million",
-    "bestFinish": "Winners (1966)", "worldCupWins": 1,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Jude Bellingham",
+      "Harry Kane",
+      "Phil Foden"
+    ],
+    "capital": "London",
+    "population": "56 million",
+    "bestFinish": "Winners (1966)",
+    "worldCupWins": 1,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "In the 1966 World Cup final Geoff Hurst scored a hat-trick for England",
+    "fact2": "England invented football and wrote the first ever rules of the game in 1863"
   },
   {
-    "code": "CRO", "name": "Croatia", "group": "L",
+    "code": "CRO",
+    "name": "Croatia",
+    "group": "L",
     "flag": "https://flagcdn.com/w80/hr.png",
     "blurb": "Chequered shirts and unbreakable spirit — always go further than expected.",
-    "players": ["Luka Modrić", "Ivan Perišić", "Dominik Livaković"],
-    "capital": "Zagreb", "population": "3.9 million",
-    "bestFinish": "Runners Up (2018)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Luka Modrić",
+      "Ivan Perišić",
+      "Dominik Livaković"
+    ],
+    "capital": "Zagreb",
+    "population": "3.9 million",
+    "bestFinish": "Runners Up (2018)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Croatia finished 2nd at the 2018 World Cup, their best ever result",
+    "fact2": "Croatia has over 1,000 islands along its coastline"
   },
   {
-    "code": "GHA", "name": "Ghana", "group": "L",
+    "code": "GHA",
+    "name": "Ghana",
+    "group": "L",
     "flag": "https://flagcdn.com/w80/gh.png",
     "blurb": "Black Stars with a passionate fanbase and exciting attacking talent.",
-    "players": ["Jordan Ayew", "Thomas Partey", "André Ayew"],
-    "capital": "Accra", "population": "33 million",
-    "bestFinish": "Quarter Final (2010)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Jordan Ayew",
+      "Thomas Partey",
+      "André Ayew"
+    ],
+    "capital": "Accra",
+    "population": "33 million",
+    "bestFinish": "Quarter Final (2010)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Ghana came closest of any African team to a World Cup semi-final, losing on penalties to Uruguay in 2010",
+    "fact2": "Ghana was the first country in sub-Saharan Africa to gain independence in 1957"
   },
   {
-    "code": "PAN", "name": "Panama", "group": "L",
+    "code": "PAN",
+    "name": "Panama",
+    "group": "L",
     "flag": "https://flagcdn.com/w80/pa.png",
     "blurb": "Los Canaleros with heart, hustle and a never-say-die attitude.",
-    "players": ["Rolando Blackburn", "Armando Cooper", "Luis Mejía"],
-    "capital": "Panama City", "population": "4.4 million",
-    "bestFinish": "Group Stage (2018)", "worldCupWins": 0,
-    "interestingFact": "Interesting Fact Here Please Rowan"
+    "players": [
+      "Rolando Blackburn",
+      "Armando Cooper",
+      "Luis Mejía"
+    ],
+    "capital": "Panama City",
+    "population": "4.4 million",
+    "bestFinish": "Group Stage (2018)",
+    "worldCupWins": 0,
+    "interestingFact": "Interesting Fact Here Please Rowan",
+    "fact": "Panama are making their second ever World Cup appearance in 2026",
+    "fact2": "The Panama Canal connects the Atlantic and Pacific Oceans and saves ships 8,000 miles"
   }
 ]
