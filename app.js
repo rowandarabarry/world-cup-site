@@ -2973,7 +2973,6 @@ async function renderReview() {
               <div style="font-size:1.8rem;margin-bottom:8px">${f.icon}</div>
               <span class="review-card-label">${f.label}</span>
               <div class="review-card-value">${r[f.key]}</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">${f.desc}</div>
               ${r[f.notesKey] ? `<div style="font-size:0.875rem;color:var(--text-mid);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);line-height:1.6;white-space:pre-wrap">${r[f.notesKey]}</div>` : ''}
             </div>`).join('')}
         </div>
