@@ -260,10 +260,14 @@ async function renderTeam(code) {
               </div>
             </div>
 
-            ${team.interestingFact ? `
+            ${(team.fact || team.interestingFact) ? `
             <div class="interesting-fact">
-              <span class="fact-tag">💡 Did You Know?</span>
-              <p>${team.interestingFact}</p>
+              <span class="fact-tag">⚽ Rowan's Facts</span>
+              <ul style="margin:8px 0 0 0;padding-left:18px;line-height:1.8;color:var(--text-mid);font-size:0.9rem">
+                ${team.fact ? `<li>${team.fact}</li>` : ''}
+                ${team.fact2 ? `<li>${team.fact2}</li>` : ''}
+                ${!team.fact && team.interestingFact ? `<li>${team.interestingFact}</li>` : ''}
+              </ul>
             </div>` : ''}
           </div>
 
