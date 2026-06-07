@@ -1565,3 +1565,59 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   /* Overflow scroll wrapper */
   .lb-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
+
+/* ============================================================
+   LEADERBOARD PAGE FIXES
+   ============================================================ */
+
+/* Smaller page title on mobile for leaderboard */
+@media (max-width: 680px) {
+  .page-title { font-size: clamp(1.4rem, 6vw, 2.2rem); }
+}
+
+/* Leaderboard table — constrain width, no overflow */
+.pred-lb-table,
+.buster-lb-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Position column — big and bold */
+.pred-lb-table td:first-child,
+.pred-lb-table th:first-child,
+.buster-lb-table td:first-child,
+.buster-lb-table th:first-child {
+  width: 52px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* Player name column — allow wrap */
+.pred-lb-table td:nth-child(2),
+.buster-lb-table td:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+/* Points column — right aligned, fixed width */
+.pred-lb-table td:last-child,
+.pred-lb-table th:last-child,
+.buster-lb-table td:last-child,
+.buster-lb-table th:last-child {
+  width: 56px;
+  text-align: center;
+}
+
+/* Remove scroll wrapper overflow on mobile — table fits instead */
+@media (max-width: 600px) {
+  .lb-scroll-wrap { overflow: visible; }
+  .pred-lb-table th:nth-child(3),
+  .pred-lb-table td:nth-child(3) { display: none; }
+  .buster-lb-table th:nth-child(n+3):nth-child(-n+8),
+  .buster-lb-table td:nth-child(n+3):nth-child(-n+8) { display: none; }
+}
