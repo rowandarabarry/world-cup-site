@@ -3302,9 +3302,29 @@ async function renderAdminUtilities() {
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px">
 
       <div class="admin-blog-form">
-        <h3>🗑️ Cancel a Result</h3>
+        <h3>🗑️ Cancel ALL Results</h3>
         <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
-          Reset a match back to Upcoming and clear the score.
+          Reset every match back to Upcoming and clear all scores.
+        </p>
+        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminCancelAllResults()">
+          Cancel All Results
+        </button>
+      </div>
+
+      <div class="admin-blog-form">
+        <h3>🎲 Reset All Buster Progress</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+          Set every team back to Eliminated in the Buster competition.
+        </p>
+        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminResetAllBuster()">
+          Reset All Buster Progress
+        </button>
+      </div>
+
+      <div class="admin-blog-form">
+        <h3>🗑️ Cancel a Single Result</h3>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+          Reset one match back to Upcoming.
         </p>
         <div class="form-group">
           <label class="form-label">Match ID (1–72)</label>
@@ -3379,20 +3399,65 @@ async function adminResetUserPredictions() {
   const userId = $('reset-pred-user')?.value;
   if (!userId) { alert('Please select a user'); return; }
   if (!confirm('Reset all predictions for this user?')) return;
-  const ok = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`, {
     method: 'DELETE', headers: sbHeaders
-  }).then(r => r.ok);
-  if (ok) { $('reset-pred-msg').style.display='inline'; setTimeout(()=>$('reset-pred-msg').style.display='none',3000); }
+  });
+  if (res.ok || res.status === 204) {
+    $('reset-pred-msg').style.display='inline';
+    setTimeout(()=>$('reset-pred-msg').style.display='none',3000);
+  } else {
+    const err = await res.text();
+    alert('Could not reset: ' + err);
+  }
 }
 
 async function adminDeleteUser() {
   const userId = $('delete-user-select')?.value;
   if (!userId) { alert('Please select a user'); return; }
   if (!confirm('Permanently delete this user and ALL their data? This cannot be undone.')) return;
-  const ok = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-    method: 'DELETE', headers: sbHeaders
-  }).then(r => r.ok);
-  if (ok) { alert('User deleted.'); loadAdminPanel(); }
+  /* Delete predictions first, then buster picks, then user */
+  await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`, { method: 'DELETE', headers: sbHeaders });
+  await fetch(`${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${userId}`, { method: 'DELETE', headers: sbHeaders });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, { method: 'DELETE', headers: sbHeaders });
+  if (res.ok || res.status === 204) {
+    alert('User deleted.');
+    loadAdminPanel();
+  } else {
+    const err = await res.text();
+    alert('Could not delete user: ' + err);
+  }
+}
+
+async function adminCancelAllResults() {
+  if (!confirm('Cancel ALL results? This will reset every match to Upcoming and clear all scores.')) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=gte.1`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ home_score: null, away_score: null, status: 'Upcoming' })
+  });
+  if (res.ok || res.status === 204) {
+    alert('All results cancelled.');
+    loadAdminPanel();
+  } else {
+    alert('Could not cancel results.');
+  }
+}
+
+async function adminResetAllBuster() {
+  if (!confirm('Reset ALL team progress for Buster? This sets every team back to Eliminated.')) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/team_progress?id=gte.0`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ best_stage: 'eliminated', updated_at: new Date().toISOString() })
+  });
+  /* Also try with a different filter */
+  const res2 = await fetch(`${SUPABASE_URL}/rest/v1/team_progress?best_stage=neq.eliminated`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ best_stage: 'eliminated', updated_at: new Date().toISOString() })
+  });
+  alert('All buster progress reset.');
+  loadAdminPanel();
 }
 
 async function adminSaveBlogPost() {
@@ -3446,15 +3511,16 @@ async function adminSaveReview() {
 /* Reset all predictions for a user */
 async function confirmResetPredictions(userId) {
   if (!confirm('Are you sure you want to delete ALL your predictions? This cannot be undone.')) return;
-  const ok = await fetch(
+  const res = await fetch(
     `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}`,
     { method: 'DELETE', headers: sbHeaders }
-  ).then(r => r.ok);
-  if (ok) {
+  );
+  if (res.ok || res.status === 204) {
     alert('All predictions cleared. The page will now reload.');
     location.reload();
   } else {
-    alert('Could not reset predictions. Please try again.');
+    const err = await res.text();
+    alert('Could not reset predictions: ' + err);
   }
 }
 
