@@ -2713,7 +2713,7 @@ async function renderAbout() {
         <div class="info-card">
           <h3 style="margin-bottom:14px">💬 Feedback</h3>
           <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-            Found a bug? Have an idea? Just want to say something? Let us know!
+            Found a bug? Have an idea? Just want to say something? Let me know!
           </p>
           <div class="form-group">
             <label class="form-label">Your Name</label>
@@ -3710,12 +3710,13 @@ async function renderBuster() {
     </div>
 
     ${!locked ? `
-    <div style="text-align:center;margin-bottom:40px">
+    <div style="text-align:center;margin-bottom:40px;display:flex;flex-direction:column;align-items:center;gap:12px">
       <button class="hero-cta" onclick="saveBusterPicks('${user.id}')" id="buster-save-btn"
         style="min-width:260px;justify-content:center;font-size:1.1rem;padding:16px 32px;background:var(--gold);color:var(--navy);box-shadow:0 4px 24px rgba(245,194,0,0.4)">
         💾 Save My Buster Picks
       </button>
-      <p id="buster-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-top:10px">✅ Picks saved!</p>
+      <p id="buster-save-msg" style="display:none;color:var(--teal);font-weight:600">✅ Picks saved!</p>
+      <button onclick="confirmResetBuster('${user.id}')" class="comp-action-btn danger">🗑️ Reset My Buster Picks</button>
     </div>` : ''}
 
     <h2 class="section-title" style="margin-bottom:20px">🎲 <span>Buster Leaderboard</span></h2>
@@ -3728,6 +3729,19 @@ async function renderBuster() {
 
   /* Load leaderboard */
   loadBusterLeaderboard();
+}
+
+async function confirmResetBuster(userId) {
+  if (!confirm('Reset all your Buster picks? This cannot be undone.')) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${userId}`, {
+    method: 'DELETE', headers: sbHeaders
+  });
+  if (res.ok || res.status === 204) {
+    alert('Buster picks cleared. The page will now reload.');
+    location.reload();
+  } else {
+    alert('Could not reset. Please try again.');
+  }
 }
 
 async function saveBusterPicks(userId) {
