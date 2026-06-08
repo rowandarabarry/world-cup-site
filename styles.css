@@ -1744,3 +1744,28 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   padding: 0 16px 12px;
   border-top: 1px solid var(--border);
 }
+
+/* Portrait orientation hint — only show on narrow mobile screens */
+.portrait-hint {
+  display: none;
+  background: rgba(0,180,180,0.1);
+  border: 1px solid var(--teal);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--teal-dark);
+  text-align: center;
+  margin-bottom: 16px;
+}
+@media (max-width: 480px) and (orientation: portrait) {
+  .portrait-hint { display: block; }
+}
+
+/* Scoring page - prevent pts wrapping on mobile */
+.fact-row {
+  flex-wrap: nowrap !important;
+}
+.fact-value {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
