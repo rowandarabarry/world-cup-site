@@ -1665,9 +1665,9 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 
 /* Wall chart print styles */
 @media print {
-  @page { size: A4 landscape; margin: 8mm; }
-  .site-header, footer, .no-print, .bottom-nav { display: none !important; }
-  body { background: white; font-size: 10px; }
-  .page-title-bar { display: none; }
+  @page { size: A3 landscape; margin: 5mm; }
+  .site-header, footer, .no-print, .bottom-nav, .page-title-bar { display: none !important; }
+  body { background: white; }
   #wc-content { padding: 0 !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
