@@ -1459,7 +1459,7 @@ function calcStandings(teams, predictions) {
     const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
     const home = standings[grp][normName(p.home_team || p.homeTeam)];
     const away = standings[grp][normName(p.away_team || p.awayTeam)];
-    if (!home || !away || p.home_score === '' || p.away_score === '') return;
+    if (!home || !away || p.home_score === null || p.away_score === null || p.home_score === undefined || p.away_score === undefined) return;
     const hs = parseInt(p.home_score ?? p.homeScore);
     const as_ = parseInt(p.away_score ?? p.awayScore);
     if (isNaN(hs) || isNaN(as_)) return;
@@ -1782,11 +1782,14 @@ async function renderPredict() {
   savedPreds.forEach(p => { predMap[p.match_id] = p; });
 
   /* Calculate current predicted standings from saved group preds */
-  const groupPreds = groupFixtures.map(fix => ({
-    ...fix,
-    home_score: predMap[fix.match_id]?.home_score ?? '',
-    away_score: predMap[fix.match_id]?.away_score ?? ''
-  }));
+  const groupPreds = groupFixtures.map(fix => {
+    const saved = predMap[fix.match_id];
+    return {
+      ...fix,
+      home_score: saved?.home_score ?? null,
+      away_score: saved?.away_score ?? null
+    };
+  });
   const standings = calcStandings(teams, groupPreds);
 
   /* Generate knockout fixtures */
