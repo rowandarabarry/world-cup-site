@@ -805,6 +805,10 @@ function setSession(user) {
 function clearSession() {
   try { sessionStorage.removeItem('wc_user'); } catch(e) {}
 }
+function compLogout() {
+  clearSession();
+  location.href = './?comps=1';
+}
 async function sbUpdate(table, match_id, data) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?match_id=eq.${match_id}`, {
     method: 'PATCH',
@@ -1391,10 +1395,10 @@ async function loadUserPredictions(userId) {
 /* Save predictions for a section (upsert) */
 async function savePredictions(userId, predictions) {
   const rows = predictions.map(p => ({
-    user_id:   userId,
-    match_id:  p.matchId,
-    home_score: p.homeScore,
-    away_score: p.awayScore,
+    user_id:    userId,
+    match_id:   p.matchId,
+    home_score: parseInt(p.homeScore ?? 0),
+    away_score: parseInt(p.awayScore ?? 0),
     et_winner:  p.etWinner || null,
     stage:      p.stage || 'group',
     updated_at: new Date().toISOString()
@@ -1402,15 +1406,40 @@ async function savePredictions(userId, predictions) {
 
   if (!rows.length) return true;
 
+  /* Try upsert first, fall back to delete+insert if it fails */
   const res = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions`, {
     method: 'POST',
-    headers: { ...sbHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${SUPABASE_ANON}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
     body: JSON.stringify(rows)
   });
 
-  if (!res.ok && res.status !== 204) {
-    const err = await res.text();
-    console.error('Save error:', err);
+  if (res.ok || res.status === 204 || res.status === 201) return true;
+
+  /* Fallback: delete existing rows then insert fresh */
+  const matchIds = rows.map(r => r.match_id).join(',');
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&match_id=in.(${matchIds})`,
+    { method: 'DELETE', headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+  );
+
+  const res2 = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${SUPABASE_ANON}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(rows)
+  });
+
+  if (!res2.ok && res2.status !== 204 && res2.status !== 201) {
+    const err = await res2.text().catch(() => res2.status);
     throw new Error('Save failed: ' + err);
   }
   return true;
@@ -2224,6 +2253,8 @@ async function saveSection(stage) {
   try {
     await savePredictions(user.id, fixtures);
     btn.textContent = stage === 'final' ? '🏆 Save Final Prediction' : `Save ${stage.toUpperCase()} →`;
+    btn.disabled = false;
+    if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
     btn.disabled = false;
     if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
 
