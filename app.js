@@ -3086,6 +3086,10 @@ async function renderWallChart(predPicks = null, username = '') {
       <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ' — ' + username : ''}</h1>
         <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">🖨️ Print</button>
+        <a href="images/wallchart-official.png" download="WorldCup2026-WallChart.png"
+          class="comp-btn-secondary no-print" style="display:inline-flex;padding:10px 20px;width:auto">
+          ⬇️ Download Official Chart
+        </a>
       </div>
     </div>
     <div id="wc-content" style="padding:8px"><p style="color:var(--text-muted)">Building…</p></div>`;
@@ -3153,7 +3157,7 @@ async function renderWallChart(predPicks = null, username = '') {
         ⚽ ROWAN'S WORLD CUP ZONE — 2026 WALL CHART${username ? ' · ' + username.toUpperCase() : ''}
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1.8fr 1fr;gap:8px;align-items:start">
+      <div style="display:grid;grid-template-columns:1fr 1.8fr 1fr;gap:8px;align-items:stretch">
 
         <!-- LEFT: Groups A-F -->
         <div>
@@ -3164,7 +3168,7 @@ async function renderWallChart(predPicks = null, username = '') {
         <!-- CENTRE: Bracket -->
         <div>
           <div style="background:#f5c200;color:#0f0e2a;font-weight:800;font-size:0.7rem;text-align:center;padding:3px;letter-spacing:0.06em;margin-bottom:4px;border-radius:3px">KNOCKOUT STAGES</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;align-items:start">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 1fr;gap:6px;align-items:start">
 
             <!-- R32 left -->
             <div>
