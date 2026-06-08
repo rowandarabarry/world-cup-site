@@ -1675,3 +1675,34 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   #app { padding-bottom: 0 !important; }
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
+
+/* ============================================================
+   PREDICTION MATCH CARD — mobile fixes
+   ============================================================ */
+@media (max-width: 500px) {
+  .pred-match-teams {
+    gap: 4px;
+  }
+  .pred-team-name {
+    font-size: 0.72rem;
+    max-width: none;
+  }
+  .pred-score {
+    width: 36px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
+    padding: 0 !important;
+  }
+  .pred-inputs {
+    gap: 3px;
+  }
+  .pred-team.home,
+  .pred-team.away {
+    min-width: 0;
+    flex: 1;
+  }
+  .pred-team img.fixture-flag {
+    width: 24px;
+    flex-shrink: 0;
+  }
+}
