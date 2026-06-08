@@ -2893,6 +2893,122 @@ async function renderLeaderboardBuster() {
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
+        <h1 class="page-title">🎲 <span>Busters Comp</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="buster-lb"><p style="color:var(--text-muted)">Loading…</p></div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+
+    const rows = data.map(r => ({
+      ...r,
+      total: (r.pot1_pts||0)+(r.pot2_pts||0)+(r.pot3_pts||0)+(r.pot4_pts||0)+(r.pot5_pts||0)+(r.pot6_pts||0),
+      best: Math.max(r.pot1_pts||0,r.pot2_pts||0,r.pot3_pts||0,r.pot4_pts||0,r.pot5_pts||0,r.pot6_pts||0)
+    })).sort((a,b) => b.total-a.total || b.best-a.best);
+
+    const teams = await loadTeams();
+    const flagMap = {};
+    teams.forEach(t => { flagMap[t.name] = t.flag; });
+
+    const potLabel = (n) => ['Elite','Contenders','Challengers','Dark Horses','Underdogs','Minnows'][n-1] || `Pot ${n}`;
+
+    $('buster-lb').innerHTML = `
+      <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+        👆 Tap any player to see their full team selections
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${rows.map((row, i) => {
+          const pots = [1,2,3,4,5,6].map(n => ({
+            label: potLabel(n),
+            team: row[`pot${n}_team`] || '—',
+            pts: row[`pot${n}_pts`] || 0,
+            flag: flagMap[row[`pot${n}_team`]] || ''
+          }));
+
+          return `
+            <div class="buster-lb-row" onclick="this.querySelector('.buster-lb-detail').style.display=this.querySelector('.buster-lb-detail').style.display==='none'?'block':'none'">
+              <div class="buster-lb-summary">
+                <span class="lb-pos" style="color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+                  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+                </span>
+                <span style="font-weight:700;flex:1">${row.username}</span>
+                <span class="pts-cell">${row.total} pts</span>
+                <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px">▼</span>
+              </div>
+              <div class="buster-lb-detail" style="display:none">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:12px 0 4px">
+                  ${pots.map(p => `
+                    <div style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
+                      <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${p.label}</div>
+                      <div style="display:flex;align-items:center;gap:5px">
+                        ${p.flag ? `<img src="${p.flag}" width="20" height="14" style="border-radius:2px;border:1px solid var(--border)">` : ''}
+                        <span style="font-weight:700;font-size:0.82rem;color:var(--text-dark)">${p.team}</span>
+                      </div>
+                      <div style="font-size:0.72rem;color:var(--teal);font-weight:600;margin-top:3px">${p.pts} pts</div>
+                    </div>`).join('')}
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
+}
+
+async function renderLeaderboardPredictions() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
+        <h1 class="page-title">🎯 <span>Score Predictions</span></h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="wrap" id="pred-lb"><p style="color:var(--text-muted)">Loading…</p></div>
+    </div>`;
+
+  try {
+    const data = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+
+    if (!data.length) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+
+    $('pred-lb').innerHTML = `
+      <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
+        <thead><tr>
+          <th style="text-align:center;width:48px">Pos</th>
+          <th style="text-align:left;padding-left:12px">Player</th>
+          <th>Match Pts</th><th>Total</th>
+        </tr></thead>
+        <tbody>
+          ${data.map((row,i) => `
+            <tr>
+              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
+                ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+              </td>
+              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
+              <td>${row.match_pts}</td>
+              <td class="pts-cell">${row.total_pts}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>`;
+  } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
+}
+
+async function renderLeaderboardBuster() {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
         <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
       </div>
     </div>
@@ -2946,12 +3062,7 @@ async function renderLeaderboardBuster() {
           </tbody>
         </table>
       </div>
-      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Hover P1–P6 to see team names</p>
-      <div style="margin-top:16px">
-        <a href="./?busterpicks=1" class="comp-btn-secondary" style="display:inline-flex;width:auto;padding:10px 20px">
-          👀 View Everyone's Picks
-        </a>
-      </div>`;
+`;
   } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
 }
 
