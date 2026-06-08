@@ -3004,71 +3004,7 @@ async function renderLeaderboardPredictions() {
   } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
 }
 
-async function renderLeaderboardBuster() {
-  app().innerHTML = `
-    <div class="page-title-bar">
-      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
-        <h1 class="page-title">🎲 <span>Buster Competition</span></h1>
-      </div>
-    </div>
-    <div class="section">
-      <div class="wrap" id="buster-lb"><p style="color:var(--text-muted)">Loading…</p></div>
-    </div>`;
 
-  try {
-    const data = await fetch(
-      `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
-      { headers: sbHeaders }
-    ).then(r => r.json());
-
-    if (!data.length) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
-
-    const rows = data.map(r => ({
-      ...r,
-      total: r.pot1_pts+r.pot2_pts+r.pot3_pts+r.pot4_pts+r.pot5_pts+r.pot6_pts,
-      best: Math.max(r.pot1_pts,r.pot2_pts,r.pot3_pts,r.pot4_pts,r.pot5_pts,r.pot6_pts)
-    })).sort((a,b) => b.total-a.total || b.best-a.best);
-
-    $('buster-lb').innerHTML = `
-      <div class="lb-scroll-wrap">
-        <table class="group-table buster-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:520px">
-          <thead><tr>
-            <th style="text-align:center;width:48px">Pos</th>
-            <th style="text-align:left;padding-left:12px">Player</th>
-            <th title="Pot 1 — Elite">P1</th>
-            <th title="Pot 2 — Contenders">P2</th>
-            <th title="Pot 3 — Challengers">P3</th>
-            <th title="Pot 4 — Dark Horses">P4</th>
-            <th title="Pot 5 — Underdogs">P5</th>
-            <th title="Pot 6 — Minnows">P6</th>
-            <th>Total</th>
-          </tr></thead>
-          <tbody>
-            ${rows.map((row,i) => `
-              <tr>
-                <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
-                  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
-                </td>
-                <td style="font-weight:600;text-align:left;padding-left:12px">${row.username}</td>
-                <td title="${row.pot1_team}">${row.pot1_pts}</td>
-                <td title="${row.pot2_team}">${row.pot2_pts}</td>
-                <td title="${row.pot3_team}">${row.pot3_pts}</td>
-                <td title="${row.pot4_team}">${row.pot4_pts}</td>
-                <td title="${row.pot5_team}">${row.pot5_pts}</td>
-                <td title="${row.pot6_team}">${row.pot6_pts}</td>
-                <td class="pts-cell">${row.total}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-`;
-  } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
-}
-
-/* ============================================================
-   TOURNAMENT REVIEW PAGE — Rowan's opinions
-   ============================================================ */
 async function renderReview() {
   app().innerHTML = `
     <div class="page-title-bar">
