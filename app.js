@@ -1312,7 +1312,18 @@ function flagCode(team) {
    ============================================================ */
 
 function isPastCutoff() {
-  return new Date() > CUTOFF;
+  return new Date() > CUTOFF || window._competitionsLocked === true;
+}
+
+/* Load competition lock state from Supabase */
+async function loadLockState() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked&select=value`,
+      { headers: sbHeaders }
+    ).then(r => r.json());
+    window._competitionsLocked = res[0]?.value === 'true';
+  } catch(e) { window._competitionsLocked = false; }
 }
 
 /* Hash a string with SHA-256 */
@@ -1712,6 +1723,7 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
    PREDICTIONS PAGE
    ============================================================ */
 async function renderPredict() {
+  await loadLockState();
   /* ── Check session ── */
   const session = getSession();
   if (!session) {
@@ -1892,8 +1904,13 @@ async function renderPredict() {
         <div class="pred-section" style="margin-top:40px;margin-bottom:40px">
           <h2 class="section-title">The <span>Final</span></h2>
           <div id="final-matches">${renderPredictionSection(finalFixtures, savedPreds, locked)}</div>
+          <div style="text-align:center;margin:24px 0 8px">
+            <a href="./?wallchart=1" class="comp-btn-secondary" style="display:inline-flex;padding:10px 24px;width:auto">
+              🖨️ Download My Predictions Wall Chart
+            </a>
+          </div>
           ${!locked ? `
-          <div style="text-align:center;margin-top:24px">
+          <div style="text-align:center;margin-top:8px">
             <button class="hero-cta" onclick="saveSection('final')" id="save-final"
               style="background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.4)">
               🏆 Save Final Prediction
@@ -3061,148 +3078,119 @@ async function renderBlog() {
 }
 
 /* ============================================================
-   WALL CHART PAGE
+   WALL CHART PAGE — landscape bracket format
    ============================================================ */
-async function renderWallChart(filledPreds = null, username = '') {
+async function renderWallChart(predPicks = null, username = '') {
   app().innerHTML = `
     <div class="page-title-bar no-print">
       <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ` — ${username}` : ''}</h1>
+        <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ' — ' + username : ''}</h1>
         <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">
           🖨️ Print / Download
         </button>
       </div>
     </div>
-    <div class="wall-chart-wrap">
-      <div class="wc-title">ROWAN'S WORLD CUP ZONE</div>
-      <div class="wc-subtitle">FIFA World Cup 2026 · USA · Canada · Mexico${username ? ` · ${username}'s Predictions` : ' · Wall Chart'}</div>
-      <div id="wc-content"><p style="color:var(--text-muted)">Building chart…</p></div>
+    <div id="wc-content" style="padding:12px">
+      <p style="color:var(--text-muted)">Building chart…</p>
     </div>`;
 
-  const [teams, results] = await Promise.all([
-    loadTeams(),
-    sbGet('results')
-  ]);
+  const [teams, results] = await Promise.all([loadTeams(), sbGet('results')]);
 
-  /* Build group fixtures map */
-  const groupFixtures = {};
-  results.filter(r => parseInt(r.match_id) <= 72).forEach(r => {
-    const g = r.group_name.replace('Group ','');
-    if (!groupFixtures[g]) groupFixtures[g] = [];
-    groupFixtures[g].push(r);
-  });
-
-  /* Prediction map if filled */
   const predMap = {};
-  if (filledPreds) filledPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
+  if (predPicks) predPicks.forEach(p => { predMap[p.match_id] = p; });
 
-  const scoreDisplay = (matchId, isHome) => {
-    if (filledPreds) {
+  const score = (matchId, isHome) => {
+    if (predPicks) {
       const p = predMap[matchId];
       if (p) return isHome ? (p.home_score ?? '') : (p.away_score ?? '');
+      return '';
     }
     const r = results.find(r => r.match_id == matchId);
-    if (r && r.status === 'Played') return isHome ? r.home_score : r.away_score;
+    if (r?.status === 'Played') return isHome ? r.home_score : r.away_score;
     return '';
   };
 
-  /* Group stage HTML */
-  const groupsHtml = Object.entries(groupFixtures)
-    .sort(([a],[b]) => a.localeCompare(b))
-    .map(([g, matches]) => `
-      <div class="wc-group">
-        <div class="wc-group-header">
-          <span>GROUP ${g}</span>
-        </div>
-        ${matches.map(m => `
-          <div class="wc-match-row">
-            <div class="wc-match-teams">
-              <img src="https://flagcdn.com/w20/${flagCode(m.home_team)}.png" width="16" height="11" style="border-radius:1px">
-              <span>${m.home_team}</span>
-              <span style="color:var(--text-muted);margin:0 2px">v</span>
-              <span>${m.away_team}</span>
-              <img src="https://flagcdn.com/w20/${flagCode(m.away_team)}.png" width="16" height="11" style="border-radius:1px">
-            </div>
-            <div class="wc-score-box">
-              <input class="wc-score-input" value="${scoreDisplay(m.match_id, true)}" readonly>
-              <span class="wc-dash">–</span>
-              <input class="wc-score-input" value="${scoreDisplay(m.match_id, false)}" readonly>
-            </div>
-          </div>`).join('')}
-      </div>`).join('');
+  const flag = name => `<img src="https://flagcdn.com/w20/${flagCode(name)}.png" width="16" height="11" style="border-radius:1px;vertical-align:middle;margin-right:3px">`;
 
-  /* Knockout bracket */
-  const r32Matches = results.filter(r => r.match_id >= 73 && r.match_id <= 88);
-  const r16Matches = results.filter(r => r.match_id >= 89 && r.match_id <= 96);
-  const qfMatches  = results.filter(r => r.match_id >= 97 && r.match_id <= 100);
-  const sfMatches  = results.filter(r => r.match_id >= 101 && r.match_id <= 102);
-  const finalMatch = results.find(r => r.match_id === 103);
+  /* Group fixtures */
+  const groupMatches = {};
+  results.filter(r => r.match_id <= 72).forEach(r => {
+    const g = r.group_name;
+    if (!groupMatches[g]) groupMatches[g] = [];
+    groupMatches[g].push(r);
+  });
 
-  const bracketMatch = (matchId, label, homeLabel, awayLabel) => {
-    const hs = scoreDisplay(matchId, true);
-    const as_ = scoreDisplay(matchId, false);
+  /* Knockout fixtures */
+  const ko = (id) => results.find(r => r.match_id === id) || { match_id: id, home_team: 'TBD', away_team: 'TBD' };
+
+  const matchRow = (r) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 6px;border-bottom:1px solid #e8e8f0;font-size:0.68rem;gap:4px">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${flag(r.home_team)}${r.home_team}</span>
+      <span style="display:flex;align-items:center;gap:2px;flex-shrink:0">
+        <input style="width:18px;height:18px;border:1px solid #ccc;border-radius:2px;text-align:center;font-size:0.65rem;font-weight:700;background:#f8f8ff" value="${score(r.match_id, true)}" readonly>
+        <span style="font-size:0.6rem;color:#999">–</span>
+        <input style="width:18px;height:18px;border:1px solid #ccc;border-radius:2px;text-align:center;font-size:0.65rem;font-weight:700;background:#f8f8ff" value="${score(r.match_id, false)}" readonly>
+      </span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">${r.away_team}${flag(r.away_team)}</span>
+    </div>`;
+
+  const groupCard = (g, matches) => `
+    <div style="border:1px solid #dde;border-radius:6px;overflow:hidden;break-inside:avoid">
+      <div style="background:#0f0e2a;color:#00b4b4;padding:4px 8px;font-weight:800;font-size:0.75rem;letter-spacing:0.05em">GROUP ${g.replace('Group ','')}</div>
+      ${matches.map(matchRow).join('')}
+    </div>`;
+
+  const koMatch = (id, label, date) => {
+    const r = ko(id);
     return `
-      <div class="wc-bracket-match">
-        <div class="wc-bracket-match-label">${label}</div>
-        <div class="wc-bracket-team">
-          <span class="wc-bracket-team-name">${homeLabel}</span>
-          <input class="wc-bracket-score" value="${hs}" readonly>
-        </div>
-        <div class="wc-bracket-team">
-          <span class="wc-bracket-team-name">${awayLabel}</span>
-          <input class="wc-bracket-score" value="${as_}" readonly>
-        </div>
-      </div>`;
+    <div style="border:1px solid #dde;border-radius:6px;overflow:hidden;margin-bottom:4px;break-inside:avoid">
+      <div style="background:#1a1860;color:rgba(255,255,255,0.7);padding:2px 6px;font-size:0.6rem;font-weight:700;display:flex;justify-content:space-between">
+        <span>${label}</span><span>${date}</span>
+      </div>
+      ${matchRow(r)}
+    </div>`;
   };
 
-  $('wc-content').innerHTML = `
-    <div class="wc-groups-grid">${groupsHtml}</div>
-
-    <div class="wc-bracket">
-      <div class="wc-bracket-header">ROUND OF 32</div>
-      <div class="wc-bracket-grid">
-        ${Array.from({length:16}, (_,i) => {
-          const m = results.find(r => r.match_id === 73+i) || {match_id:73+i,home_team:'TBD',away_team:'TBD'};
-          return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team || 'TBD', m.away_team || 'TBD');
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="wc-bracket">
-      <div class="wc-bracket-header">ROUND OF 16</div>
-      <div class="wc-bracket-grid">
-        ${Array.from({length:8}, (_,i) => {
-          const m = results.find(r => r.match_id === 89+i) || {match_id:89+i,home_team:'TBD',away_team:'TBD'};
-          return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
-        }).join('')}
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="wc-bracket">
-        <div class="wc-bracket-header">QUARTER FINALS</div>
-        <div class="wc-bracket-grid" style="grid-template-columns:1fr 1fr">
-          ${Array.from({length:4}, (_,i) => {
-            const m = results.find(r => r.match_id === 97+i) || {match_id:97+i,home_team:'TBD',away_team:'TBD'};
-            return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
-          }).join('')}
+  document.getElementById('wc-content').innerHTML = `
+    <div style="max-width:1200px;margin:0 auto">
+      <!-- Title -->
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#0f0e2a;letter-spacing:0.05em">
+          ROWAN'S WORLD CUP ZONE — 2026 WALL CHART${username ? ' · ' + username.toUpperCase() : ''}
         </div>
       </div>
-      <div class="wc-bracket">
-        <div class="wc-bracket-header">SEMI FINALS</div>
-        <div class="wc-bracket-grid" style="grid-template-columns:1fr 1fr">
-          ${Array.from({length:2}, (_,i) => {
-            const m = results.find(r => r.match_id === 101+i) || {match_id:101+i,home_team:'TBD',away_team:'TBD'};
-            return bracketMatch(m.match_id, `Match ${m.match_id}`, m.home_team||'TBD', m.away_team||'TBD');
-          }).join('')}
-        </div>
-      </div>
-    </div>
 
-    <div class="wc-bracket" style="border:2px solid var(--gold)">
-      <div class="wc-bracket-header" style="background:var(--gold);color:var(--navy);font-size:1.2rem">🏆 THE FINAL — Sunday 19 July</div>
-      <div class="wc-bracket-grid" style="grid-template-columns:1fr">
-        ${bracketMatch(103, 'Match 103 · MetLife Stadium', finalMatch?.home_team||'TBD', finalMatch?.away_team||'TBD')}
+      <!-- Group Stage -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+        ${Object.entries(groupMatches).sort(([a],[b])=>a.localeCompare(b)).map(([g,ms]) => groupCard(g,ms)).join('')}
+      </div>
+
+      <!-- Knockout bracket -->
+      <div style="background:#0f0e2a;color:#00b4b4;padding:6px 10px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;border-radius:6px 6px 0 0;margin-bottom:0">
+        KNOCKOUT STAGES
+      </div>
+      <div style="border:1px solid #0f0e2a;border-top:none;border-radius:0 0 6px 6px;padding:10px;background:#fafafa;margin-bottom:16px">
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 32</div>
+            ${[73,74,75,76,77,78,79,80].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
+          </div>
+          <div>
+            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 32 (cont.)</div>
+            ${[81,82,83,84,85,86,87,88].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
+          </div>
+          <div>
+            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 16</div>
+            ${[89,90,91,92,93,94,95,96].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
+          </div>
+          <div>
+            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">QF · SF · Final</div>
+            ${[97,98,99,100].map(id => { const r=ko(id); return koMatch(id,'QF',r.match_date||''); }).join('')}
+            ${[101,102].map(id => { const r=ko(id); return koMatch(id,'SF',r.match_date||''); }).join('')}
+            ${koMatch(103,'🏆 FINAL','Sun 19 Jul')}
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -3305,8 +3293,31 @@ async function renderAdminUtilities() {
     { headers: sbHeaders }
   ).then(r => r.json()).catch(() => []);
 
+  /* Get current lock state */
+  const lockRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked&select=value`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+  const isLocked = lockRes[0]?.value === 'true';
+
   return `
     <h2 class="section-title" style="margin:40px 0 16px">⚙️ <span>Admin Utilities</span></h2>
+
+    <div class="admin-blog-form" style="margin-bottom:24px;border:3px solid ${isLocked ? '#e63200' : 'var(--teal)'};background:${isLocked ? '#fff5f5' : '#f5ffff'}">
+      <h3 style="color:${isLocked ? '#e63200' : 'var(--teal-dark)'}">
+        ${isLocked ? '🔒 Competitions are LOCKED' : '🔓 Competitions are OPEN'}
+      </h3>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px">
+        ${isLocked
+          ? 'All competition entry is currently disabled. Users cannot save predictions or buster picks.'
+          : 'Competitions are open. Click to lock before the tournament starts.'}
+      </p>
+      <button class="hero-cta" onclick="adminToggleLock(${!isLocked})"
+        style="background:${isLocked ? 'var(--teal)' : '#e63200'};box-shadow:none;padding:12px 32px">
+        ${isLocked ? '🔓 Unlock Competitions' : '🔒 Lock All Competitions'}
+      </button>
+      <span id="lock-msg" style="display:none;font-weight:600;margin-left:12px">✅ Done!</span>
+    </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px">
 
@@ -3434,6 +3445,21 @@ async function adminDeleteUser() {
   } else {
     const err = await res.text();
     alert('Could not delete user: ' + err);
+  }
+}
+
+async function adminToggleLock(lock) {
+  const action = lock ? 'lock' : 'unlock';
+  if (!confirm(`Are you sure you want to ${action} all competitions?`)) return;
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ value: lock ? 'true' : 'false', updated_at: new Date().toISOString() })
+  }).then(r => r.ok || r.status === 204);
+  if (ok) {
+    window._competitionsLocked = lock;
+    $('lock-msg').style.display = 'inline';
+    setTimeout(() => loadAdminPanel(), 1000);
   }
 }
 
@@ -3621,6 +3647,7 @@ async function renderBusterPicks() {
 
 
 async function renderBuster() {
+  await loadLockState();
   const session = getSession();
   const locked  = isPastCutoff();
 
