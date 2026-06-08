@@ -813,10 +813,13 @@ async function sbUpdate(table, match_id, data) {
   return res.ok;
 }
 
-/* Time lookup map from fixtures */
+/* Time lookup map — built from fixture data */
+const MATCH_TIMES = {
+  
+};
+
 function getMatchTime(matchId) {
-  const fix = FIXTURES.find(f => f.id === matchId);
-  return fix ? fix.time : '';
+  return MATCH_TIMES[matchId] || '';
 }
 
 /* ============================================================
@@ -843,7 +846,7 @@ async function renderResults() {
     /* Group by group */
     const groups = {};
     results.forEach(r => {
-      const g = r.Group || 'Other';
+      const g = r.group_name || 'Other';
       if (!groups[g]) groups[g] = [];
       groups[g].push(r);
     });
@@ -870,7 +873,7 @@ async function renderResults() {
                 ${m.status === 'Played'
                   ? `<div class="fixture-result">${m.home_score} – ${m.away_score}</div>`
                   : `<div class="fixture-vs">VS</div>`}
-                <div class="fixture-time">${m.match_date}${getMatchTime(m.match_id) ? ' · ' + getMatchTime(m.match_id) : ''}</div>
+                <div class="fixture-time">${m.match_date}</div>
               </div>
               <div class="fixture-team away">
                 <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" alt="${m.away_team}">
@@ -880,7 +883,7 @@ async function renderResults() {
         </div>`).join('')}`;
   } catch(e) {
     document.getElementById('results-content').innerHTML =
-      `<p style="color:var(--text-muted)">Could not load results. Make sure the Google Sheet is set up correctly.</p>`;
+      `<p style="color:var(--text-muted)">Could not load results. Could not connect to database.</p>`;
   }
 }
 
@@ -1933,7 +1936,7 @@ function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
         const aScore = saved ? (saved.away_score ?? 0) : 0;
         return `
           <div class="pred-match-card" id="pred-${fix.match_id}">
-            <div class="pred-match-date">${fix.match_date}${getMatchTime(fix.match_id) ? ' · ' + getMatchTime(fix.match_id) : ''}</div>
+            <div class="pred-match-date">${fix.match_date}</div>
             <div class="pred-match-teams">
               <div class="pred-team home">
                 <img src="https://flagcdn.com/w40/${flagCode(fix.home_team)}.png" class="fixture-flag" alt="">
