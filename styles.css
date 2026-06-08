@@ -1706,3 +1706,19 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
     flex-shrink: 0;
   }
 }
+
+/* Buster leaderboard inside buster page — compress on mobile */
+@media (max-width: 600px) {
+  .buster-lb-table {
+    font-size: 0.7rem;
+  }
+  .buster-lb-table th,
+  .buster-lb-table td {
+    padding: 6px 3px !important;
+  }
+  .buster-lb-table th:nth-child(n+3):nth-child(-n+8),
+  .buster-lb-table td:nth-child(n+3):nth-child(-n+8) {
+    font-size: 0.65rem;
+    padding: 6px 2px !important;
+  }
+}
