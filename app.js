@@ -1206,7 +1206,18 @@ function flagCode(team) {
     else if (params.has('admin'))      { await renderAdmin();                  }
     else if (params.has('predict'))    { await renderPredict();                }
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
-    else if (params.has('wallchart'))  { await renderWallChart();              }
+    else if (params.has('wallchart'))  {
+      const session = getSession();
+      if (session) {
+        const preds = await fetch(
+          `${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${session.id}&select=*`,
+          { headers: sbHeaders }
+        ).then(r => r.json()).catch(() => []);
+        await renderWallChart(preds, session.username);
+      } else {
+        await renderWallChart();
+      }
+    }
     else if (params.has('comps'))      { await renderComps();                  }
     else if (params.has('scoring'))    { renderScoring(params.get('scoring')); }
     else if (params.has('busterpicks')) { await renderBusterPicks();              }
@@ -1715,8 +1726,10 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
     const aFlag    = flagCode(fix.away_team || fix.away);
     const homeTeam = fix.home_team || fix.home;
     const awayTeam = fix.away_team || fix.away;
-    /* Always show ET picker — 0-0 is a valid score */
-    const isDraw = true;
+    /* Show ET picker if draw or no score saved yet (0-0 default needs it) */
+    const hs = parseInt(hScore);
+    const as_ = parseInt(aScore);
+    const isDraw = isNaN(hs) || isNaN(as_) || hs === as_;
 
     return `
       <div class="pred-match-card" id="pred-${fix.matchId}"
@@ -3191,10 +3204,15 @@ async function renderWallChart(predPicks = null, username = '') {
 
   const [teams, results] = await Promise.all([loadTeams(), sbGet('results')]);
   const predMap = {};
-  if (predPicks) predPicks.forEach(p => { predMap[p.match_id] = p; });
+  if (predPicks) predPicks.forEach(p => { predMap[p.match_id || p.matchId] = p; });
 
   const sc = (matchId, isHome) => {
-    if (predPicks) { const p = predMap[matchId]; return p ? (isHome ? p.home_score??'' : p.away_score??'') : ''; }
+    if (predPicks) {
+      const p = predMap[matchId];
+      if (!p) return '';
+      const val = isHome ? (p.home_score ?? p.homeScore) : (p.away_score ?? p.awayScore);
+      return val !== null && val !== undefined ? val : '';
+    }
     const r = results.find(r => r.match_id == matchId);
     return r?.status === 'Played' ? (isHome ? r.home_score : r.away_score) : '';
   };
