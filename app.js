@@ -2386,8 +2386,10 @@ function renderCompLogin(redirectPage = 'comps') {
     <div class="info-card" style="max-width:560px;margin:20px auto 0">
       <h3 style="margin-bottom:14px">🎯 How Score Predictions Works</h3>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="fact-row"><span class="fact-label">Exact score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Correct outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Exact draw score</span><span class="fact-value" style="color:var(--gold)">10 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Exact win/loss score</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Correct draw (wrong score)</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Correct win/loss outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
         <div class="fact-row"><span class="fact-label">Correct group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4/2 pts</span></div>
         <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
         <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
@@ -2630,8 +2632,10 @@ function renderScoring(which) {
         <div class="info-card" style="margin-bottom:20px">
           <h3 style="margin-bottom:14px">Match Predictions</h3>
           <div style="display:flex;flex-direction:column;gap:0">
-            <div class="fact-row"><span class="fact-label">⚽ Exact score — same teams, same scoreline</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">✅ Correct outcome — right team wins/draws/loses</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🎯 Exact score — draw (e.g. 1-1 = 1-1)</span><span class="fact-value" style="color:var(--gold)">10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">⚽ Exact score — win or loss</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🤝 Correct draw outcome (wrong score)</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✅ Correct win/loss outcome (wrong score)</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
             <div class="fact-row"><span class="fact-label">❌ Wrong outcome</span><span class="fact-value" style="color:var(--text-muted)">0 pts</span></div>
           </div>
           <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;font-size:0.82rem;color:var(--text-mid)">
