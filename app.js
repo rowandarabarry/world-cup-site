@@ -7,7 +7,7 @@
    3. Add an `if (params.has('yourpage'))` block in init()
    ============================================================ */
 
-const CUTOFF = new Date('2026-06-11T14:00:00Z'); // 1hr before first match
+const CUTOFF = new Date('2026-06-11T18:00:00Z'); // 7pm IST = 6pm UTC
 
 
 /* Convert UTC time string to Irish Standard Time (UTC+1 in summer) */
@@ -3691,7 +3691,7 @@ async function renderBuster() {
         <div style="display:flex;align-items:center;gap:10px">
           ${locked
             ? `<span style="font-size:1.1rem">🔒</span><strong style="font-size:0.95rem">Buster picks are locked</strong>`
-            : `<span style="font-size:1.1rem">⏰</span><strong style="font-size:0.95rem">Locks 1 hour before tournament kickoff (Irish time)</strong>`}
+            : `<span style="font-size:1.1rem">⏰</span><strong style="font-size:0.95rem">Locks Thu 11 Jun at 7pm Irish time</strong>`}
         </div>
         <button onclick="compLogout()" class="comp-action-btn">👋 Log Out</button>
       </div>
