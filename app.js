@@ -3078,119 +3078,139 @@ async function renderBlog() {
 }
 
 /* ============================================================
-   WALL CHART PAGE — landscape bracket format
+   WALL CHART PAGE — newspaper style with groups left/right, bracket centre
    ============================================================ */
 async function renderWallChart(predPicks = null, username = '') {
   app().innerHTML = `
     <div class="page-title-bar no-print">
       <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ' — ' + username : ''}</h1>
-        <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">
-          🖨️ Print / Download
-        </button>
+        <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">🖨️ Print</button>
       </div>
     </div>
-    <div id="wc-content" style="padding:12px">
-      <p style="color:var(--text-muted)">Building chart…</p>
-    </div>`;
+    <div id="wc-content" style="padding:8px"><p style="color:var(--text-muted)">Building…</p></div>`;
 
   const [teams, results] = await Promise.all([loadTeams(), sbGet('results')]);
-
   const predMap = {};
   if (predPicks) predPicks.forEach(p => { predMap[p.match_id] = p; });
 
-  const score = (matchId, isHome) => {
-    if (predPicks) {
-      const p = predMap[matchId];
-      if (p) return isHome ? (p.home_score ?? '') : (p.away_score ?? '');
-      return '';
-    }
+  const sc = (matchId, isHome) => {
+    if (predPicks) { const p = predMap[matchId]; return p ? (isHome ? p.home_score??'' : p.away_score??'') : ''; }
     const r = results.find(r => r.match_id == matchId);
-    if (r?.status === 'Played') return isHome ? r.home_score : r.away_score;
-    return '';
+    return r?.status === 'Played' ? (isHome ? r.home_score : r.away_score) : '';
   };
 
-  const flag = name => `<img src="https://flagcdn.com/w20/${flagCode(name)}.png" width="16" height="11" style="border-radius:1px;vertical-align:middle;margin-right:3px">`;
+  const f = name => `<img src="https://flagcdn.com/w20/${flagCode(name)}.png" width="14" height="10" style="border-radius:1px;vertical-align:middle;margin-right:2px">`;
 
-  /* Group fixtures */
   const groupMatches = {};
   results.filter(r => r.match_id <= 72).forEach(r => {
-    const g = r.group_name;
-    if (!groupMatches[g]) groupMatches[g] = [];
-    groupMatches[g].push(r);
+    const g = r.group_name; if (!groupMatches[g]) groupMatches[g] = []; groupMatches[g].push(r);
   });
 
-  /* Knockout fixtures */
-  const ko = (id) => results.find(r => r.match_id === id) || { match_id: id, home_team: 'TBD', away_team: 'TBD' };
+  const ko = id => results.find(r => r.match_id === id) || { match_id:id, home_team:'TBD', away_team:'TBD', match_date:'' };
 
-  const matchRow = (r) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 6px;border-bottom:1px solid #e8e8f0;font-size:0.68rem;gap:4px">
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${flag(r.home_team)}${r.home_team}</span>
-      <span style="display:flex;align-items:center;gap:2px;flex-shrink:0">
-        <input style="width:18px;height:18px;border:1px solid #ccc;border-radius:2px;text-align:center;font-size:0.65rem;font-weight:700;background:#f8f8ff" value="${score(r.match_id, true)}" readonly>
-        <span style="font-size:0.6rem;color:#999">–</span>
-        <input style="width:18px;height:18px;border:1px solid #ccc;border-radius:2px;text-align:center;font-size:0.65rem;font-weight:700;background:#f8f8ff" value="${score(r.match_id, false)}" readonly>
-      </span>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">${r.away_team}${flag(r.away_team)}</span>
+  const groupBlock = (g, matches) => `
+    <div style="margin-bottom:5px;border:1px solid #ccd;border-radius:4px;overflow:hidden;font-size:0.62rem">
+      <div style="background:#0f0e2a;color:#f5c200;font-weight:800;padding:2px 5px;font-size:0.65rem;letter-spacing:0.06em">
+        GROUP ${g.replace('Group ','')}
+      </div>
+      ${matches.map(m => `
+        <div style="display:flex;align-items:center;padding:2px 4px;border-bottom:1px solid #eef;gap:2px">
+          <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f(m.home_team)}${m.home_team}</span>
+          <span style="display:flex;gap:1px;flex-shrink:0">
+            <input style="width:16px;height:16px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.6rem;font-weight:700;background:#f8f8ff;padding:0" value="${sc(m.match_id,true)}" readonly>
+            <span style="color:#999;font-size:0.55rem;line-height:16px">-</span>
+            <input style="width:16px;height:16px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.6rem;font-weight:700;background:#f8f8ff;padding:0" value="${sc(m.match_id,false)}" readonly>
+          </span>
+          <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">${m.away_team}${f(m.away_team)}</span>
+        </div>`).join('')}
     </div>`;
 
-  const groupCard = (g, matches) => `
-    <div style="border:1px solid #dde;border-radius:6px;overflow:hidden;break-inside:avoid">
-      <div style="background:#0f0e2a;color:#00b4b4;padding:4px 8px;font-weight:800;font-size:0.75rem;letter-spacing:0.05em">GROUP ${g.replace('Group ','')}</div>
-      ${matches.map(matchRow).join('')}
-    </div>`;
-
-  const koMatch = (id, label, date) => {
+  const bracketMatch = (id, label) => {
     const r = ko(id);
     return `
-    <div style="border:1px solid #dde;border-radius:6px;overflow:hidden;margin-bottom:4px;break-inside:avoid">
-      <div style="background:#1a1860;color:rgba(255,255,255,0.7);padding:2px 6px;font-size:0.6rem;font-weight:700;display:flex;justify-content:space-between">
-        <span>${label}</span><span>${date}</span>
-      </div>
-      ${matchRow(r)}
-    </div>`;
+      <div style="margin-bottom:3px">
+        <div style="font-size:0.5rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">${label}</div>
+        <div style="display:flex;align-items:center;gap:2px;padding:1px 0">
+          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f(r.home_team)}${r.home_team}</div>
+          <input style="width:14px;height:14px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.55rem;background:#f8f8ff;flex-shrink:0;padding:0" value="${sc(id,true)}" readonly>
+        </div>
+        <div style="display:flex;align-items:center;gap:2px;padding:1px 0">
+          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f(r.away_team)}${r.away_team}</div>
+          <input style="width:14px;height:14px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.55rem;background:#f8f8ff;flex-shrink:0;padding:0" value="${sc(id,false)}" readonly>
+        </div>
+      </div>`;
   };
 
+  const groups = Object.entries(groupMatches).sort(([a],[b])=>a.localeCompare(b));
+  const leftGroups  = groups.slice(0,6);   // A-F
+  const rightGroups = groups.slice(6,12);  // G-L
+
   document.getElementById('wc-content').innerHTML = `
-    <div style="max-width:1200px;margin:0 auto">
-      <!-- Title -->
-      <div style="text-align:center;margin-bottom:12px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#0f0e2a;letter-spacing:0.05em">
-          ROWAN'S WORLD CUP ZONE — 2026 WALL CHART${username ? ' · ' + username.toUpperCase() : ''}
+    <div style="max-width:1300px;margin:0 auto;background:white">
+      <!-- Header -->
+      <div style="text-align:center;padding:6px 0;background:#0f0e2a;color:#f5c200;font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.08em;margin-bottom:8px;border-radius:6px">
+        ⚽ ROWAN'S WORLD CUP ZONE — 2026 WALL CHART${username ? ' · ' + username.toUpperCase() : ''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1.8fr 1fr;gap:8px;align-items:start">
+
+        <!-- LEFT: Groups A-F -->
+        <div>
+          <div style="background:#f5c200;color:#0f0e2a;font-weight:800;font-size:0.7rem;text-align:center;padding:3px;letter-spacing:0.06em;margin-bottom:4px;border-radius:3px">GROUP STAGE</div>
+          ${leftGroups.map(([g,ms]) => groupBlock(g,ms)).join('')}
         </div>
-      </div>
 
-      <!-- Group Stage -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-        ${Object.entries(groupMatches).sort(([a],[b])=>a.localeCompare(b)).map(([g,ms]) => groupCard(g,ms)).join('')}
-      </div>
+        <!-- CENTRE: Bracket -->
+        <div>
+          <div style="background:#f5c200;color:#0f0e2a;font-weight:800;font-size:0.7rem;text-align:center;padding:3px;letter-spacing:0.06em;margin-bottom:4px;border-radius:3px">KNOCKOUT STAGES</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;align-items:start">
 
-      <!-- Knockout bracket -->
-      <div style="background:#0f0e2a;color:#00b4b4;padding:6px 10px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;border-radius:6px 6px 0 0;margin-bottom:0">
-        KNOCKOUT STAGES
-      </div>
-      <div style="border:1px solid #0f0e2a;border-top:none;border-radius:0 0 6px 6px;padding:10px;background:#fafafa;margin-bottom:16px">
+            <!-- R32 left -->
+            <div>
+              <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;text-align:center;margin-bottom:3px;letter-spacing:0.05em">Rd of 32</div>
+              ${[73,74,75,76,77,78,79,80].map(id=>bracketMatch(id,`M${id}`)).join('')}
+            </div>
 
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
-          <div>
-            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 32</div>
-            ${[73,74,75,76,77,78,79,80].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
-          </div>
-          <div>
-            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 32 (cont.)</div>
-            ${[81,82,83,84,85,86,87,88].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
-          </div>
-          <div>
-            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Round of 16</div>
-            ${[89,90,91,92,93,94,95,96].map(id => { const r=ko(id); return koMatch(id,`M${id}`,r.match_date||''); }).join('')}
-          </div>
-          <div>
-            <div style="font-size:0.65rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">QF · SF · Final</div>
-            ${[97,98,99,100].map(id => { const r=ko(id); return koMatch(id,'QF',r.match_date||''); }).join('')}
-            ${[101,102].map(id => { const r=ko(id); return koMatch(id,'SF',r.match_date||''); }).join('')}
-            ${koMatch(103,'🏆 FINAL','Sun 19 Jul')}
+            <!-- R16 left -->
+            <div>
+              <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;text-align:center;margin-bottom:3px;letter-spacing:0.05em">Rd of 16</div>
+              ${[89,90,91,92].map(id=>bracketMatch(id,`M${id}`)).join('')}
+            </div>
+
+            <!-- QF + SF + Final centre -->
+            <div>
+              <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;text-align:center;margin-bottom:3px;letter-spacing:0.05em">QF · SF · Final</div>
+              ${[97,98].map(id=>bracketMatch(id,`QF M${id}`)).join('')}
+              ${[101].map(id=>bracketMatch(id,`SF M${id}`)).join('')}
+              <div style="background:#f5c200;border-radius:3px;padding:3px;margin:4px 0 2px">
+                <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-align:center;letter-spacing:0.05em">🏆 FINAL · Sun 19 Jul</div>
+              </div>
+              ${bracketMatch(103,'M103')}
+              ${[102].map(id=>bracketMatch(id,`SF M${id}`)).join('')}
+              ${[99,100].map(id=>bracketMatch(id,`QF M${id}`)).join('')}
+            </div>
+
+            <!-- R16 right -->
+            <div>
+              <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;text-align:center;margin-bottom:3px;letter-spacing:0.05em">Rd of 16</div>
+              ${[93,94,95,96].map(id=>bracketMatch(id,`M${id}`)).join('')}
+            </div>
+
+            <!-- R32 right -->
+            <div>
+              <div style="font-size:0.55rem;font-weight:800;color:#0f0e2a;text-transform:uppercase;text-align:center;margin-bottom:3px;letter-spacing:0.05em">Rd of 32</div>
+              ${[81,82,83,84,85,86,87,88].map(id=>bracketMatch(id,`M${id}`)).join('')}
+            </div>
           </div>
         </div>
+
+        <!-- RIGHT: Groups G-L -->
+        <div>
+          <div style="background:#f5c200;color:#0f0e2a;font-weight:800;font-size:0.7rem;text-align:center;padding:3px;letter-spacing:0.06em;margin-bottom:4px;border-radius:3px">GROUP STAGE</div>
+          ${rightGroups.map(([g,ms]) => groupBlock(g,ms)).join('')}
+        </div>
+
       </div>
     </div>`;
 }
