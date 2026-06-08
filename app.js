@@ -1396,15 +1396,24 @@ async function savePredictions(userId, predictions) {
     home_score: p.homeScore,
     away_score: p.awayScore,
     et_winner:  p.etWinner || null,
-    stage:      p.stage,
+    stage:      p.stage || 'group',
     updated_at: new Date().toISOString()
-  }));
+  })).filter(r => r.match_id && !isNaN(r.home_score) && !isNaN(r.away_score));
 
-  return fetch(`${SUPABASE_URL}/rest/v1/match_predictions`, {
+  if (!rows.length) return true;
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions`, {
     method: 'POST',
     headers: { ...sbHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
     body: JSON.stringify(rows)
   });
+
+  if (!res.ok && res.status !== 204) {
+    const err = await res.text();
+    console.error('Save error:', err);
+    throw new Error('Save failed: ' + err);
+  }
+  return true;
 }
 
 /* Calculate predicted group standings from predictions */
@@ -1905,7 +1914,8 @@ async function renderPredict() {
           <h2 class="section-title">The <span>Final</span></h2>
           <div id="final-matches">${renderPredictionSection(finalFixtures, savedPreds, locked)}</div>
           <div style="text-align:center;margin:24px 0 8px">
-            <a href="./?wallchart=1" class="comp-btn-secondary" style="display:inline-flex;padding:10px 24px;width:auto">
+            <a href="./?wallchart=1"
+              style="display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;border:2px solid var(--purple-mid);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;background:var(--white)">
               🖨️ Download My Predictions Wall Chart
             </a>
           </div>
