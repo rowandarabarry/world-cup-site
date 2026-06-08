@@ -638,6 +638,7 @@ async function renderGroups() {
     <div class="page-title-bar">
       <div class="wrap">
         <h1 class="page-title">Group <span>Standings</span></h1>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-top:6px">💡 Click on any team to see their facts, players and more</p>
       </div>
     </div>
     <div class="section">
