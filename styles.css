@@ -1662,3 +1662,12 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 .buster-lb-table th:last-child {
   width: 48px !important;
 }
+
+/* Wall chart print styles */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  .site-header, footer, .no-print, .bottom-nav { display: none !important; }
+  body { background: white; font-size: 10px; }
+  .page-title-bar { display: none; }
+  #wc-content { padding: 0 !important; }
+}
