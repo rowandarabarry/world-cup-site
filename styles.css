@@ -1859,3 +1859,13 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
     font-size: 0.72rem;
   }
 }
+
+/* Groups table mobile — show W D L Pts only */
+@media (max-width: 600px) {
+  .group-table th:nth-child(2),
+  .group-table td:nth-child(2),
+  .group-table th:nth-child(6),
+  .group-table td:nth-child(6) {
+    display: none;
+  }
+}
