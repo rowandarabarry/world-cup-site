@@ -87,15 +87,14 @@ function renderHome() {
         <div class="strip-stat"><strong>16</strong> Venues</div>
         <div class="strip-divider"></div>
         <div class="strip-stat"><strong>12</strong> Groups</div>
-        <div class="strip-divider"></div>
-        <a href="./?teams=1" class="strip-stat" style="color:var(--teal);font-weight:700;text-decoration:none">🌍 Explore Teams</a>
+
       </div>
     </div>
 
     <section class="section animate-in-3">
       <div class="wrap">
         <div class="section-head">
-          <h2 class="section-title">Featured <span>Teams</span></h2>
+          <h2 class="section-title">Explore <span>Teams</span></h2>
           <a class="section-link" href="./?teams=1">See all 48 teams →</a>
         </div>
         <div class="grid" id="featured-grid">
