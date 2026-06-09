@@ -666,7 +666,8 @@ async function renderGroups() {
   /* Build standings — normalise team names for lookup */
   const nameMap = {
     'Bosnia & Herzegovina': 'Bosnia & Herz.',
-    'Côte d\'Ivoire': "Côte d'Ivoire"
+    'Côte d\'Ivoire': "Côte d'Ivoire",
+    'USA': 'United States',
   };
   const normName = n => nameMap[n] || n;
 
@@ -1075,7 +1076,7 @@ async function autoUpdateTeamProgress() {
     played.filter(r => r.match_id <= 72).forEach(r => {
       const g = r.group_name.replace('Group ','');
       if (!standings[g]) return;
-      const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+      const normName = n => ({'Bosnia & Herzegovina':'Bosnia & Herz.','USA':'United States'}[n] || n);
       const home = standings[g][normName(r.home_team)];
       const away = standings[g][normName(r.away_team)];
       if (!home || !away) return;
@@ -1118,7 +1119,7 @@ async function autoUpdateTeamProgress() {
     koStages.forEach(({ matchIds, stage }) => {
       played.filter(r => matchIds.includes(r.match_id)).forEach(r => {
         /* Both teams reached this stage */
-        const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+        const normName = n => ({'Bosnia & Herzegovina':'Bosnia & Herz.','USA':'United States'}[n] || n);
         const home = normName(r.home_team);
         const away = normName(r.away_team);
         const stageOrder = ['eliminated','group_second','best_third','group_winner','r16','qf','sf','final','winner'];
@@ -1457,6 +1458,19 @@ async function savePredictions(userId, predictions) {
   return true;
 }
 
+/* Normalise team names that differ between results table and teams.json */
+function normTeam(name) {
+  const map = {
+    'USA': 'United States',
+    'United States': 'United States',
+    'IR Iran': 'IR Iran',
+    'Korea Republic': 'Korea Republic',
+    'Bosnia & Herzegovina': 'Bosnia & Herz.',
+    'Bosnia & Herz.': 'Bosnia & Herz.',
+  };
+  return map[name] || name;
+}
+
 /* Calculate predicted group standings from predictions */
 function calcStandings(teams, predictions) {
   const standings = {};
@@ -1468,7 +1482,7 @@ function calcStandings(teams, predictions) {
   predictions.forEach(p => {
     const grp = p.group_name ? p.group_name.replace('Group ','') : p.group;
     if (!grp || !standings[grp]) return;
-    const normName = n => n === 'Bosnia & Herzegovina' ? 'Bosnia & Herz.' : n;
+    const normName = n => ({'Bosnia & Herzegovina':'Bosnia & Herz.','USA':'United States'}[n] || n);
     const home = standings[grp][normName(p.home_team || p.homeTeam)];
     const away = standings[grp][normName(p.away_team || p.awayTeam)];
     if (!home || !away || p.home_score === null || p.away_score === null || p.home_score === undefined || p.away_score === undefined) return;
