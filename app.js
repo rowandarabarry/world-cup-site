@@ -1927,6 +1927,7 @@ async function renderPredict() {
         <!-- ROUND OF 32 -->
         <div class="pred-section" style="margin-top:40px">
           <h2 class="section-title">Round of <span>32</span></h2>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Knockout scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.</p>
           <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
           <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
           ${!locked ? `
@@ -2463,11 +2464,11 @@ function renderCompLogin(redirectPage = 'comps') {
         <div class="fact-row"><span class="fact-label">Correct draw (wrong score)</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
         <div class="fact-row"><span class="fact-label">Correct win/loss outcome</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
         <div class="fact-row"><span class="fact-label">Correct group winner / qualifier</span><span class="fact-value" style="color:var(--teal)">4/2 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
-        <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">14 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">20 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">30 pts</span></div>
+        <div class="fact-row"><span class="fact-label">Tournament Winner</span><span class="fact-value" style="color:var(--gold)">50 pts</span></div>
       </div>
     </div>` : redirectPage === 'buster' ? `
     <div class="info-card" style="max-width:560px;margin:20px auto 0">
@@ -2475,7 +2476,7 @@ function renderCompLogin(redirectPage = 'comps') {
       <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">Pick one team from each of 6 pots. Score points based on how far each team goes.</p>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="fact-row"><span class="fact-label">Group Winner / 2nd / 3rd</span><span class="fact-value" style="color:var(--teal)">4/2/1 pts</span></div>
-        <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">5·8·12·17·25</span></div>
+        <div class="fact-row"><span class="fact-label">R16 · QF · SF · Final · Winner</span><span class="fact-value" style="color:var(--teal)">10·14·20·30·50</span></div>
       </div>
     </div>` : '';
 
@@ -2724,17 +2725,17 @@ function renderScoring(which) {
         <div class="info-card">
           <h3 style="margin-bottom:14px">Knockout Progression Bonuses</h3>
           <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">
-            Points awarded if a team you predicted reaches that stage — regardless of the route they took to get there.
+            In knockout rounds, scoring is progression only — no exact scores. Points awarded if a team you predicted reaches that stage, regardless of route.
           </p>
           <div style="display:flex;flex-direction:column;gap:0">
-            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">7 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">15 pts</span></div>
-            <div class="fact-row"><span class="fact-label">🏆 Tournament Winner</span><span class="fact-value" style="color:var(--gold)">20 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">14 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">20 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Final</span><span class="fact-value" style="color:var(--teal)">30 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🏆 Tournament Winner</span><span class="fact-value" style="color:var(--gold)">50 pts</span></div>
           </div>
           <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:12px;margin-top:14px;font-size:0.82rem;color:var(--text-mid)">
-            <strong>Example:</strong> You predicted Spain to win the World Cup. They qualify as runners-up but go all the way — you still get: 5+7+10+15+20 = <strong style="color:var(--teal)">57 pts</strong>
+            <strong>Note:</strong> Knockout stage scoring is progression only — no exact scores. The draw for 3rd place qualifiers means we can't predict exactly who plays who in the Round of 32.
           </div>
         </div>` : `
         <div class="info-card" style="margin-bottom:20px">
