@@ -1873,9 +1873,9 @@ async function renderPredict() {
       <div class="wrap">
 
         <!-- IMPORTANT NOTICES -->
-        <div style="background:#e63200;color:#fff;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
-          <div style="font-weight:800;font-size:1rem;margin-bottom:6px">⏰ Important — Read Before Predicting</div>
-          <p style="font-size:0.875rem;line-height:1.6;margin:0">
+        <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
+          <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important — Read Before Predicting</div>
+          <p style="font-size:0.875rem;line-height:1.6;margin:0;color:var(--text-dark)">
             <strong>You must predict every match from the group stage all the way to the final before the competition locks on Thursday 11th June at 7pm Irish time — one hour before the tournament kicks off.</strong> Your knockout bracket will build automatically as you complete the groups.
           </p>
         </div>
