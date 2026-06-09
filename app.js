@@ -73,8 +73,7 @@ function renderHome() {
       <div class="hero-title-overlay">
         <div class="wrap">
           <div class="hero-site-name">ROWAN'S <span>WORLD CUP ZONE</span></div>
-          <a class="hero-cta hero-cta-banner" href="./?comps=1">🏆 Enter the Competition →</a>
-          <a href="./?teams=1" style="display:inline-block;margin-top:10px;color:rgba(255,255,255,0.7);font-size:0.85rem;text-decoration:underline">Explore Teams</a>
+          <a class="hero-cta hero-cta-banner" href="./?comps=1">Enter Competition →</a>
         </div>
       </div>
     </section>
@@ -88,6 +87,8 @@ function renderHome() {
         <div class="strip-stat"><strong>16</strong> Venues</div>
         <div class="strip-divider"></div>
         <div class="strip-stat"><strong>12</strong> Groups</div>
+        <div class="strip-divider"></div>
+        <a href="./?teams=1" class="strip-stat" style="color:var(--teal);font-weight:700;text-decoration:none">🌍 Explore Teams</a>
       </div>
     </div>
 
