@@ -1928,6 +1928,7 @@ async function renderPredict() {
         <div class="pred-section" style="margin-top:40px">
           <h2 class="section-title">Round of <span>32</span></h2>
           <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Knockout scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.</p>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Knockout scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.</p>
           <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
           <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
           ${!locked ? `
