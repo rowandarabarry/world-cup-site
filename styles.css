@@ -1769,3 +1769,25 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* Fix team page overflow on mobile */
+@media (max-width: 500px) {
+  .team-facts-inline, .player-grid, .team-detail-wrap {
+    overflow-x: hidden;
+  }
+  .fact-label {
+    font-size: 0.78rem;
+  }
+  .fact-row {
+    gap: 6px;
+  }
+  /* Scoring page - shrink label text on mobile */
+  .info-card .fact-label {
+    font-size: 0.75rem;
+  }
+  .info-card .fact-value {
+    font-size: 0.78rem;
+    min-width: 40px;
+    text-align: right;
+  }
+}
