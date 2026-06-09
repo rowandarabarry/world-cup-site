@@ -1791,3 +1791,46 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
     text-align: right;
   }
 }
+
+/* ============================================================
+   TEAM PAGE MOBILE FIXES
+   ============================================================ */
+
+/* Prevent whole page from overflowing */
+.team-content, .team-hero {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Fix fact rows — allow value to wrap, don't force nowrap on label */
+.fact-label {
+  white-space: normal !important;
+  word-break: break-word;
+}
+.fact-value {
+  word-break: break-word;
+  max-width: 60%;
+}
+
+/* On mobile make fact rows stack if content is long */
+@media (max-width: 500px) {
+  .fact-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .fact-value {
+    max-width: 100%;
+    text-align: left;
+  }
+  /* Team hero — reduce flag size and name on small screens */
+  .team-flag-lg {
+    width: 70px;
+    height: 48px;
+  }
+  .team-hero-name {
+    font-size: clamp(1.8rem, 8vw, 3rem);
+  }
+  .team-hero-inner {
+    gap: 16px;
+  }
+}
