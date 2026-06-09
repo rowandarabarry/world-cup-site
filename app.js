@@ -1872,6 +1872,19 @@ async function renderPredict() {
     <div class="section">
       <div class="wrap">
 
+        <!-- IMPORTANT NOTICES -->
+        <div style="background:#e63200;color:#fff;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
+          <div style="font-weight:800;font-size:1rem;margin-bottom:6px">⏰ Important — Read Before Predicting</div>
+          <p style="font-size:0.875rem;line-height:1.6;margin:0">
+            <strong>You must predict every match from the group stage all the way to the final before the competition locks on Thursday 11th June at 7pm Irish time — one hour before the tournament kicks off.</strong> Your knockout bracket will build automatically as you complete the groups.
+          </p>
+        </div>
+        <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 20px;margin-bottom:24px">
+          <p style="font-size:0.82rem;color:var(--text-mid);margin:0;line-height:1.6">
+            📋 <strong>Note on knockout scoring:</strong> Knockout stage scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.
+          </p>
+        </div>
+
         <!-- GROUP STAGE -->
         <div class="pred-section" id="section-group">
           <div class="pred-section-header">
@@ -1927,8 +1940,7 @@ async function renderPredict() {
         <!-- ROUND OF 32 -->
         <div class="pred-section" style="margin-top:40px">
           <h2 class="section-title">Round of <span>32</span></h2>
-          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Knockout scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.</p>
-          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Knockout scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.</p>
+
           <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
           <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
           ${!locked ? `
