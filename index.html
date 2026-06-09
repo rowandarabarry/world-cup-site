@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=102" />
+  <link rel="stylesheet" href="styles.css?v=103" />
 </head>
 <body>
 
@@ -63,24 +63,6 @@
     </div>
   </header>
 
-  <div id="portrait-hint" style="display:none;background:#1a1860;color:#fff;text-align:center;padding:10px 16px;font-size:0.82rem;position:relative;z-index:100">
-    📱 Having any issues? Try turning your phone sideways
-    <button onclick="document.getElementById('portrait-hint').style.display='none';localStorage.setItem('hint-dismissed','1')"
-      style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:1rem;cursor:pointer;margin-left:8px;vertical-align:middle">✕</button>
-  </div>
-  <script>
-    function checkPortraitHint() {
-      const hint = document.getElementById('portrait-hint');
-      if (!hint) return;
-      const dismissed = localStorage.getItem('hint-dismissed');
-      const isMobile = window.innerWidth < 768;
-      const isPortrait = window.innerHeight > window.innerWidth;
-      hint.style.display = (!dismissed && isMobile && isPortrait) ? 'block' : 'none';
-    }
-    window.addEventListener('load', checkPortraitHint);
-    window.addEventListener('resize', checkPortraitHint);
-    window.addEventListener('orientationchange', checkPortraitHint);
-  </script>
   <main id="app">
     <noscript>Please enable JavaScript to view this site.</noscript>
   </main>
@@ -146,6 +128,6 @@
   </nav>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=102"></script>
+  <script src="app.js?v=103"></script>
 </body>
 </html>
