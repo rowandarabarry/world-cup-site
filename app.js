@@ -1990,7 +1990,9 @@ async function renderPredict() {
   const r32Result = generateR32(standings, window._userPicks3rd || []);
   const r32Fixtures = r32Result.fixtures;
   const r32TiedTeams = r32Result.tiedTeams;
-  const r32NeedsPicks = r32Result.needsPicks;
+  /* Only show picker if group stage has real data (not all 0-0) and there's a genuine tie */
+  const hasGroupData = groupPreds.some(p => p.home_score !== null && (p.home_score > 0 || p.away_score > 0));
+  const r32NeedsPicks = hasGroupData && r32Result.needsPicks;
   const r32SpotsLeft = r32Result.spotsLeft;
   const r32Preds = savedPreds.filter(p => p.match_id >= 73 && p.match_id <= 88)
     .map(p => ({ ...p, matchId: p.match_id, homeScore: p.home_score, awayScore: p.away_score }));
