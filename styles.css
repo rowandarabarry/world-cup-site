@@ -1879,3 +1879,42 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
     display: none;
   }
 }
+
+/* Collapsible prediction sections */
+.pred-section-collapsible {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 16px;
+  user-select: none;
+}
+.pred-section-collapsible:hover .section-title { color: var(--teal-dark); }
+
+/* Admin tabs */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+.admin-tab {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.admin-tab:hover { color: var(--purple-dark); }
+.admin-tab.active { color: var(--purple-dark); border-bottom-color: var(--teal); }
