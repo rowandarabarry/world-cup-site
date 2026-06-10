@@ -1124,7 +1124,8 @@ async function switchAdminTab(tab) {
       el.innerHTML = blogHtml + '<h2 class="section-title" style="margin:40px 0 16px">⭐ <span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
 
     } else if (tab === 'feedback') {
-      const posts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?published=eq.false&title=like.[FEEDBACK]*&select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      const allPosts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      const posts = allPosts.filter(p => p.title && p.title.startsWith('[FEEDBACK]'));
       el.innerHTML = `
         <h2 class="section-title" style="margin:20px 0 16px">💬 <span>Feedback</span></h2>
         ${posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : ''}
