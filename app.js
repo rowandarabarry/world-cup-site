@@ -2649,7 +2649,7 @@ async function renderLeaderboard() {
 
   try {
     const data = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc,created_at.asc`,
       { headers: sbHeaders }
     ).then(r => r.json());
 
@@ -3364,7 +3364,7 @@ async function loadPredLeagueRows(tabId, leagueId) {
   el.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
 
   let data = await fetch(
-    `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+    `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc,created_at.asc`,
     { headers: sbHeaders }
   ).then(r => r.json()).catch(() => []);
 
@@ -3974,26 +3974,70 @@ async function loadAdminLeaguesList() {
 
   if (!leagues.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem">No leagues created yet.</p>'; return; }
 
-  /* Get member counts */
-  const counts = await Promise.all(leagues.map(l =>
-    fetch(`${SUPABASE_URL}/rest/v1/user_leagues?league_id=eq.${l.id}&select=user_id`, { headers: sbHeaders })
-      .then(r => r.json()).then(d => d.length).catch(() => 0)
+  /* Get members and all users */
+  const allUsers = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username&order=username`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+
+  const memberLists = await Promise.all(leagues.map(l =>
+    fetch(`${SUPABASE_URL}/rest/v1/user_leagues?league_id=eq.${l.id}&select=user_id,users(username)`, { headers: sbHeaders })
+      .then(r => r.json()).catch(() => [])
   ));
 
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
-    ${leagues.map((l, i) => `
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div>
-          <span style="font-weight:700">${l.name}</span>
-          <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">Code: <strong style="color:var(--teal)">${l.code}</strong></span>
-          <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">${counts[i]} member${counts[i]!==1?'s':''}</span>
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
+    ${leagues.map((l, i) => {
+      const members = memberLists[i] || [];
+      const memberIds = members.map(m => m.user_id);
+      const nonMembers = allUsers.filter(u => !memberIds.includes(u.id));
+      return `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div>
+            <span style="font-weight:700;font-size:1rem">${l.name}</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">Code: <strong style="color:var(--teal)">${l.code}</strong></span>
+          </div>
+          <button onclick="adminDeleteLeague('${l.id}','${l.name}')"
+            style="background:none;border:1px solid #e63200;color:#e63200;border-radius:999px;padding:4px 12px;font-size:0.75rem;cursor:pointer">
+            Delete League
+          </button>
         </div>
-        <button onclick="adminDeleteLeague('${l.id}','${l.name}')" 
-          style="background:none;border:1px solid #e63200;color:#e63200;border-radius:999px;padding:4px 12px;font-size:0.75rem;cursor:pointer">
-          Delete
-        </button>
-      </div>`).join('')}
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          ${members.length ? members.map(m => `
+            <span style="display:inline-flex;align-items:center;gap:4px;background:#f0f0fa;border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:600">
+              ${m.users?.username || '—'}
+              <button onclick="adminRemoveFromLeague('${m.user_id}','${l.id}')" title="Remove"
+                style="background:none;border:none;color:#e63200;font-size:0.9rem;cursor:pointer;padding:0;line-height:1">×</button>
+            </span>`).join('') : '<span style="color:var(--text-muted);font-size:0.8rem">No members yet</span>'}
+        </div>
+        ${nonMembers.length ? `
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="form-select" id="add-user-${l.id}" style="flex:1;padding:6px 10px;font-size:0.8rem">
+            <option value="">— add a user —</option>
+            ${nonMembers.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+          </select>
+          <button class="admin-save-btn" style="padding:7px 14px" onclick="adminAddToLeague('${l.id}')">Add</button>
+          <span id="add-msg-${l.id}" style="display:none;color:var(--teal);font-size:0.8rem">✅</span>
+        </div>` : '<span style="color:var(--text-muted);font-size:0.8rem">All users are members</span>'}
+      </div>`}).join('')}
   </div>`;
+}
+
+async function adminAddToLeague(leagueId) {
+  const sel = document.getElementById(`add-user-${leagueId}`);
+  const userId = sel?.value;
+  if (!userId) return;
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/user_leagues`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: userId, league_id: leagueId })
+  }).then(r => r.ok || r.status === 201);
+  if (ok) { document.getElementById(`add-msg-${leagueId}`).style.display='inline'; loadAdminLeaguesList(); }
+}
+
+async function adminRemoveFromLeague(userId, leagueId) {
+  if (!confirm('Remove this user from the league?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/user_leagues?user_id=eq.${userId}&league_id=eq.${leagueId}`,
+    { method: 'DELETE', headers: sbHeaders });
+  loadAdminLeaguesList();
 }
 
 async function adminDeleteLeague(leagueId, name) {
