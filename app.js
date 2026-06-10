@@ -1115,10 +1115,10 @@ async function switchAdminTab(tab) {
           💾 Save All Progress
         </button>
 
-        <h2 class="section-title" style="margin:40px 0 12px">Buster <span>Leagues</span></h2>
-        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">Create private Buster Leagues and share the code with your group. This is for Buster only.</p>
+        <h2 class="section-title" style="margin:40px 0 12px"><span>Leagues</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">Create leagues and share the code with your group. Members can see their own league leaderboard for both competitions.</p>
         <div class="admin-blog-form" style="max-width:400px;margin-bottom:20px">
-          <h3 style="margin-bottom:12px">Create New Buster League</h3>
+          <h3 style="margin-bottom:12px">Create New League</h3>
           <div class="form-group">
             <label class="form-label">League Name</label>
             <input class="form-input" id="new-league-name" placeholder="e.g. Barry Family">
@@ -2040,6 +2040,24 @@ async function renderPredict() {
     <div class="section">
       <div class="wrap">
 
+        <!-- LEAGUES BAR -->
+        <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Leagues</span>
+              <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
+            </div>
+            ${!locked ? `
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="form-input" id="league-code-input" placeholder="Enter code to join"
+                style="width:160px;padding:6px 10px;font-size:0.8rem;text-transform:uppercase"
+                onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
+              <button class="comp-action-btn" style="padding:7px 14px;font-size:0.8rem" onclick="handleJoinLeague('${user.id}')">Join</button>
+            </div>` : ''}
+          </div>
+          <p id="league-join-msg" style="display:none;margin-top:6px;font-size:0.78rem"></p>
+        </div>
+
         <!-- IMPORTANT NOTICES -->
         <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
           <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important — Read Before Predicting</div>
@@ -2197,6 +2215,9 @@ async function renderPredict() {
 
       </div>
     </div>`;
+
+  /* Load user leagues */
+  loadUserLeaguesList(user.id);
 
   /* Store user and fixtures in window for save/cascade functions */
   window._predUser      = user;
@@ -3186,54 +3207,12 @@ async function renderLeaderboard() {
     </div>`;
 }
 
-async function renderLeaderboardPredictions() {
-  app().innerHTML = `
-    <div class="page-title-bar">
-      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
-        <h1 class="page-title">🎯 <span>Score Predictions</span></h1>
-      </div>
-    </div>
-    <div class="section">
-      <div class="wrap" id="pred-lb"><p style="color:var(--text-muted)">Loading…</p></div>
-    </div>`;
-
-  try {
-    const data = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
-      { headers: sbHeaders }
-    ).then(r => r.json());
-
-    if (!data.length) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
-
-    $('pred-lb').innerHTML = `
-      <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
-        <thead><tr>
-          <th style="text-align:center;width:48px">Pos</th>
-          <th style="text-align:left;padding-left:12px">Player</th>
-          <th>Match Pts</th><th>Total</th>
-        </tr></thead>
-        <tbody>
-          ${data.map((row,i) => `
-            <tr>
-              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
-                ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
-              </td>
-              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
-              <td>${row.match_pts}</td>
-              <td class="pts-cell">${row.total_pts}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table></div>`;
-  } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
-}
-
 async function renderLeaderboardBuster() {
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
-        <h1 class="page-title">🎲 <span>Busters Comp</span></h1>
+        <h1 class="page-title">🎲 <span>${user.username}'s</span> Busters</h1>
       </div>
     </div>
     <div class="section">
@@ -3355,33 +3334,71 @@ async function renderLeaderboardPredictions() {
     </div>`;
 
   try {
-    const data = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
-      { headers: sbHeaders }
-    ).then(r => r.json());
+    const session = getSession();
+    const userLeagues = session ? await getUserLeagues(session.id) : [];
+    const tabs = [{ id: 'overall', name: 'Overall' }, ...userLeagues.map(l => ({ id: l.id, name: l.name }))];
 
-    if (!data.length) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+    const tabsHtml = tabs.length > 1 ? `
+      <div class="lb-league-tabs">
+        ${tabs.map((t, i) => `
+          <button class="lb-league-tab ${i===0?'active':''}"
+            data-league="${t.id}"
+            onclick="switchPredLeagueTab('${t.id}', this)">
+            ${t.name}
+          </button>`).join('')}
+      </div>` : '';
 
-    $('pred-lb').innerHTML = `
-      <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
-        <thead><tr>
-          <th style="text-align:center;width:48px">Pos</th>
-          <th style="text-align:left;padding-left:12px">Player</th>
-          <th>Match Pts</th><th>Total</th>
-        </tr></thead>
-        <tbody>
-          ${data.map((row,i) => `
-            <tr>
-              <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
-                ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
-              </td>
-              <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
-              <td>${row.match_pts}</td>
-              <td class="pts-cell">${row.total_pts}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table></div>`;
+    document.getElementById('pred-lb').innerHTML = tabsHtml + '<div id="pred-lb-rows"><p style="color:var(--text-muted)">Loading…</p></div>';
+    await loadPredLeagueRows('overall', null);
   } catch(e) { $('pred-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
+}
+
+async function switchPredLeagueTab(leagueId, btn) {
+  document.querySelectorAll('.lb-league-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  await loadPredLeagueRows(leagueId, leagueId === 'overall' ? null : leagueId);
+}
+
+async function loadPredLeagueRows(tabId, leagueId) {
+  const el = document.getElementById('pred-lb-rows');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
+
+  let data = await fetch(
+    `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=total_pts.desc`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  if (leagueId) {
+    const members = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_leagues?league_id=eq.${leagueId}&select=user_id`,
+      { headers: sbHeaders }
+    ).then(r => r.json()).catch(() => []);
+    const memberIds = members.map(m => m.user_id);
+    data = data.filter(r => memberIds.includes(r.user_id));
+  }
+
+  if (!data.length) { el.innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+
+  el.innerHTML = `
+    <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
+      <thead><tr>
+        <th style="text-align:center;width:48px">Pos</th>
+        <th style="text-align:left;padding-left:12px">Player</th>
+        <th>Match Pts</th><th>Total</th>
+      </tr></thead>
+      <tbody>
+        ${data.map((row,i) => `
+          <tr>
+            <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
+              ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+            </td>
+            <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
+            <td>${row.match_pts}</td>
+            <td class="pts-cell">${row.total_pts}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table></div>`;
 }
 
 
@@ -3518,7 +3535,7 @@ async function renderWallChart(predPicks = null, username = '') {
         <h1 class="page-title">🗒️ <span>Wall Chart</span>${username ? ' — ' + username : ''}</h1>
         <button class="hero-cta no-print" onclick="window.print()" style="padding:10px 24px">🖨️ Print</button>
         <a href="images/wallchart-official.png" download="WorldCup2026-WallChart.png"
-          class="comp-btn-secondary no-print" style="display:inline-flex;padding:10px 20px;width:auto">
+          class="no-print" style="display:inline-flex;align-items:center;padding:10px 20px;border:2px solid var(--teal);border-radius:999px;color:var(--teal);font-weight:700;font-size:0.875rem;text-decoration:none;background:transparent">
           ⬇️ Download Official Chart
         </a>
       </div>
@@ -3566,17 +3583,28 @@ async function renderWallChart(predPicks = null, username = '') {
         </div>`).join('')}
     </div>`;
 
+  /* Build a fixture lookup from predPicks for knockout team names */
+  const predFixtures = {};
+  if (predPicks) {
+    predPicks.forEach(p => {
+      if (p.match_id >= 73) predFixtures[p.match_id] = p;
+    });
+  }
+
   const bracketMatch = (id, label) => {
     const r = ko(id);
+    const homeTeam = r.home_team || 'TBD';
+    const awayTeam = r.away_team || 'TBD';
+    const safeFlag = name => (!name || name === 'TBD' || name.startsWith('Winner') || name.startsWith('⏳')) ? '' : f(name);
     return `
       <div style="margin-bottom:3px">
         <div style="font-size:0.5rem;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">${label}</div>
         <div style="display:flex;align-items:center;gap:2px;padding:1px 0">
-          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f(r.home_team)}${r.home_team}</div>
+          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeFlag(homeTeam)}${homeTeam}</div>
           <input style="width:14px;height:14px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.55rem;background:#f8f8ff;flex-shrink:0;padding:0" value="${sc(id,true)}" readonly>
         </div>
         <div style="display:flex;align-items:center;gap:2px;padding:1px 0">
-          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f(r.away_team)}${r.away_team}</div>
+          <div style="flex:1;border-bottom:1px solid #0f0e2a;padding-bottom:1px;font-size:0.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeFlag(awayTeam)}${awayTeam}</div>
           <input style="width:14px;height:14px;border:1px solid #bbc;border-radius:2px;text-align:center;font-size:0.55rem;background:#f8f8ff;flex-shrink:0;padding:0" value="${sc(id,false)}" readonly>
         </div>
       </div>`;
@@ -4180,9 +4208,8 @@ async function renderBuster() {
 
   app().innerHTML = `
     <div class="page-title-bar">
-      <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <a class="back-link" href="./?comps=1" style="padding:0;font-size:0.9rem">← Competition Hub</a>
-        <h1 class="page-title">🎲 <span>Busters Comp</span></h1>
+      <div class="wrap">
+        <h1 class="page-title">🎲 <span>${user.username}'s</span> Busters</h1>
       </div>
     </div>
     <div class="${locked ? 'comp-status-bar locked' : 'comp-status-bar'}">
@@ -4238,7 +4265,7 @@ async function renderBuster() {
     <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Buster Leagues</span>
+          <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Leagues</span>
           <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
         </div>
         ${!locked ? `
