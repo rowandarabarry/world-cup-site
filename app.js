@@ -1113,7 +1113,27 @@ async function switchAdminTab(tab) {
         <button class="hero-cta" id="buster-save-all-btn" onclick="adminSaveAllBusterProgress()"
           style="background:var(--gold);color:var(--navy);box-shadow:none;padding:12px 32px">
           💾 Save All Progress
-        </button>`;
+        </button>
+
+        <h2 class="section-title" style="margin:40px 0 12px">Buster <span>Leagues</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">Create private Buster Leagues and share the code with your group. This is for Buster only.</p>
+        <div class="admin-blog-form" style="max-width:400px;margin-bottom:20px">
+          <h3 style="margin-bottom:12px">Create New Buster League</h3>
+          <div class="form-group">
+            <label class="form-label">League Name</label>
+            <input class="form-input" id="new-league-name" placeholder="e.g. Barry Family">
+          </div>
+          <div class="form-group">
+            <label class="form-label">League Code <span style="color:var(--text-muted);font-weight:400">(players enter this to join)</span></label>
+            <input class="form-input" id="new-league-code" placeholder="e.g. BARRY6" style="text-transform:uppercase">
+          </div>
+          <button class="admin-save-btn" onclick="adminCreateLeague()">Create League</button>
+          <span id="league-create-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px"></span>
+        </div>
+        <div id="admin-leagues-list"><p style="color:var(--text-muted);font-size:0.85rem">Loading leagues…</p></div>`;
+
+      /* Load leagues list */
+      loadAdminLeaguesList();
 
     } else if (tab === 'blog') {
       const blogHtml = await renderAdminBlog(true);
@@ -3072,6 +3092,59 @@ async function submitFeedback() {
   }
 }
 
+
+/* ============================================================
+   BUSTER LEAGUES
+   ============================================================ */
+async function getUserLeagues(userId) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/user_leagues?user_id=eq.${userId}&select=league_id,leagues(id,name,code)`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+  return res.map(r => r.leagues).filter(Boolean);
+}
+
+async function joinBusterLeague(userId, code) {
+  const code_upper = code.trim().toUpperCase();
+  /* Find league by code */
+  const leagues = await fetch(
+    `${SUPABASE_URL}/rest/v1/leagues?code=eq.${encodeURIComponent(code_upper)}&select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  if (!leagues.length) throw new Error('League code not found — check and try again');
+
+  const league = leagues[0];
+
+  /* Check not already in it */
+  const existing = await fetch(
+    `${SUPABASE_URL}/rest/v1/user_leagues?user_id=eq.${userId}&league_id=eq.${league.id}&select=id`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+  if (existing.length) throw new Error('You are already in this league!');
+
+  /* Check max 3 leagues */
+  const userLeagues = await getUserLeagues(userId);
+  if (userLeagues.length >= 3) throw new Error('You can be in a maximum of 3 Buster Leagues');
+
+  /* Join */
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/user_leagues`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: userId, league_id: league.id })
+  }).then(r => r.ok || r.status === 201);
+
+  if (!ok) throw new Error('Could not join league — please try again');
+  return league;
+}
+
+async function leaveLeague(userId, leagueId) {
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/user_leagues?user_id=eq.${userId}&league_id=eq.${leagueId}`,
+    { method: 'DELETE', headers: sbHeaders }
+  );
+}
+
 /* ============================================================
    LEADERBOARD HUB
    ============================================================ */
@@ -3166,65 +3239,105 @@ async function renderLeaderboardBuster() {
     </div>`;
 
   try {
-    const data = await fetch(
-      `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
-      { headers: sbHeaders }
-    ).then(r => r.json());
+    /* Get user leagues if logged in */
+    const session = getSession();
+    const userLeagues = session ? await getUserLeagues(session.id) : [];
 
-    if (!data.length) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+    /* Build tabs — Overall + user's leagues */
+    const tabs = [{ id: 'overall', name: 'Overall' }, ...userLeagues.map(l => ({ id: l.id, name: l.name }))];
 
-    const rows = data.map(r => ({
-      ...r,
-      total: (r.pot1_pts||0)+(r.pot2_pts||0)+(r.pot3_pts||0)+(r.pot4_pts||0)+(r.pot5_pts||0)+(r.pot6_pts||0),
-      best: Math.max(r.pot1_pts||0,r.pot2_pts||0,r.pot3_pts||0,r.pot4_pts||0,r.pot5_pts||0,r.pot6_pts||0)
-    })).sort((a,b) => b.total-a.total || b.best-a.best);
+    const tabsHtml = tabs.length > 1 ? `
+      <div class="lb-league-tabs">
+        ${tabs.map((t, i) => `
+          <button class="lb-league-tab ${i===0?'active':''}"
+            data-league="${t.id}"
+            onclick="switchBusterLeagueTab('${t.id}', this)">
+            ${t.name}
+          </button>`).join('')}
+      </div>` : '';
 
-    const teams = await loadTeams();
-    const flagMap = {};
-    teams.forEach(t => { flagMap[t.name] = t.flag; });
-
-    const potLabel = (n) => ['Elite','Contenders','Challengers','Dark Horses','Underdogs','Minnows'][n-1] || `Pot ${n}`;
-
-    $('buster-lb').innerHTML = `
+    $('buster-lb').innerHTML = tabsHtml + `
       <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
         👆 Tap any player to see their full team selections
       </p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${rows.map((row, i) => {
-          const pots = [1,2,3,4,5,6].map(n => ({
-            label: potLabel(n),
-            team: row[`pot${n}_team`] || '—',
-            pts: row[`pot${n}_pts`] || 0,
-            flag: flagMap[row[`pot${n}_team`]] || ''
-          }));
+      <div id="buster-lb-rows"><p style="color:var(--text-muted)">Loading…</p></div>`;
 
-          return `
-            <div class="buster-lb-row" onclick="this.querySelector('.buster-lb-detail').style.display=this.querySelector('.buster-lb-detail').style.display==='none'?'block':'none'">
-              <div class="buster-lb-summary">
-                <span class="lb-pos" style="color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
-                  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
-                </span>
-                <span style="font-weight:700;flex:1">${row.username}</span>
-                <span class="pts-cell">${row.total} pts</span>
-                <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px">▼</span>
-              </div>
-              <div class="buster-lb-detail" style="display:none">
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:12px 0 4px">
-                  ${pots.map(p => `
-                    <div style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
-                      <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${p.label}</div>
-                      <div style="display:flex;align-items:center;gap:5px">
-                        ${p.flag ? `<img src="${p.flag}" width="20" height="14" style="border-radius:2px;border:1px solid var(--border)">` : ''}
-                        <span style="font-weight:700;font-size:0.82rem;color:var(--text-dark)">${p.team}</span>
-                      </div>
-                      <div style="font-size:0.72rem;color:var(--teal);font-weight:600;margin-top:3px">${p.pts} pts</div>
-                    </div>`).join('')}
-                </div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>`;
-  } catch(e) { $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>'; }
+    await loadBusterLeagueRows('overall', null);
+  } catch(e) {
+    $('buster-lb').innerHTML = '<p style="color:var(--text-muted)">Could not load.</p>';
+  }
+}
+
+async function switchBusterLeagueTab(leagueId, btn) {
+  document.querySelectorAll('.lb-league-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  await loadBusterLeagueRows(leagueId, leagueId === 'overall' ? null : leagueId);
+}
+
+async function loadBusterLeagueRows(tabId, leagueId) {
+  const el = document.getElementById('buster-lb-rows');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
+
+  let data = await fetch(
+    `${SUPABASE_URL}/rest/v1/buster_leaderboard?select=*`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+
+  /* Filter by league if needed */
+  if (leagueId) {
+    const members = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_leagues?league_id=eq.${leagueId}&select=user_id`,
+      { headers: sbHeaders }
+    ).then(r => r.json()).catch(() => []);
+    const memberIds = members.map(m => m.user_id);
+    data = data.filter(r => memberIds.includes(r.user_id));
+  }
+
+  if (!data.length) { el.innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
+
+  const rows = data.map(r => ({
+    ...r,
+    total: (r.pot1_pts||0)+(r.pot2_pts||0)+(r.pot3_pts||0)+(r.pot4_pts||0)+(r.pot5_pts||0)+(r.pot6_pts||0),
+  })).sort((a,b) => b.total-a.total);
+
+  const teams = await loadTeams();
+  const flagMap = {};
+  teams.forEach(t => { flagMap[t.name] = t.flag; });
+  const potLabel = n => ['Elite','Contenders','Challengers','Dark Horses','Underdogs','Minnows'][n-1] || `Pot ${n}`;
+
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${rows.map((row, i) => {
+      const pots = [1,2,3,4,5,6].map(n => ({
+        label: potLabel(n), team: row[`pot${n}_team`] || '—',
+        pts: row[`pot${n}_pts`] || 0, flag: flagMap[row[`pot${n}_team`]] || ''
+      }));
+      return `
+        <div class="buster-lb-row" onclick="this.querySelector('.buster-lb-detail').style.display=this.querySelector('.buster-lb-detail').style.display==='none'?'block':'none'">
+          <div class="buster-lb-summary">
+            <span class="lb-pos" style="color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
+              ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+            </span>
+            <span style="font-weight:700;flex:1">${row.username}</span>
+            <span class="pts-cell">${row.total} pts</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px">▼</span>
+          </div>
+          <div class="buster-lb-detail" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:12px 0 4px">
+              ${pots.map(p => `
+                <div style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
+                  <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${p.label}</div>
+                  <div style="display:flex;align-items:center;gap:5px">
+                    ${p.flag ? `<img src="${p.flag}" width="20" height="14" style="border-radius:2px;border:1px solid var(--border)">` : ''}
+                    <span style="font-weight:700;font-size:0.82rem;color:var(--text-dark)">${p.team}</span>
+                  </div>
+                  <div style="font-size:0.72rem;color:var(--teal);font-weight:600;margin-top:3px">${p.pts} pts</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+    }).join('')}
+  </div>`;
 }
 
 async function renderLeaderboardPredictions() {
@@ -3797,6 +3910,69 @@ async function adminDeleteUser() {
   }
 }
 
+async function adminCreateLeague() {
+  const name = document.getElementById('new-league-name')?.value.trim();
+  const code = document.getElementById('new-league-code')?.value.trim().toUpperCase();
+  const msg  = document.getElementById('league-create-msg');
+  if (!name || !code) { alert('Please enter both a name and a code'); return; }
+  if (code.length < 4) { alert('Code must be at least 4 characters'); return; }
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/leagues`, {
+    method: 'POST',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ name, code })
+  });
+
+  if (res.ok || res.status === 201) {
+    document.getElementById('new-league-name').value = '';
+    document.getElementById('new-league-code').value = '';
+    msg.textContent = `League "${name}" created!`;
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 3000);
+    loadAdminLeaguesList();
+  } else {
+    const err = await res.text();
+    alert('Could not create league: ' + err);
+  }
+}
+
+async function loadAdminLeaguesList() {
+  const el = document.getElementById('admin-leagues-list');
+  if (!el) return;
+
+  const leagues = await fetch(`${SUPABASE_URL}/rest/v1/leagues?select=*&order=created_at`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+
+  if (!leagues.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem">No leagues created yet.</p>'; return; }
+
+  /* Get member counts */
+  const counts = await Promise.all(leagues.map(l =>
+    fetch(`${SUPABASE_URL}/rest/v1/user_leagues?league_id=eq.${l.id}&select=user_id`, { headers: sbHeaders })
+      .then(r => r.json()).then(d => d.length).catch(() => 0)
+  ));
+
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${leagues.map((l, i) => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <span style="font-weight:700">${l.name}</span>
+          <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">Code: <strong style="color:var(--teal)">${l.code}</strong></span>
+          <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">${counts[i]} member${counts[i]!==1?'s':''}</span>
+        </div>
+        <button onclick="adminDeleteLeague('${l.id}','${l.name}')" 
+          style="background:none;border:1px solid #e63200;color:#e63200;border-radius:999px;padding:4px 12px;font-size:0.75rem;cursor:pointer">
+          Delete
+        </button>
+      </div>`).join('')}
+  </div>`;
+}
+
+async function adminDeleteLeague(leagueId, name) {
+  if (!confirm(`Delete league "${name}"? All members will be removed.`)) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/leagues?id=eq.${leagueId}`, { method: 'DELETE', headers: sbHeaders });
+  loadAdminLeaguesList();
+}
+
 async function adminToggleLock(lock) {
   const action = lock ? 'lock' : 'unlock';
   if (!confirm(`Are you sure you want to ${action} all competitions?`)) return;
@@ -4104,6 +4280,23 @@ async function renderBuster() {
       <button onclick="confirmResetBuster('${user.id}')" class="comp-action-btn danger">🗑️ Reset My Buster Picks</button>
     </div>` : ''}
 
+    <!-- BUSTER LEAGUES -->
+    <div class="info-card" style="margin-top:24px">
+      <h3 style="margin-bottom:6px">Buster Leagues</h3>
+      <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">
+        Have a league code? Enter it below to join a private Buster League and see how you rank against your group.
+      </p>
+      <div id="user-leagues-list" style="margin-bottom:14px"></div>
+      ${!locked ? `
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input class="form-input" id="league-code-input" placeholder="Enter league code" 
+          style="flex:1;min-width:160px;text-transform:uppercase"
+          onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
+        <button class="comp-action-btn" onclick="handleJoinLeague('${user.id}')">Join League</button>
+      </div>
+      <p id="league-join-msg" style="display:none;margin-top:8px;font-size:0.82rem"></p>` : ''}
+    </div>
+
     <h2 class="section-title" style="margin-bottom:20px">🎲 <span>Buster Leaderboard</span></h2>
     <div id="buster-leaderboard"><p style="color:var(--text-muted)">Loading…</p></div>`;
 
@@ -4114,6 +4307,48 @@ async function renderBuster() {
 
   /* Load leaderboard */
   loadBusterLeaderboard();
+}
+
+async function handleJoinLeague(userId) {
+  const input = document.getElementById('league-code-input');
+  const msg   = document.getElementById('league-join-msg');
+  const code  = input?.value.trim();
+  if (!code) return;
+  msg.style.display = 'none';
+  try {
+    const league = await joinBusterLeague(userId, code);
+    input.value = '';
+    msg.textContent = `Joined "${league.name}"!`;
+    msg.style.color = 'var(--teal)';
+    msg.style.display = 'block';
+    loadUserLeaguesList(userId);
+  } catch(e) {
+    msg.textContent = e.message;
+    msg.style.color = '#e63200';
+    msg.style.display = 'block';
+  }
+}
+
+async function loadUserLeaguesList(userId) {
+  const el = document.getElementById('user-leagues-list');
+  if (!el) return;
+  const leagues = await getUserLeagues(userId);
+  if (!leagues.length) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:0.82rem">You haven\'t joined any leagues yet.</p>';
+    return;
+  }
+  el.innerHTML = leagues.map(l => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0f0fa;border-radius:var(--radius-sm);margin-bottom:6px">
+      <span style="font-weight:700;font-size:0.875rem">${l.name}</span>
+      <button onclick="handleLeaveLeague('${userId}','${l.id}')"
+        style="background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">Leave</button>
+    </div>`).join('');
+}
+
+async function handleLeaveLeague(userId, leagueId) {
+  if (!confirm('Leave this league?')) return;
+  await leaveLeague(userId, leagueId);
+  loadUserLeaguesList(userId);
 }
 
 async function confirmResetBuster(userId) {
