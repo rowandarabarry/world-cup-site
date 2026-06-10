@@ -1953,3 +1953,32 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   color: #fff !important;
   box-shadow: 0 2px 8px rgba(15,14,42,0.2) !important;
 }
+
+/* Buster league tabs */
+.lb-league-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+  scrollbar-width: none;
+}
+.lb-league-tabs::-webkit-scrollbar { display: none; }
+.lb-league-tab {
+  padding: 8px 16px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.lb-league-tab:hover { border-color: var(--teal); color: var(--teal-dark); }
+.lb-league-tab.active { background: var(--purple-dark); border-color: var(--purple-dark); color: #fff; }
