@@ -1146,7 +1146,7 @@ async function switchAdminTab(tab) {
       });
     }
   } catch(e) {
-    el.innerHTML = `<p style="color:#e63200">Error loading: ${e.message}</p>`;
+    el.innerHTML = `<p style="color:#e63200">Error loading tab "${tab}": ${e.message}<br><small>${e.stack||''}</small></p>`;
   }
 }
 
