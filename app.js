@@ -32,8 +32,8 @@ const BUSTER_POTS = [
 ];
 
 const BUSTER_POINTS = {
-  winner: 25, final: 17, sf: 12, qf: 8,
-  r16: 5, best_third: 1, group_second: 2, group_winner: 4, eliminated: 0
+  winner: 50, final: 40, sf: 30, qf: 20,
+  r16: 10, best_third: 2, group_second: 4, group_winner: 8, eliminated: 0
 };
 
 const STAGE_LABELS = {
@@ -944,11 +944,11 @@ async function submitPin() {
 async function loadAdminPanel() {
   document.getElementById('admin-content').innerHTML = `
     <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
-      <button class="admin-tab" data-tab="results" onclick="switchAdminTab('results')">⚽ Results</button>
-      <button class="admin-tab" data-tab="comps" onclick="switchAdminTab('comps')">🏆 Competitions</button>
-      <button class="admin-tab" data-tab="blog" onclick="switchAdminTab('blog')">✍️ Blog & Review</button>
-      <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+      <button class="admin-tab active" data-tab="users" onclick="switchAdminTab('users')">Users</button>
+      <button class="admin-tab" data-tab="results" onclick="switchAdminTab('results')">Results</button>
+      <button class="admin-tab" data-tab="comps" onclick="switchAdminTab('comps')">Competitions</button>
+      <button class="admin-tab" data-tab="blog" onclick="switchAdminTab('blog')">Blog &amp; Review</button>
+      <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">Feedback</button>
     </div>
     <div id="admin-tab-content"><p style="color:var(--text-muted)">Loading…</p></div>`;
 
@@ -1116,9 +1116,9 @@ async function switchAdminTab(tab) {
         </button>`;
 
     } else if (tab === 'blog') {
-      const blogHtml = await renderAdminBlog();
+      const blogHtml = await renderAdminBlog(true);
       const reviewHtml = await renderReviewAdminForm();
-      el.innerHTML = '<h2 class="section-title" style="margin:16px 0"><span>Blog Posts</span></h2>' + blogHtml + '<h2 class="section-title" style="margin:40px 0 16px"><span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
+      el.innerHTML = blogHtml + '<h2 class="section-title" style="margin:40px 0 16px"><span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
 
     } else if (tab === 'feedback') {
       const allPostsRes = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders });
@@ -1141,7 +1141,7 @@ async function switchAdminTab(tab) {
       posts.forEach((fb, i) => {
         const t = document.getElementById('fb-title-' + i);
         const c = document.getElementById('fb-content-' + i);
-        if (t) t.textContent = (fb.title || '').replace('[FEEDBACK] ', '');
+        if (t) t.textContent = (fb.title || '').replace(/\[FEEDBACK\]\s*/i, '').replace(/^\S+\s+from\s+/i, '');
         if (c) c.textContent = fb.content || '';
       });
     }
@@ -2948,14 +2948,14 @@ function renderScoring(which) {
           <h3 style="margin-bottom:14px">Points per Team</h3>
           <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Only the highest stage reached is scored</p>
           <div style="display:flex;flex-direction:column;gap:0">
-            <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
-            <div class="fact-row"><span class="fact-label">2️⃣ Group Runner-up</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">✔️ Qualifies as Best 3rd Place</span><span class="fact-value" style="color:var(--teal)">1 pt</span></div>
-            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">5 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">12 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Finalist</span><span class="fact-value" style="color:var(--teal)">17 pts</span></div>
-            <div class="fact-row"><span class="fact-label">🏆 World Cup Winner</span><span class="fact-value" style="color:var(--gold)">25 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
+            <div class="fact-row"><span class="fact-label">2️⃣ Group Runner-up</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
+            <div class="fact-row"><span class="fact-label">✔️ Best 3rd Place Qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">20 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">30 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Finalist</span><span class="fact-value" style="color:var(--teal)">40 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🏆 World Cup Winner</span><span class="fact-value" style="color:var(--gold)">50 pts</span></div>
           </div>
         </div>
         <div class="info-card">
@@ -3543,11 +3543,15 @@ async function renderWallChart(predPicks = null, username = '') {
 /* ============================================================
    ADMIN — Blog management added to loadAdminPanel
    ============================================================ */
-async function renderAdminBlog() {
-  const posts = await fetch(
+async function renderAdminBlog(excludeFeedback = false) {
+  const allPosts = await fetch(
     `${SUPABASE_URL}/rest/v1/blog_posts?order=created_at.desc&select=*`,
     { headers: sbHeaders }
   ).then(r => r.json()).catch(() => []);
+
+  const posts = excludeFeedback
+    ? allPosts.filter(p => !(p.title || '').startsWith('[FEEDBACK]'))
+    : allPosts;
 
   const results = await sbGet('results').catch(() => []);
 
