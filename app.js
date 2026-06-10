@@ -4232,7 +4232,25 @@ async function renderBuster() {
 
   $('buster-content').innerHTML = `
 
-    <div class="info-card" style="margin-bottom:24px;padding:16px 20px;margin-top:16px">
+    <!-- BUSTER LEAGUES — compact bar above picks -->
+    <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Buster Leagues</span>
+          <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        ${!locked ? `
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="form-input" id="league-code-input" placeholder="Enter code to join"
+            style="width:160px;padding:6px 10px;font-size:0.8rem;text-transform:uppercase"
+            onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
+          <button class="comp-action-btn" style="padding:7px 14px;font-size:0.8rem" onclick="handleJoinLeague('${user.id}')">Join</button>
+        </div>` : ''}
+      </div>
+      <p id="league-join-msg" style="display:none;margin-top:6px;font-size:0.78rem"></p>
+    </div>
+
+    <div class="info-card" style="margin-bottom:24px;padding:16px 20px">
       <p style="font-size:0.875rem;color:var(--text-muted)">
         Pick <strong>one team from each pot</strong>. Your Buster Score is the sum of points earned by all 6 teams as they progress.
         ${locked ? '<span style="color:#e63200;font-weight:600"> — Selections are now locked.</span>' : '<span style="color:var(--teal);font-weight:600"> Selections lock 1 hour before tournament kickoff.</span>'}
@@ -4280,23 +4298,6 @@ async function renderBuster() {
       <button onclick="confirmResetBuster('${user.id}')" class="comp-action-btn danger">🗑️ Reset My Buster Picks</button>
     </div>` : ''}
 
-    <!-- BUSTER LEAGUES -->
-    <div class="info-card" style="margin-top:24px">
-      <h3 style="margin-bottom:6px">Buster Leagues</h3>
-      <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">
-        Have a league code? Enter it below to join a private Buster League and see how you rank against your group.
-      </p>
-      <div id="user-leagues-list" style="margin-bottom:14px"></div>
-      ${!locked ? `
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input class="form-input" id="league-code-input" placeholder="Enter league code" 
-          style="flex:1;min-width:160px;text-transform:uppercase"
-          onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
-        <button class="comp-action-btn" onclick="handleJoinLeague('${user.id}')">Join League</button>
-      </div>
-      <p id="league-join-msg" style="display:none;margin-top:8px;font-size:0.82rem"></p>` : ''}
-    </div>
-
     <h2 class="section-title" style="margin-bottom:20px">🎲 <span>Buster Leaderboard</span></h2>
     <div id="buster-leaderboard"><p style="color:var(--text-muted)">Loading…</p></div>`;
 
@@ -4334,15 +4335,15 @@ async function loadUserLeaguesList(userId) {
   if (!el) return;
   const leagues = await getUserLeagues(userId);
   if (!leagues.length) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:0.82rem">You haven\'t joined any leagues yet.</p>';
+    el.innerHTML = '<span style="color:var(--text-muted);font-size:0.78rem">No leagues joined yet</span>';
     return;
   }
   el.innerHTML = leagues.map(l => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0f0fa;border-radius:var(--radius-sm);margin-bottom:6px">
-      <span style="font-weight:700;font-size:0.875rem">${l.name}</span>
-      <button onclick="handleLeaveLeague('${userId}','${l.id}')"
-        style="background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">Leave</button>
-    </div>`).join('');
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--teal);color:#fff;border-radius:999px;padding:3px 10px;font-size:0.72rem;font-weight:700">
+      ${l.name}
+      <button onclick="handleLeaveLeague('${userId}','${l.id}')" title="Leave league"
+        style="background:none;border:none;color:rgba(255,255,255,0.8);font-size:0.85rem;cursor:pointer;padding:0;line-height:1;margin-left:2px">×</button>
+    </span>`).join('');
 }
 
 async function handleLeaveLeague(userId, leagueId) {
