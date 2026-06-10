@@ -944,11 +944,11 @@ async function submitPin() {
 async function loadAdminPanel() {
   document.getElementById('admin-content').innerHTML = `
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab('users')">👥 Users</button>
-      <button class="admin-tab" onclick="switchAdminTab('results')">⚽ Results</button>
-      <button class="admin-tab" onclick="switchAdminTab('comps')">🏆 Competitions</button>
-      <button class="admin-tab" onclick="switchAdminTab('blog')">✍️ Blog & Review</button>
-      <button class="admin-tab" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+      <button class="admin-tab active" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
+      <button class="admin-tab" data-tab="results" onclick="switchAdminTab('results')">⚽ Results</button>
+      <button class="admin-tab" data-tab="comps" onclick="switchAdminTab('comps')">🏆 Competitions</button>
+      <button class="admin-tab" data-tab="blog" onclick="switchAdminTab('blog')">✍️ Blog & Review</button>
+      <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
     </div>
     <div id="admin-tab-content"><p style="color:var(--text-muted)">Loading…</p></div>`;
 
@@ -957,11 +957,8 @@ async function loadAdminPanel() {
 
 async function switchAdminTab(tab) {
   /* Update tab buttons */
-  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.admin-tab').forEach(b => {
-    if (b.textContent.toLowerCase().includes(tab === 'comps' ? 'comp' : tab === 'blog' ? 'blog' : tab)) {
-      b.classList.add('active');
-    }
+    b.classList.toggle('active', b.dataset.tab === tab);
   });
 
   const el = document.getElementById('admin-tab-content');
@@ -1125,7 +1122,9 @@ async function switchAdminTab(tab) {
 
     } else if (tab === 'feedback') {
       const allPosts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      console.log('All posts:', allPosts.length, allPosts.map(p => p.title));
       const posts = allPosts.filter(p => p.title && p.title.startsWith('[FEEDBACK]'));
+      console.log('Feedback posts:', posts.length);
       el.innerHTML = `
         <h2 class="section-title" style="margin:20px 0 16px">💬 <span>Feedback</span></h2>
         ${posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : ''}
