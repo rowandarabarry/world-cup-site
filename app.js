@@ -1121,8 +1121,9 @@ async function switchAdminTab(tab) {
       el.innerHTML = '<h2 class="section-title" style="margin:16px 0"><span>Blog Posts</span></h2>' + blogHtml + '<h2 class="section-title" style="margin:40px 0 16px"><span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
 
     } else if (tab === 'feedback') {
-      const allPosts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
-      const posts = allPosts.filter(fb => fb.title && fb.title.startsWith('[FEEDBACK]'));
+      const allPostsRes = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders });
+      const allPosts = allPostsRes.ok ? await allPostsRes.json() : [];
+      const posts = Array.isArray(allPosts) ? allPosts.filter(fb => fb.title && fb.title.startsWith('[FEEDBACK]')) : [];
       /* Build feedback HTML safely — use textContent for user content to handle emoji */
       el.innerHTML = '<h2 class="section-title" style="margin:20px 0 16px"><span>Feedback</span></h2>' +
         (posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : '') +
