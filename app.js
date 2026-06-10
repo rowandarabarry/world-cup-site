@@ -3212,7 +3212,7 @@ async function renderLeaderboardBuster() {
     <div class="page-title-bar">
       <div class="wrap" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <a class="back-link" href="./?leaderboard=1" style="padding:0;font-size:0.9rem">← Leaderboards</a>
-        <h1 class="page-title">🎲 <span>${user.username}'s</span> Busters</h1>
+        <h1 class="page-title">🎲 <span>Busters</span> Leaderboard</h1>
       </div>
     </div>
     <div class="section">
@@ -3220,7 +3220,6 @@ async function renderLeaderboardBuster() {
     </div>`;
 
   try {
-    /* Get user leagues if logged in */
     const session = getSession();
     const userLeagues = session ? await getUserLeagues(session.id) : [];
 
