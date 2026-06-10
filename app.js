@@ -942,84 +942,224 @@ async function submitPin() {
 }
 
 async function loadAdminPanel() {
-  document.getElementById('admin-content').innerHTML =
-    `<p style="color:var(--text-muted)">Loading…</p>`;
+  document.getElementById('admin-content').innerHTML = `
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('users')">👥 Users</button>
+      <button class="admin-tab" onclick="switchAdminTab('results')">⚽ Results</button>
+      <button class="admin-tab" onclick="switchAdminTab('comps')">🏆 Competitions</button>
+      <button class="admin-tab" onclick="switchAdminTab('blog')">✍️ Blog & Review</button>
+      <button class="admin-tab" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+    </div>
+    <div id="admin-tab-content"><p style="color:var(--text-muted)">Loading…</p></div>`;
+
+  await switchAdminTab('users');
+}
+
+async function switchAdminTab(tab) {
+  /* Update tab buttons */
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => {
+    if (b.textContent.toLowerCase().includes(tab === 'comps' ? 'comp' : tab === 'blog' ? 'blog' : tab)) {
+      b.classList.add('active');
+    }
+  });
+
+  const el = document.getElementById('admin-tab-content');
+  el.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
 
   try {
-    const results = await sbGet('results');
-    const upcoming = results.filter(r => r.status !== 'Played');
-    const played   = results.filter(r => r.status === 'Played');
+    if (tab === 'users') {
+      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,name,created_at&order=created_at`, { headers: sbHeaders }).then(r => r.json());
+      el.innerHTML = `
+        <h2 class="section-title" style="margin:24px 0 16px">👥 <span>All Users</span></h2>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:32px">
+          ${users.map(u => `
+            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <div>
+                  <span style="font-weight:700">${u.username}</span>
+                  ${u.name ? `<span style="color:var(--text-muted);font-size:0.82rem;margin-left:8px">(${u.name})</span>` : ''}
+                  <span style="font-size:0.72rem;color:var(--text-muted);margin-left:8px">${new Date(u.created_at).toLocaleDateString('en-GB')}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input class="form-input" id="newpw-${u.id}" placeholder="New password" style="width:130px;padding:6px 10px;font-size:0.8rem">
+                  <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')">Reset PW</button>
+                  <span id="pw-msg-${u.id}" style="display:none;color:var(--teal);font-size:0.78rem">✅</span>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
 
-    document.getElementById('admin-content').innerHTML = `
-      <div class="admin-header">
-        <p style="color:var(--text-muted);margin-bottom:24px">
-          ✅ ${played.length} results entered &nbsp;·&nbsp; ⏳ ${upcoming.length} remaining
-        </p>
-      </div>
+        <h2 class="section-title" style="margin:24px 0 16px">🔄 <span>Reset User Predictions</span></h2>
+        <div class="admin-blog-form" style="max-width:400px">
+          <select class="form-select" id="reset-pred-user">
+            <option value="">— pick user —</option>
+            ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+          </select>
+          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminResetUserPredictions()">Reset Predictions</button>
+          <span id="reset-pred-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
+        </div>
 
-      <h2 class="section-title" style="margin-bottom:16px">Enter <span>Results</span></h2>
-      ${upcoming.length === 0 ? '<p style="color:var(--text-muted)">All results entered!</p>' : ''}
-      ${upcoming.map(m => `
-        <div class="admin-match-card" id="match-${m.match_id}">
-          <div class="admin-match-teams">
-            <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
-            <span class="admin-team-name">${m.home_team}</span>
-            <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="${m.home_score ?? 0}" style="${m.status==='Played'?'border-color:var(--teal)':''}">
-            <span class="admin-vs">–</span>
-            <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="${m.away_score ?? 0}" style="${m.status==='Played'?'border-color:var(--teal)':''}">
-            <span class="admin-team-name">${m.away_team}</span>
-            <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
-          </div>
-          <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
-          <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span>
-          <button class="admin-save-btn" onclick="saveResult(${m.match_id})"
-            style="${m.status==='Played'?'background:var(--teal-dark)':''}">
-            ${m.status==='Played'?'Update':'Save'} Result
+        <h2 class="section-title" style="margin:32px 0 16px">❌ <span>Delete User</span></h2>
+        <div class="admin-blog-form" style="max-width:400px">
+          <select class="form-select" id="delete-user-select">
+            <option value="">— pick user —</option>
+            ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+          </select>
+          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminDeleteUser()">Delete User</button>
+        </div>`;
+
+    } else if (tab === 'results') {
+      const results = await sbGet('results');
+      const upcoming = results.filter(r => r.status !== 'Played');
+      const played   = results.filter(r => r.status === 'Played');
+      el.innerHTML = `
+        <p style="color:var(--text-muted);margin:16px 0">✅ ${played.length} results entered &nbsp;·&nbsp; ⏳ ${upcoming.length} remaining</p>
+        <h2 class="section-title" style="margin-bottom:16px">Enter <span>Results</span></h2>
+        ${upcoming.length === 0 ? '<p style="color:var(--text-muted)">All results entered!</p>' : ''}
+        ${upcoming.map(m => `
+          <div class="admin-match-card" id="match-${m.match_id}">
+            <div class="admin-match-teams">
+              <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
+              <span class="admin-team-name">${m.home_team}</span>
+              <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="${m.home_score ?? 0}">
+              <span class="admin-vs">–</span>
+              <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="${m.away_score ?? 0}">
+              <span class="admin-team-name">${m.away_team}</span>
+              <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
+            </div>
+            <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
+            <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span>
+            <button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
+            <span class="admin-saved" id="saved-${m.match_id}" style="display:none">✅ Saved!</span>
+          </div>`).join('')}
+        ${played.length > 0 ? `
+        <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Entered <span>Results</span></h2>
+        ${played.map(m => `
+          <div class="admin-match-card admin-match-played">
+            <div class="admin-match-teams">
+              <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
+              <span class="admin-team-name">${m.home_team}</span>
+              <span class="admin-score-display">${m.home_score} – ${m.away_score}</span>
+              <span class="admin-team-name">${m.away_team}</span>
+              <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
+            </div>
+            <div class="admin-match-meta">${m.group_name} · ${m.match_date} #${m.match_id}</div>
+            <button class="admin-save-btn" onclick="makeMatchEditable(${m.match_id},'${m.home_team}','${m.away_team}',${m.home_score},${m.away_score},'${m.group_name}','${m.match_date}')" style="background:var(--teal-dark)">Update</button>
+          </div>`).join('')}` : ''}`;
+
+    } else if (tab === 'comps') {
+      const lockRes = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked&select=value`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      const isLocked = lockRes[0]?.value === 'true';
+      const progress = await fetch(`${SUPABASE_URL}/rest/v1/team_progress?select=*&order=team_name`, { headers: sbHeaders }).then(r => r.json());
+      const stages = [
+        { value:'eliminated',   label:'Eliminated'   },
+        { value:'group_second', label:'Group 2nd'     },
+        { value:'best_third',   label:'Best 3rd'      },
+        { value:'group_winner', label:'Group Winner'  },
+        { value:'r16',          label:'Round of 16'   },
+        { value:'qf',           label:'Quarter Final' },
+        { value:'sf',           label:'Semi Final'    },
+        { value:'final',        label:'Final'         },
+        { value:'winner',       label:'Winner'        },
+      ];
+
+      el.innerHTML = `
+        <!-- Lock toggle -->
+        <div class="admin-blog-form" style="margin:20px 0 28px;border:3px solid ${isLocked ? '#e63200' : 'var(--teal)'};background:${isLocked ? '#fff5f5' : '#f5ffff'}">
+          <h3 style="color:${isLocked ? '#e63200' : 'var(--teal-dark)'}">
+            ${isLocked ? '🔒 Competitions are LOCKED' : '🔓 Competitions are OPEN'}
+          </h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
+            ${isLocked ? 'All competition entry is disabled.' : 'Click to lock before the tournament starts.'}
+          </p>
+          <button class="hero-cta" onclick="adminToggleLock(${!isLocked})"
+            style="background:${isLocked ? 'var(--teal)' : '#e63200'};box-shadow:none;padding:12px 28px">
+            ${isLocked ? '🔓 Unlock Competitions' : '🔒 Lock All Competitions'}
           </button>
-          <span class="admin-saved" id="saved-${m.match_id}" style="display:none">✅ Saved!</span>
-        </div>`).join('')}
+          <span id="lock-msg" style="display:none;font-weight:600;margin-left:12px">✅ Done!</span>
+        </div>
 
-      ${played.length > 0 ? `
-      <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Entered <span>Results</span></h2>
-      ${played.map(m => `
-        <div class="admin-match-card admin-match-played">
-          <div class="admin-match-teams">
-            <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
-            <span class="admin-team-name">${m.home_team}</span>
-            <span class="admin-score-display">${m.home_score} – ${m.away_score}</span>
-            <span class="admin-team-name">${m.away_team}</span>
-            <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
+        <!-- Cancel all / reset buster -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px">
+          <div class="admin-blog-form">
+            <h3>🗑️ Cancel All Results</h3>
+            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminCancelAllResults()">Cancel All Results</button>
           </div>
-          <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
-        </div>`).join('')}` : ''}
+          <div class="admin-blog-form">
+            <h3>🗑️ Cancel a Result</h3>
+            <input class="form-input" id="cancel-match-id" type="number" min="1" max="104" placeholder="Match ID" style="margin-bottom:8px">
+            <button class="admin-save-btn" style="background:#e63200" onclick="adminCancelResult()">Cancel Result</button>
+            <span id="cancel-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
+          </div>
+          <div class="admin-blog-form">
+            <h3>🎲 Reset All Buster Progress</h3>
+            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminResetAllBuster()">Reset All Progress</button>
+          </div>
+        </div>
 
-      <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Reset <span>Password</span></h2>
-      <div id="admin-users-list"><p style="color:var(--text-muted)">Loading users…</p></div>`;
+        <!-- Buster team progress -->
+        <h2 class="section-title" style="margin-bottom:12px">🎲 <span>Buster Team Progress</span></h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Update manually or let auto-scoring handle it. Click Save All when done.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px">
+          ${progress.map(p => `
+            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;display:flex;align-items:center;gap:8px">
+              <img src="https://flagcdn.com/w20/${flagCode(p.team_name)}.png" width="20" style="flex-shrink:0">
+              <span style="font-size:0.78rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.team_name}</span>
+              <select class="form-select" id="prog-${p.team_name.replace(/[^a-z]/gi,'_')}"
+                style="flex:1;padding:4px 6px;font-size:0.72rem"
+                onchange="updateTeamProgress('${p.team_name}', this.value)">
+                ${stages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
+              </select>
+            </div>`).join('')}
+        </div>
+        <button class="hero-cta" id="buster-save-all-btn" onclick="adminSaveAllBusterProgress()"
+          style="background:var(--gold);color:var(--navy);box-shadow:none;padding:12px 32px">
+          💾 Save All Progress
+        </button>`;
 
-  /* Load users for password reset */
-  fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username&order=username`, { headers: sbHeaders })
-    .then(r => r.json())
-    .then(users => {
-      if (!users.length) { $('admin-users-list').innerHTML = '<p style="color:var(--text-muted)">No users yet.</p>'; return; }
-      $('admin-users-list').innerHTML = users.map(u => `
-        <div class="admin-match-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <span style="font-weight:600;flex:1;min-width:120px">${u.username}</span>
-          <input class="search" id="pw-${u.id}" type="password" placeholder="New password" style="padding:8px 12px;flex:2;min-width:160px">
-          <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')">Reset</button>
-          <span id="pw-msg-${u.id}" style="color:var(--teal);font-size:0.85rem;display:none">✅ Done</span>
-        </div>`).join('');
-    });
+    } else if (tab === 'blog') {
+      const blogHtml = await renderAdminBlog();
+      const reviewHtml = await renderReviewAdminForm();
+      el.innerHTML = blogHtml + '<h2 class="section-title" style="margin:40px 0 16px">⭐ <span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
 
-    /* Add blog management section */
-    const blogHtml = await renderAdminBlog();
-    const busterHtml = await renderAdminBuster();
-    const utilsHtml = await renderAdminUtilities();
-    document.getElementById('admin-content').innerHTML += blogHtml + busterHtml + utilsHtml;
-
+    } else if (tab === 'feedback') {
+      const posts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?published=eq.false&title=like.[FEEDBACK]*&select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      el.innerHTML = `
+        <h2 class="section-title" style="margin:20px 0 16px">💬 <span>Feedback</span></h2>
+        ${posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : ''}
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${posts.map(p => `
+            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                <strong style="color:var(--purple-dark)">${p.title.replace('[FEEDBACK] ','')}</strong>
+                <span style="font-size:0.75rem;color:var(--text-muted)">${new Date(p.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+              </div>
+              <p style="color:var(--text-mid);font-size:0.875rem;line-height:1.6;margin:0">${p.content}</p>
+            </div>`).join('')}
+        </div>`;
+    }
   } catch(e) {
-    document.getElementById('admin-content').innerHTML =
-      `<p style="color:var(--text-muted)">Could not load matches.</p>`;
+    el.innerHTML = `<p style="color:#e63200">Error loading: ${e.message}</p>`;
   }
+}
+
+function makeMatchEditable(matchId, home, away, homeScore, awayScore, group, date) {
+  const card = document.getElementById(`match-${matchId}`);
+  if (!card) return;
+  card.innerHTML = `
+    <div class="admin-match-teams">
+      <img src="https://flagcdn.com/w40/${flagCode(home)}.png" class="fixture-flag" alt="">
+      <span class="admin-team-name">${home}</span>
+      <input type="number" min="0" max="20" class="score-input" id="home-${matchId}" value="${homeScore}">
+      <span class="admin-vs">–</span>
+      <input type="number" min="0" max="20" class="score-input" id="away-${matchId}" value="${awayScore}">
+      <span class="admin-team-name">${away}</span>
+      <img src="https://flagcdn.com/w40/${flagCode(away)}.png" class="fixture-flag" alt="">
+    </div>
+    <div class="admin-match-meta">${group} · ${date} #${matchId}</div>
+    <button class="admin-save-btn" onclick="saveResult(${matchId})" style="background:var(--teal-dark)">Update Result</button>
+    <span class="admin-saved" id="saved-${matchId}" style="display:none">✅ Saved!</span>`;
 }
 
 async function saveResult(matchId) {
@@ -1876,7 +2016,7 @@ async function renderPredict() {
         <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
           <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important — Read Before Predicting</div>
           <p style="font-size:0.875rem;line-height:1.6;margin:0;color:var(--text-dark)">
-            <strong>You must predict every match from the group stage all the way to the final before the competition locks on Thursday 11th June at 7pm Irish time — one hour before the tournament kicks off.</strong> Your knockout bracket will build automatically as you complete the groups.
+            <strong>You must predict every match from the group stage all the way to the final before the competition locks on Thursday 11th June at 7pm Irish time — one hour before the tournament kicks off.</strong> Your knockout fixtures will build automatically as you complete the groups.
           </p>
         </div>
         <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 20px;margin-bottom:24px">
@@ -1939,68 +2079,92 @@ async function renderPredict() {
 
         <!-- ROUND OF 32 -->
         <div class="pred-section" style="margin-top:40px">
-          <h2 class="section-title">Round of <span>32</span></h2>
-
-          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
-          <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
-          ${!locked ? `
-          <div style="text-align:center;margin-top:24px">
-            <button class="hero-cta" onclick="saveSection('r32')" id="save-r32">Save Round of 32 →</button>
-            <p id="save-r32-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 32 saved!</p>
-          </div>` : ''}
+          <div class="pred-section-collapsible" onclick="togglePredSection('r32')">
+            <h2 class="section-title" style="margin:0">Round of <span>32</span></h2>
+            <span id="r32-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
+          </div>
+          <div id="r32-body">
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">Based on your predicted group standings.</p>
+            <div id="r32-matches">${renderPredictionSection(r32Fixtures, savedPreds, locked)}</div>
+            ${!locked ? `
+            <div style="text-align:center;margin-top:24px">
+              <button class="hero-cta" onclick="saveSection('r32')" id="save-r32">Save Round of 32 →</button>
+              <p id="save-r32-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 32 saved!</p>
+            </div>` : ''}
+          </div>
         </div>
 
         <!-- ROUND OF 16 -->
         <div class="pred-section" style="margin-top:40px">
-          <h2 class="section-title">Round of <span>16</span></h2>
-          <div id="r16-matches">${renderPredictionSection(r16Fixtures, savedPreds, locked)}</div>
-          ${!locked ? `
-          <div style="text-align:center;margin-top:24px">
-            <button class="hero-cta" onclick="saveSection('r16')" id="save-r16">Save Round of 16 →</button>
-            <p id="save-r16-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 16 saved!</p>
-          </div>` : ''}
+          <div class="pred-section-collapsible" onclick="togglePredSection('r16')">
+            <h2 class="section-title" style="margin:0">Round of <span>16</span></h2>
+            <span id="r16-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
+          </div>
+          <div id="r16-body">
+            <div id="r16-matches">${renderPredictionSection(r16Fixtures, savedPreds, locked)}</div>
+            ${!locked ? `
+            <div style="text-align:center;margin-top:24px">
+              <button class="hero-cta" onclick="saveSection('r16')" id="save-r16">Save Round of 16 →</button>
+              <p id="save-r16-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Round of 16 saved!</p>
+            </div>` : ''}
+          </div>
         </div>
 
         <!-- QUARTER FINALS -->
         <div class="pred-section" style="margin-top:40px">
-          <h2 class="section-title">Quarter <span>Finals</span></h2>
-          <div id="qf-matches">${renderPredictionSection(qfFixtures, savedPreds, locked)}</div>
-          ${!locked ? `
-          <div style="text-align:center;margin-top:24px">
-            <button class="hero-cta" onclick="saveSection('qf')" id="save-qf">Save Quarter Finals →</button>
-            <p id="save-qf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Quarter finals saved!</p>
-          </div>` : ''}
+          <div class="pred-section-collapsible" onclick="togglePredSection('qf')">
+            <h2 class="section-title" style="margin:0">Quarter <span>Finals</span></h2>
+            <span id="qf-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
+          </div>
+          <div id="qf-body">
+            <div id="qf-matches">${renderPredictionSection(qfFixtures, savedPreds, locked)}</div>
+            ${!locked ? `
+            <div style="text-align:center;margin-top:24px">
+              <button class="hero-cta" onclick="saveSection('qf')" id="save-qf">Save Quarter Finals →</button>
+              <p id="save-qf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Quarter finals saved!</p>
+            </div>` : ''}
+          </div>
         </div>
 
         <!-- SEMI FINALS -->
         <div class="pred-section" style="margin-top:40px">
-          <h2 class="section-title">Semi <span>Finals</span></h2>
-          <div id="sf-matches">${renderPredictionSection(sfFixtures, savedPreds, locked)}</div>
-          ${!locked ? `
-          <div style="text-align:center;margin-top:24px">
-            <button class="hero-cta" onclick="saveSection('sf')" id="save-sf">Save Semi Finals →</button>
-            <p id="save-sf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Semi finals saved!</p>
-          </div>` : ''}
+          <div class="pred-section-collapsible" onclick="togglePredSection('sf')">
+            <h2 class="section-title" style="margin:0">Semi <span>Finals</span></h2>
+            <span id="sf-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
+          </div>
+          <div id="sf-body">
+            <div id="sf-matches">${renderPredictionSection(sfFixtures, savedPreds, locked)}</div>
+            ${!locked ? `
+            <div style="text-align:center;margin-top:24px">
+              <button class="hero-cta" onclick="saveSection('sf')" id="save-sf">Save Semi Finals →</button>
+              <p id="save-sf-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ Semi finals saved!</p>
+            </div>` : ''}
+          </div>
         </div>
 
         <!-- FINAL -->
         <div class="pred-section" style="margin-top:40px;margin-bottom:40px">
-          <h2 class="section-title">The <span>Final</span></h2>
-          <div id="final-matches">${renderPredictionSection(finalFixtures, savedPreds, locked)}</div>
-          <div style="text-align:center;margin:24px 0 8px">
-            <a href="./?wallchart=1"
-              style="display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;border:2px solid var(--purple-mid);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;background:var(--white)">
-              🖨️ Download My Predictions Wall Chart
-            </a>
+          <div class="pred-section-collapsible" onclick="togglePredSection('final')">
+            <h2 class="section-title" style="margin:0">The <span>Final</span></h2>
+            <span id="final-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
           </div>
-          ${!locked ? `
-          <div style="text-align:center;margin-top:8px">
-            <button class="hero-cta" onclick="saveSection('final')" id="save-final"
-              style="background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.4)">
-              🏆 Save Final Prediction
-            </button>
-            <p id="save-final-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ All predictions saved! Good luck!</p>
-          </div>` : ''}
+          <div id="final-body">
+            <div id="final-matches">${renderPredictionSection(finalFixtures, savedPreds, locked)}</div>
+            <div style="text-align:center;margin:24px 0 8px">
+              <a href="./?wallchart=1"
+                style="display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;border:2px solid var(--purple-mid);border-radius:999px;font-weight:700;font-size:0.875rem;color:var(--purple-dark);text-decoration:none;background:var(--white)">
+                🖨️ Download My Predictions Wall Chart
+              </a>
+            </div>
+            ${!locked ? `
+            <div style="text-align:center;margin-top:8px">
+              <button class="hero-cta" onclick="saveSection('final')" id="save-final"
+                style="background:var(--gold);color:var(--navy);box-shadow:0 4px 20px rgba(245,194,0,0.4)">
+                🏆 Save Final Prediction
+              </button>
+              <p id="save-final-msg" style="margin-top:10px;font-size:0.85rem;color:var(--teal);display:none">✅ All predictions saved! Good luck!</p>
+            </div>` : ''}
+          </div>
         </div>
 
       </div>
@@ -2220,6 +2384,15 @@ function cascadeKnockouts() {
   if (qfEl)   qfEl.innerHTML   = renderPredictionSection(qfFixtures,    allPreds, locked);
   if (sfEl)   sfEl.innerHTML   = renderPredictionSection(sfFixtures,    allPreds, locked);
   if (finEl)  finEl.innerHTML  = renderPredictionSection(finalFixtures, allPreds, locked);
+}
+
+function togglePredSection(id) {
+  const body   = document.getElementById(`${id}-body`);
+  const toggle = document.getElementById(`${id}-toggle`);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display   = isOpen ? 'none' : '';
+  if (toggle) toggle.textContent = isOpen ? '▶' : '▼';
 }
 
 /* onPredChange — cascade knockout fixtures when any knockout score changes */
