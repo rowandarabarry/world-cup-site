@@ -1118,24 +1118,31 @@ async function switchAdminTab(tab) {
     } else if (tab === 'blog') {
       const blogHtml = await renderAdminBlog();
       const reviewHtml = await renderReviewAdminForm();
-      el.innerHTML = '<h2 class="section-title" style="margin:16px 0">✍️ <span>Blog Posts</span></h2>' + blogHtml + '<h2 class="section-title" style="margin:40px 0 16px">⭐ <span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
+      el.innerHTML = '<h2 class="section-title" style="margin:16px 0"><span>Blog Posts</span></h2>' + blogHtml + '<h2 class="section-title" style="margin:40px 0 16px"><span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
 
     } else if (tab === 'feedback') {
       const allPosts = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
       const posts = allPosts.filter(fb => fb.title && fb.title.startsWith('[FEEDBACK]'));
-      el.innerHTML = `
-        <h2 class="section-title" style="margin:20px 0 16px">💬 <span>Feedback</span></h2>
-        ${posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : ''}
-        <div style="display:flex;flex-direction:column;gap:12px">
-          ${posts.map(fb => `
-            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-                <strong style="color:var(--purple-dark)">${fb.title.replace('[FEEDBACK] ','')}</strong>
-                <span style="font-size:0.75rem;color:var(--text-muted)">${new Date(fb.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
-              </div>
-              <p style="color:var(--text-mid);font-size:0.875rem;line-height:1.6;margin:0">${fb.content}</p>
-            </div>`).join('')}
-        </div>`;
+      /* Build feedback HTML safely — use textContent for user content to handle emoji */
+      el.innerHTML = '<h2 class="section-title" style="margin:20px 0 16px"><span>Feedback</span></h2>' +
+        (posts.length === 0 ? '<p style="color:var(--text-muted)">No feedback yet.</p>' : '') +
+        '<div style="display:flex;flex-direction:column;gap:12px">' +
+        posts.map((fb, i) =>
+          '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">' +
+          '<strong style="color:var(--purple-dark)" id="fb-title-' + i + '"></strong>' +
+          '<span style="font-size:0.75rem;color:var(--text-muted)">' + new Date(fb.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</span>' +
+          '</div>' +
+          '<p id="fb-content-' + i + '" style="color:var(--text-mid);font-size:0.875rem;line-height:1.6;margin:0"></p>' +
+          '</div>'
+        ).join('') + '</div>';
+      /* Set text safely via textContent */
+      posts.forEach((fb, i) => {
+        const t = document.getElementById('fb-title-' + i);
+        const c = document.getElementById('fb-content-' + i);
+        if (t) t.textContent = (fb.title || '').replace('[FEEDBACK] ', '');
+        if (c) c.textContent = fb.content || '';
+      });
     }
   } catch(e) {
     el.innerHTML = `<p style="color:#e63200">Error loading: ${e.message}</p>`;
