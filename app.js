@@ -4205,6 +4205,14 @@ async function renderBuster() {
   const session = getSession();
   const locked  = isPastCutoff();
 
+  /* Need to be logged in */
+  if (!session) {
+    renderCompLogin('buster');
+    return;
+  }
+
+  const user = session;
+
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap">
@@ -4226,14 +4234,6 @@ async function renderBuster() {
         <p style="color:var(--text-muted)">Loading…</p>
       </div>
     </div>`;
-
-  /* Need to be logged in */
-  if (!session) {
-    renderCompLogin('buster');
-    return;
-  }
-
-  const user = session;
 
   /* Load existing picks */
   const existingPicks = await fetch(
