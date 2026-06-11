@@ -721,7 +721,7 @@ async function renderGroups() {
                     ${s.team.name}
                   </a>
                 </td>
-                <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                <td class="pts-cell">${s.pts}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td><td>${s.p}</td>
                 <td>${s.gf}</td><td>${s.ga}</td>
                 <td>${s.gf-s.ga > 0 ? '+' : ''}${s.gf-s.ga}</td>
                 <td class="pts-cell">${s.pts}</td>
@@ -1372,7 +1372,11 @@ function flagCode(team) {
     else if (params.has('groups'))     { await renderGroups();                 }
     else if (params.has('results'))    { await renderResults();                }
     else if (params.has('admin'))      { await renderAdmin();                  }
-    else if (params.has('predict'))    { await renderPredict();                }
+    else if (params.has('predict'))    {
+      const viewId = params.get('view');
+      if (viewId) { await renderPredictView(viewId); }
+      else        { await renderPredict(); }
+    }
     else if (params.has('leaderboard')){ await renderLeaderboard();            }
     else if (params.has('wallchart'))  {
       const session = getSession();
@@ -1954,6 +1958,65 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
 /* ============================================================
    PREDICTIONS PAGE
    ============================================================ */
+/* View another user's predictions in read-only mode */
+async function renderPredictView(userId) {
+  app().innerHTML = `
+    <div class="page-title-bar">
+      <div class="wrap" style="display:flex;align-items:center;gap:16px">
+        <a class="back-link" href="./?leaderboard=predictions" style="padding:0;font-size:0.9rem">← Leaderboard</a>
+        <h1 class="page-title" id="pred-view-title">🎯 <span>Predictions</span></h1>
+      </div>
+    </div>
+    <div class="section"><div class="wrap" id="pred-view-content">
+      <p style="color:var(--text-muted)">Loading…</p>
+    </div></div>`;
+
+  const [userRes, predsRes, resultsRes, teamsData] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=username`, { headers: sbHeaders }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&select=*`, { headers: sbHeaders }).then(r => r.json()),
+    sbGet('results'),
+    loadTeams()
+  ]);
+
+  const username = userRes[0]?.username || 'Unknown';
+  document.getElementById('pred-view-title').innerHTML = `🎯 <span>${username}'s</span> Predictions`;
+
+  const savedPreds = predsRes || [];
+  const groupFixtures = resultsRes.filter(r => r.match_id <= 72);
+  const groupPreds = groupFixtures.map(fix => {
+    const saved = savedPreds.find(p => p.match_id === fix.match_id);
+    return { ...fix, home_score: saved?.home_score ?? null, away_score: saved?.away_score ?? null };
+  });
+  const standings = calcStandings(teamsData, groupPreds);
+  const r32Result = generateR32(standings, []);
+  const r32Preds = r32Result.fixtures.map(f => {
+    const s = savedPreds.find(p => p.match_id === f.matchId);
+    return { ...f, matchId: f.matchId, homeScore: s?.home_score??0, awayScore: s?.away_score??0, etWinner: s?.et_winner||null };
+  });
+  const r16Fixtures = generateR16(r32Result.fixtures, r32Preds);
+  const r16Preds = r16Fixtures.map(f => {
+    const s = savedPreds.find(p => p.match_id === f.matchId);
+    return { ...f, homeScore: s?.home_score??0, awayScore: s?.away_score??0, etWinner: s?.et_winner||null };
+  });
+  const qfFixtures  = generateQF(r16Fixtures, r16Preds);
+  const sfFixtures  = generateSF(qfFixtures, qfFixtures.map(f => { const s = savedPreds.find(p => p.match_id === f.matchId); return { ...f, homeScore: s?.home_score??0, awayScore: s?.away_score??0, etWinner: s?.et_winner||null }; }));
+  const finalFixtures = generateFinal(sfFixtures, sfFixtures.map(f => { const s = savedPreds.find(p => p.match_id === f.matchId); return { ...f, homeScore: s?.home_score??0, awayScore: s?.away_score??0, etWinner: s?.et_winner||null }; }));
+
+  document.getElementById('pred-view-content').innerHTML = `
+    <h2 class="section-title" style="margin-bottom:16px">Group <span>Stage</span></h2>
+    ${renderGroupMatchesByGroup(groupFixtures, savedPreds, true)}
+    <h2 class="section-title" style="margin:32px 0 16px">Round of <span>32</span></h2>
+    ${renderPredictionSection(r32Result.fixtures, savedPreds, true)}
+    <h2 class="section-title" style="margin:32px 0 16px">Round of <span>16</span></h2>
+    ${renderPredictionSection(r16Fixtures, savedPreds, true)}
+    <h2 class="section-title" style="margin:32px 0 16px">Quarter <span>Finals</span></h2>
+    ${renderPredictionSection(qfFixtures, savedPreds, true)}
+    <h2 class="section-title" style="margin:32px 0 16px">Semi <span>Finals</span></h2>
+    ${renderPredictionSection(sfFixtures, savedPreds, true)}
+    <h2 class="section-title" style="margin:32px 0 16px">The <span>Final</span></h2>
+    ${renderPredictionSection(finalFixtures, savedPreds, true)}`;
+}
+
 async function renderPredict() {
   await loadLockState();
   /* ── Check session ── */
@@ -2060,7 +2123,7 @@ async function renderPredict() {
 
         <!-- IMPORTANT NOTICES -->
         <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
-          <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important — Read Before Predicting</div>
+          <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important</div>
           <p style="font-size:0.875rem;line-height:1.6;margin:0;color:var(--text-dark)">
             <strong>You must predict every match from the group stage all the way to the final before the competition locks on Thursday 11th June at 7pm Irish time — one hour before the tournament kicks off.</strong> Your knockout fixtures will build automatically as you complete the groups.
           </p>
@@ -2294,7 +2357,7 @@ function renderPredStandings(standings) {
                   <img src="${s.team.flag}" alt="" loading="lazy">
                   ${s.team.name}
                 </div></td>
-                <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                <td class="pts-cell">${s.pts}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td><td>${s.p}</td>
                 <td>${s.gf-s.ga > 0 ? '+' : ''}${s.gf-s.ga}</td>
                 <td class="pts-cell">${s.pts}</td>
               </tr>`).join('')}
@@ -3392,8 +3455,7 @@ async function loadPredLeagueRows(tabId, leagueId) {
             <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
               ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
             </td>
-            <td style="font-weight:600;text-align:left;padding-left:12px">${row.username||'—'}</td>
-            <td>${row.match_pts}</td>
+            <td style="font-weight:600;text-align:left;padding-left:12px"><a href="./?predict=1&view=${row.user_id}" style="color:var(--purple-dark);text-decoration:none">${row.username||'—'}</a></td>
             <td class="pts-cell">${row.total_pts}</td>
           </tr>`).join('')}
       </tbody>
