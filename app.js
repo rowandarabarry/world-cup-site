@@ -1817,7 +1817,7 @@ function generateR16(r32Fixtures, r32Preds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
   }
 
   /* Official FIFA R16 pairings per Article 12.7
@@ -1849,7 +1849,7 @@ function generateQF(r16Fixtures, r16Preds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
   }
   return [
     { matchId:97,  home: winner(r16Fixtures[0]), away: winner(r16Fixtures[1]), stage:'qf', date:'Mon 13 Jul' },  /* W89 v W90 */
@@ -1872,7 +1872,7 @@ function generateSF(qfFixtures, qfPreds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
   }
   return [
     { matchId:101, home: winner(qfFixtures[0]), away: winner(qfFixtures[1]), stage:'sf', date:'Fri 17 Jul' },  /* W97 v W98 */
@@ -2585,6 +2585,23 @@ async function saveSection(stage) {
   }
 
   try {
+    /* Safety guard — don't overwrite existing non-zero scores with all zeros */
+    if (stage !== 'group') {
+      const allZero = fixtures.every(f => (f.homeScore === 0 || isNaN(f.homeScore)) && (f.awayScore === 0 || isNaN(f.awayScore)));
+      if (allZero && fixtures.length > 0) {
+        const savedMatchIds = fixtures.map(f => f.matchId);
+        const existing = (window._savedPreds || []).filter(p =>
+          savedMatchIds.includes(p.match_id) && (p.home_score > 0 || p.away_score > 0)
+        );
+        if (existing.length > 0) {
+          btn.textContent = `Save ${stage.toUpperCase()} →`;
+          btn.disabled = false;
+          alert('⚠️ Save cancelled — your scores appear to be blank but you have existing predictions saved. Please reload the page and try again.');
+          return;
+        }
+      }
+    }
+
     await savePredictions(user.id, fixtures);
     btn.textContent = stage === 'final' ? '🏆 Save Final Prediction' : `Save ${stage.toUpperCase()} →`;
     btn.disabled = false;
