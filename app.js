@@ -807,6 +807,53 @@ function setSession(user) {
 function clearSession() {
   try { sessionStorage.removeItem('wc_user'); } catch(e) {}
 }
+function toggleUsernameChange() {
+  const form = document.getElementById('username-change-form');
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveNewUsername(userId) {
+  const input = document.getElementById('new-username-input');
+  const msg   = document.getElementById('username-msg');
+  const newUsername = input?.value.trim();
+  if (!newUsername || newUsername.length < 3) {
+    msg.textContent = 'Username must be at least 3 characters.';
+    msg.style.color = '#e63200'; msg.style.display = 'inline'; return;
+  }
+  if (/\s/.test(newUsername)) {
+    msg.textContent = 'No spaces allowed.';
+    msg.style.color = '#e63200'; msg.style.display = 'inline'; return;
+  }
+  /* Check not taken */
+  const existing = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(newUsername)}&select=id`,
+    { headers: sbHeaders }
+  ).then(r => r.json()).catch(() => []);
+  if (existing.length) {
+    msg.textContent = 'Username already taken.';
+    msg.style.color = '#e63200'; msg.style.display = 'inline'; return;
+  }
+  const ok = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ username: newUsername })
+  }).then(r => r.ok || r.status === 204);
+
+  if (ok) {
+    /* Update session */
+    const session = getSession();
+    session.username = newUsername;
+    setSession(session);
+    msg.textContent = '✅ Username updated! Refreshing…';
+    msg.style.color = 'var(--teal)'; msg.style.display = 'inline';
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    msg.textContent = 'Could not update — try again.';
+    msg.style.color = '#e63200'; msg.style.display = 'inline';
+  }
+}
+
 function compLogout() {
   clearSession();
   location.href = './?comps=1';
@@ -2931,8 +2978,21 @@ async function renderComps() {
       <div class="wrap">
         ${getSession() ? `
           <div class="comp-session-bar">
-            <span>👋 Logged in as <strong>${getSession().username}</strong></span>
-            <button class="comp-action-btn" onclick="compLogout()">👋 Log Out</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <span>👋 Logged in as <strong>${getSession().username}</strong></span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button onclick="toggleUsernameChange()" class="comp-action-btn" style="font-size:0.78rem;padding:6px 12px">✏️ Change Username</button>
+                <button class="comp-action-btn" onclick="compLogout()">👋 Log Out</button>
+              </div>
+            </div>
+            <div id="username-change-form" style="display:none;margin-top:12px;display:none">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input class="form-input" id="new-username-input" placeholder="New username"
+                  style="width:180px;padding:7px 12px;font-size:0.85rem">
+                <button class="comp-action-btn" onclick="saveNewUsername('${getSession().id}')">Save</button>
+                <span id="username-msg" style="display:none;font-size:0.82rem"></span>
+              </div>
+            </div>
           </div>` : `
           <div class="info-card comp-login-card" style="max-width:560px;margin:0 auto 24px">
             <div class="comp-login-tabs">
