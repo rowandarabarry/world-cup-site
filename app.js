@@ -2293,6 +2293,9 @@ async function renderPredict() {
   window._qfFixtures    = qfFixtures;
   window._sfFixtures    = sfFixtures;
   window._finalFixtures = finalFixtures;
+
+  /* Cascade on load to populate team names from saved predictions */
+  setTimeout(cascadeKnockouts, 100);
 }
 
 function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
