@@ -2103,24 +2103,6 @@ async function renderPredict() {
     <div class="section">
       <div class="wrap">
 
-        <!-- LEAGUES BAR -->
-        <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Leagues</span>
-              <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
-            </div>
-            ${!locked ? `
-            <div style="display:flex;gap:6px;align-items:center">
-              <input class="form-input" id="league-code-input" placeholder="Enter code to join"
-                style="width:160px;padding:6px 10px;font-size:0.8rem;text-transform:uppercase"
-                onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
-              <button class="comp-action-btn" style="padding:7px 14px;font-size:0.8rem" onclick="handleJoinLeague('${user.id}')">Join</button>
-            </div>` : ''}
-          </div>
-          <p id="league-join-msg" style="display:none;margin-top:6px;font-size:0.78rem"></p>
-        </div>
-
         <!-- IMPORTANT NOTICES -->
         <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
           <div style="font-weight:800;font-size:1rem;margin-bottom:6px;color:#e63200">⏰ Important</div>
@@ -2132,6 +2114,25 @@ async function renderPredict() {
           <p style="font-size:0.82rem;color:var(--text-mid);margin:0;line-height:1.6">
             📋 <strong>Note on knockout scoring:</strong> Knockout stage scoring is progression only — no exact scores. The 3rd place draw means we can't predict exactly who plays who in the Round of 32.
           </p>
+        </div>
+
+        <!-- LEAGUE JOIN -->
+        <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Private Leagues</span>
+              <span style="color:var(--text-muted);font-size:0.78rem;margin-left:8px">Everyone is already in the Overall league. Enter a code below to join a private league.</span>
+              <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+            </div>
+            ${!locked ? `
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+              <input class="form-input" id="league-code-input" placeholder="Enter code"
+                style="width:130px;padding:6px 10px;font-size:0.8rem;text-transform:uppercase"
+                onkeydown="if(event.key==='Enter') handleJoinLeague('${user.id}')">
+              <button class="comp-action-btn" style="padding:7px 14px;font-size:0.8rem" onclick="handleJoinLeague('${user.id}')">Join</button>
+            </div>` : ''}
+          </div>
+          <p id="league-join-msg" style="display:none;margin-top:6px;font-size:0.78rem"></p>
         </div>
 
         <!-- GROUP STAGE -->
@@ -4370,7 +4371,8 @@ async function renderBuster() {
     <div style="background:#f0f0fa;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Leagues</span>
+          <span style="font-weight:700;font-size:0.82rem;color:var(--purple-dark)">Private Leagues</span>
+          <p style="color:var(--text-muted);font-size:0.78rem;margin:2px 0 6px">Everyone is in the Overall league. Enter a code to join a private league.</p>
           <div id="user-leagues-list" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
         </div>
         ${!locked ? `
