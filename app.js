@@ -3524,23 +3524,22 @@ async function loadPredLeagueRows(tabId, leagueId) {
   if (!data.length) { el.innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
 
   el.innerHTML = `
-    <div class="lb-scroll-wrap"><table class="group-table pred-lb-table" style="background:var(--white);border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);min-width:280px">
-      <thead><tr>
-        <th style="text-align:center;width:48px">Pos</th>
-        <th style="text-align:left;padding-left:12px">Player</th>
-        <th>Match Pts</th><th>Total</th>
-      </tr></thead>
-      <tbody>
-        ${data.map((row,i) => `
-          <tr>
-            <td style="text-align:center;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}" class="lb-pos">
+    <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+      👆 Tap any player to see their full predictions
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${data.map((row, i) => `
+        <div class="buster-lb-row" onclick="location.href='./?predict=1&view=${row.user_id}'">
+          <div class="buster-lb-summary">
+            <span class="lb-pos" style="color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">
               ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
-            </td>
-            <td style="font-weight:600;text-align:left;padding-left:12px"><a href="./?predict=1&view=${row.user_id}" style="color:var(--purple-dark);text-decoration:none">${row.username||'—'}</a></td>
-            <td class="pts-cell">${row.total_pts}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table></div>`;
+            </span>
+            <span style="font-weight:700;flex:1">${row.username||'—'}</span>
+            <span class="pts-cell">${row.total_pts} pts</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px">→</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
 }
 
 
