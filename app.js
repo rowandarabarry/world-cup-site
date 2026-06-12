@@ -1013,7 +1013,7 @@ async function switchAdminTab(tab) {
 
   try {
     if (tab === 'users') {
-      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,name,created_at,show_resubmit_message&order=created_at`, { headers: sbHeaders }).then(r => r.json());
+      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,name,created_at,user_message&order=created_at`, { headers: sbHeaders }).then(r => r.json());
       el.innerHTML = `
         <h2 class="section-title" style="margin:24px 0 16px">👥 <span>All Users</span></h2>
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:32px">
@@ -1029,10 +1029,11 @@ async function switchAdminTab(tab) {
                   <input class="form-input" id="newpw-${u.id}" placeholder="New password" style="width:130px;padding:6px 10px;font-size:0.8rem">
                   <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')">Reset PW</button>
                   <span id="pw-msg-${u.id}" style="display:none;color:var(--teal);font-size:0.78rem">✅</span>
-                  <button class="admin-save-btn" onclick="adminToggleResubmit('${u.id}', ${!u.show_resubmit_message})"
-                    style="background:${u.show_resubmit_message ? '#e63200' : 'var(--teal)'}">
-                    ${u.show_resubmit_message ? '🔴 Msg ON' : 'Msg OFF'}
-                  </button>
+                  <input class="form-input" id="msg-${u.id}" placeholder="User message (blank = none)"
+                    value="${u.user_message || ''}"
+                    style="width:200px;padding:6px 10px;font-size:0.78rem">
+                  <button class="admin-save-btn" onclick="adminSaveUserMessage('${u.id}')">Set Msg</button>
+                  <span id="msg-saved-${u.id}" style="display:none;color:var(--teal);font-size:0.78rem">✅</span>
                 </div>
               </div>
             </div>`).join('')}
@@ -1044,7 +1045,7 @@ async function switchAdminTab(tab) {
             <option value="">— pick user —</option>
             ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
           </select>
-          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminResetUserPredictions()">Reset Predictions</button>
+          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminConfirm('Reset this user's predictions? This cannot be undone.', adminResetUserPredictions)">Reset Predictions</button>
           <span id="reset-pred-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
         </div>
 
@@ -1054,7 +1055,7 @@ async function switchAdminTab(tab) {
             <option value="">— pick user —</option>
             ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
           </select>
-          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminDeleteUser()">Delete User</button>
+          <button class="admin-save-btn" style="background:#e63200;margin-top:10px" onclick="adminConfirm('Delete this user and all their data? This cannot be undone.', adminDeleteUser)">Delete User</button>
         </div>`;
 
     } else if (tab === 'results') {
@@ -1198,17 +1199,17 @@ async function switchAdminTab(tab) {
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px">
           <div class="admin-blog-form">
             <h3>🗑️ Cancel All Results</h3>
-            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminCancelAllResults()">Cancel All Results</button>
+            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminConfirm('Cancel ALL results? This cannot be undone.', adminCancelAllResults)">Cancel All Results</button>
           </div>
           <div class="admin-blog-form">
             <h3>🗑️ Cancel a Result</h3>
             <input class="form-input" id="cancel-match-id" type="number" min="1" max="104" placeholder="Match ID" style="margin-bottom:8px">
-            <button class="admin-save-btn" style="background:#e63200" onclick="adminCancelResult()">Cancel Result</button>
+            <button class="admin-save-btn" style="background:#e63200" onclick="adminConfirm('Cancel this result?', adminCancelResult)">Cancel Result</button>
             <span id="cancel-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
           </div>
           <div class="admin-blog-form">
             <h3>🎲 Reset All Buster Progress</h3>
-            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminResetAllBuster()">Reset All Progress</button>
+            <button class="admin-save-btn" style="background:#e63200;width:100%;margin-top:8px" onclick="adminConfirm('Reset ALL buster progress? This cannot be undone.', adminResetAllBuster)">Reset All Progress</button>
           </div>
         </div>
 
@@ -1435,13 +1436,27 @@ async function autoUpdateTeamProgress() {
   }
 }
 
-async function adminToggleResubmit(userId, enable) {
+async function adminSaveUserMessage(userId) {
+  const input = document.getElementById(`msg-${userId}`);
+  const msg = input?.value.trim() || null;
   await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
     method: 'PATCH',
     headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ show_resubmit_message: enable })
+    body: JSON.stringify({ user_message: msg })
   });
-  switchAdminTab('users');
+  const saved = document.getElementById(`msg-saved-${userId}`);
+  if (saved) { saved.style.display = 'inline'; setTimeout(() => saved.style.display = 'none', 2000); }
+}
+
+async function dismissUserMessage(userId) {
+  document.getElementById('user-msg-banner')?.remove();
+  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_message: null })
+  });
+  const session = getSession();
+  if (session) { session.user_message = null; setSession(session); }
 }
 
 async function adminResetPassword(userId, username) {
@@ -1522,7 +1537,7 @@ function flagCode(team) {
     else if (params.has('busterpicks')) { await renderBusterPicks();              }
     else if (params.has('buster'))     { await renderBuster();                 }
     else if (params.has('review'))     { await renderReview();                 }
-    else if (params.has('blog'))       { await renderBlog();                   }
+    else if (params.has('blog'))       { if (window._blogEnabled) { await renderBlog(); } else { await renderHome(); } }
     else if (params.has('about'))      { await renderAbout();                  }
     else if (params.get('team'))       { await renderTeam(params.get('team')); }
     else if (params.has('teams'))      { await renderList();                   }
@@ -2052,6 +2067,8 @@ function generateFinal(sfFixtures, sfPreds) {
 function renderPredictionSection(fixtures, savedPreds, readOnly) {
   const predMap = {};
   savedPreds.forEach(p => { predMap[p.match_id || p.matchId] = p; });
+  const resultsMap = {};
+  (window._results || []).forEach(r => { resultsMap[r.match_id] = r; });
 
   return fixtures.map(fix => {
     const saved    = predMap[fix.matchId] || predMap[fix.match_id];
@@ -2062,16 +2079,19 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
     const aFlag    = flagCode(fix.away_team || fix.away);
     const homeTeam = fix.home_team || fix.home;
     const awayTeam = fix.away_team || fix.away;
+    /* Lock if match already played regardless of lock state */
+    const resulted = resultsMap[fix.matchId]?.status === 'Played';
+    const isLocked = readOnly || resulted;
     /* Show ET picker if draw or no score saved yet (0-0 default needs it) */
     const hs = parseInt(hScore);
     const as_ = parseInt(aScore);
     const isDraw = isNaN(hs) || isNaN(as_) || hs === as_;
 
     return `
-      <div class="pred-match-card" id="pred-${fix.matchId}"
+      <div class="pred-match-card ${resulted ? 'pred-match-resulted' : ''}" id="pred-${fix.matchId}"
         data-home="${homeTeam.replace(/"/g,'&quot;')}"
         data-away="${awayTeam.replace(/"/g,'&quot;')}">
-        <div class="pred-match-date">${fix.match_date || fix.date}</div>
+        <div class="pred-match-date">${fix.match_date || fix.date}${resulted ? ' <span style="color:#e63200;font-size:0.7rem;font-weight:700">PLAYED</span>' : ''}</div>
         <div class="pred-match-teams">
           <div class="pred-team home">
             <img src="https://flagcdn.com/w40/${hFlag}.png" class="fixture-flag" alt="">
@@ -2080,12 +2100,12 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
           <div class="pred-inputs">
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="ph-${fix.matchId}" value="${hScore}"
-              ${readOnly ? 'disabled' : ''}
+              ${isLocked ? 'disabled' : ''}
               onchange="onKnockoutChange(${fix.matchId})" onblur="onKnockoutChange(${fix.matchId})">
             <span class="admin-vs">–</span>
             <input type="number" min="0" max="20" class="score-input pred-score"
               id="pa-${fix.matchId}" value="${aScore}"
-              ${readOnly ? 'disabled' : ''}
+              ${isLocked ? 'disabled' : ''}
               onchange="onKnockoutChange(${fix.matchId})" onblur="onKnockoutChange(${fix.matchId})">
           </div>
           <div class="pred-team away">
@@ -2095,7 +2115,7 @@ function renderPredictionSection(fixtures, savedPreds, readOnly) {
         </div>
         <div class="et-winner-row" id="et-${fix.matchId}" style="${isDraw ? '' : 'display:none'}">
           <span class="et-label">After extra time, winner:</span>
-          <select class="et-select" id="et-sel-${fix.matchId}" ${readOnly ? 'disabled' : ''}
+          <select class="et-select" id="et-sel-${fix.matchId}" ${isLocked ? 'disabled' : ''}
             onchange="cascadeKnockouts()">
             <option value="">— pick winner —</option>
             <option value="${homeTeam}" ${etWinner === homeTeam ? 'selected' : ''}>${homeTeam}</option>
@@ -2267,17 +2287,15 @@ async function renderPredict() {
     <div class="section">
       <div class="wrap">
 
-        <!-- RESUBMIT MESSAGE -->
-        ${user.show_resubmit_message ? `
-        <div style="background:#fff8e1;border:2px solid var(--gold);border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px" id="resubmit-banner">
+        <!-- USER MESSAGE BANNER -->
+        ${user.user_message ? `
+        <div style="background:#fff8e1;border:2px solid var(--gold);border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px" id="user-msg-banner">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
             <div>
-              <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:#7a5800">⚠️ Action Required</div>
-              <p style="font-size:0.875rem;line-height:1.6;margin:0;color:#5a4000">
-                There was an issue with your predictions submission and some of your knockout round scores may not have saved correctly. Your points will not be affected — please review your knockout predictions and re-save any rounds that look incorrect. We're sorry for the inconvenience!
-              </p>
+              <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:#7a5800">📢 Message</div>
+              <p style="font-size:0.875rem;line-height:1.6;margin:0;color:#5a4000">${user.user_message}</p>
             </div>
-            <button onclick="dismissResubmitMessage('${user.id}')" title="Dismiss"
+            <button onclick="dismissUserMessage('${user.id}')" title="Dismiss"
               style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#7a5800;flex-shrink:0;padding:0">×</button>
           </div>
         </div>` : ''}
@@ -2480,6 +2498,8 @@ async function renderPredict() {
 function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
   const predMap = {};
   savedPreds.forEach(p => { predMap[p.match_id] = p; });
+  const resultsMap = {};
+  (window._results || []).forEach(r => { resultsMap[r.match_id] = r; });
 
   const groups = {};
   fixtures.forEach(fix => {
@@ -2495,9 +2515,11 @@ function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
         const saved = predMap[fix.match_id];
         const hScore = saved ? (saved.home_score ?? 0) : 0;
         const aScore = saved ? (saved.away_score ?? 0) : 0;
+        const resulted = resultsMap[fix.match_id]?.status === 'Played';
+        const isLocked = locked || resulted;
         return `
-          <div class="pred-match-card" id="pred-${fix.match_id}">
-            <div class="pred-match-date">${fix.match_date}</div>
+          <div class="pred-match-card ${resulted ? 'pred-match-resulted' : ''}" id="pred-${fix.match_id}">
+            <div class="pred-match-date">${fix.match_date}${resulted ? ' <span style="color:#e63200;font-size:0.7rem;font-weight:700">PLAYED</span>' : ''}</div>
             <div class="pred-match-teams">
               <div class="pred-team home">
                 <img src="https://flagcdn.com/w40/${flagCode(fix.home_team)}.png" class="fixture-flag" alt="">
@@ -2506,12 +2528,12 @@ function renderGroupMatchesByGroup(fixtures, savedPreds, locked) {
               <div class="pred-inputs">
                 <input type="number" min="0" max="20" class="score-input pred-score"
                   id="ph-${fix.match_id}" value="${hScore}"
-                  ${locked ? 'disabled' : ''}
+                  ${isLocked ? 'disabled' : ''}
                   oninput="onGroupPredChange()">
                 <span class="admin-vs">–</span>
                 <input type="number" min="0" max="20" class="score-input pred-score"
                   id="pa-${fix.match_id}" value="${aScore}"
-                  ${locked ? 'disabled' : ''}
+                  ${isLocked ? 'disabled' : ''}
                   oninput="onGroupPredChange()">
               </div>
               <div class="pred-team away">
@@ -3005,7 +3027,7 @@ function renderCompLogin(redirectPage = 'comps') {
             </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
               <div>
-                <label class="form-label">Username</label>
+                <label class="form-label">Username <span style="color:var(--text-muted);font-weight:400;font-size:0.78rem">— shown publicly on the leaderboard</span></label>
                 <input class="form-input" id="comp-username" placeholder="yourname" autocomplete="off"
                   onkeydown="if(event.key==='Enter') compLogin('${redirectPage}')">
               </div>
@@ -4097,7 +4119,7 @@ async function renderAdminUtilities() {
         <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
           Reset every match back to Upcoming and clear all scores.
         </p>
-        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminCancelAllResults()">
+        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminConfirm('Cancel ALL results? This cannot be undone.', adminCancelAllResults)">
           Cancel All Results
         </button>
       </div>
@@ -4107,7 +4129,7 @@ async function renderAdminUtilities() {
         <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">
           Set every team back to Eliminated in the Buster competition.
         </p>
-        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminResetAllBuster()">
+        <button class="admin-save-btn" style="background:#e63200;width:100%" onclick="adminConfirm('Reset ALL buster progress? This cannot be undone.', adminResetAllBuster)">
           Reset All Buster Progress
         </button>
       </div>
@@ -4121,7 +4143,7 @@ async function renderAdminUtilities() {
           <label class="form-label">Match ID (1–72)</label>
           <input class="form-input" id="cancel-match-id" type="number" min="1" max="72" placeholder="e.g. 1">
         </div>
-        <button class="admin-save-btn" style="background:#e63200" onclick="adminCancelResult()">Cancel Result</button>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminConfirm('Cancel this result?', adminCancelResult)">Cancel Result</button>
         <span id="cancel-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
       </div>
 
@@ -4137,7 +4159,7 @@ async function renderAdminUtilities() {
             ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
           </select>
         </div>
-        <button class="admin-save-btn" style="background:#e63200" onclick="adminResetUserPredictions()">Reset Predictions</button>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminConfirm('Reset this user's predictions? This cannot be undone.', adminResetUserPredictions)">Reset Predictions</button>
         <span id="reset-pred-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
       </div>
 
@@ -4153,7 +4175,7 @@ async function renderAdminUtilities() {
             ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
           </select>
         </div>
-        <button class="admin-save-btn" style="background:#e63200" onclick="adminDeleteUser()">Delete User</button>
+        <button class="admin-save-btn" style="background:#e63200" onclick="adminConfirm('Delete this user and all their data? This cannot be undone.', adminDeleteUser)">Delete User</button>
         <span id="delete-user-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:8px">✅ Done!</span>
       </div>
 
@@ -4275,7 +4297,7 @@ async function loadAdminLeaguesList() {
             <span style="font-weight:700;font-size:1rem">${l.name}</span>
             <span style="color:var(--text-muted);font-size:0.8rem;margin-left:10px">Code: <strong style="color:var(--teal)">${l.code}</strong></span>
           </div>
-          <button onclick="adminDeleteLeague('${l.id}','${l.name}')"
+          <button onclick="adminConfirmLeague('${l.id}','${l.name}')"
             style="background:none;border:1px solid #e63200;color:#e63200;border-radius:999px;padding:4px 12px;font-size:0.75rem;cursor:pointer">
             Delete League
           </button>
@@ -4489,6 +4511,30 @@ async function loadPerUserUnlockedList() {
         <button onclick="adminReLockUser('${u.id}')" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:0.9rem;padding:0;line-height:1">×</button>
       </span>`).join('')}
   </div>`;
+}
+
+function adminConfirm(message, fn) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:var(--radius-md);padding:28px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3)">
+      <h3 style="margin-bottom:12px;color:var(--purple-dark)">⚠️ Are you sure?</h3>
+      <p style="color:var(--text-mid);margin-bottom:20px;line-height:1.5">${message}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="this.closest('.admin-confirm-overlay').remove()"
+          style="padding:10px 20px;border:2px solid var(--border);border-radius:999px;background:#fff;font-weight:700;cursor:pointer">Cancel</button>
+        <button id="confirm-yes-btn"
+          style="padding:10px 20px;background:#e63200;border:none;border-radius:999px;color:#fff;font-weight:700;cursor:pointer">Confirm</button>
+      </div>
+    </div>`;
+  overlay.classList.add('admin-confirm-overlay');
+  overlay.querySelector('#confirm-yes-btn').addEventListener('click', () => { overlay.remove(); fn(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function adminConfirmLeague(leagueId, name) {
+  adminConfirm(`Delete league "${name}" and remove all members?`, () => adminDeleteLeague(leagueId, name));
 }
 
 async function adminToggleLock(lock) {
