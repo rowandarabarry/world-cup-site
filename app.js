@@ -1095,6 +1095,7 @@ async function switchAdminTab(tab) {
     } else if (tab === 'comps') {
       const lockRes = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked&select=value`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
       const isLocked = lockRes[0]?.value === 'true';
+      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username&order=username`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
       const progress = await fetch(`${SUPABASE_URL}/rest/v1/team_progress?select=*&order=team_name`, { headers: sbHeaders }).then(r => r.json());
       const stages = [
         { value:'eliminated',   label:'Eliminated'   },
@@ -1119,9 +1120,44 @@ async function switchAdminTab(tab) {
           </p>
           <button class="hero-cta" onclick="adminToggleLock(${!isLocked})"
             style="background:${isLocked ? 'var(--teal)' : '#e63200'};box-shadow:none;padding:12px 28px">
-            ${isLocked ? '🔓 Unlock Competitions' : '🔒 Lock All Competitions'}
+            ${isLocked ? '🔓 Unlock All' : '🔒 Lock All'}
           </button>
           <span id="lock-msg" style="display:none;font-weight:600;margin-left:12px">✅ Done!</span>
+        </div>
+
+        <!-- Admin enter predictions for a user -->
+        <h2 class="section-title" style="margin:32px 0 12px">Admin <span>Predictions Entry</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">Enter or override score predictions for any user.</p>
+        <div class="admin-blog-form" style="margin-bottom:28px">
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
+            <div class="form-group" style="margin:0;flex:1;min-width:180px">
+              <label class="form-label">User</label>
+              <select class="form-select" id="admin-pred-user">
+                <option value="">— pick user —</option>
+                ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:120px">
+              <label class="form-label">Match ID (1-103)</label>
+              <input class="form-input" id="admin-pred-match" type="number" min="1" max="103" placeholder="e.g. 75">
+            </div>
+            <button class="admin-save-btn" onclick="loadAdminPredEntry()">Load</button>
+          </div>
+          <div id="admin-pred-entry"></div>
+        </div>
+
+        <!-- Admin enter buster picks for a user -->
+        <h2 class="section-title" style="margin:0 0 12px">Admin <span>Buster Entry</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">Enter or override buster picks for any user.</p>
+        <div class="admin-blog-form" style="margin-bottom:28px">
+          <div class="form-group">
+            <label class="form-label">Select User</label>
+            <select class="form-select" id="admin-buster-user" onchange="loadAdminBusterPicks()" style="max-width:300px">
+              <option value="">— pick user —</option>
+              ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+            </select>
+          </div>
+          <div id="admin-buster-picks" style="margin-top:14px"></div>
         </div>
 
         <!-- Cancel all / reset buster -->
@@ -1547,6 +1583,10 @@ function flagCode(team) {
 
 function isPastCutoff() {
   return new Date() > CUTOFF || window._competitionsLocked === true;
+}
+
+function isBusterLocked() {
+  return isPastCutoff();
 }
 
 /* Load competition lock state from Supabase */
@@ -4186,6 +4226,119 @@ async function adminDeleteLeague(leagueId, name) {
   if (!confirm(`Delete league "${name}"? All members will be removed.`)) return;
   await fetch(`${SUPABASE_URL}/rest/v1/leagues?id=eq.${leagueId}`, { method: 'DELETE', headers: sbHeaders });
   loadAdminLeaguesList();
+}
+
+async function loadAdminPredEntry() {
+  const userId  = document.getElementById('admin-pred-user')?.value;
+  const matchId = parseInt(document.getElementById('admin-pred-match')?.value);
+  const el = document.getElementById('admin-pred-entry');
+  if (!el || !userId || !matchId) { alert('Please select a user and enter a match ID'); return; }
+
+  const result = await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=eq.${matchId}&select=*`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  const existing = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&match_id=eq.${matchId}&select=*`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+
+  const fix = result[0];
+  const pred = existing[0] || {};
+  const isKnockout = matchId > 72;
+
+  el.innerHTML = `
+    <div style="background:#f8f8fd;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+      ${fix ? `<p style="font-size:0.85rem;font-weight:600;margin-bottom:10px">${fix.home_team} vs ${fix.away_team} — ${fix.group_name}</p>` : ''}
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <label class="form-label" style="font-size:0.75rem">Home Score</label>
+          <input class="form-input score-input" id="admin-pred-home" type="number" min="0" max="20" value="${pred.home_score ?? 0}" style="width:60px">
+        </div>
+        <span style="font-size:1.2rem;margin-top:16px">–</span>
+        <div>
+          <label class="form-label" style="font-size:0.75rem">Away Score</label>
+          <input class="form-input score-input" id="admin-pred-away" type="number" min="0" max="20" value="${pred.away_score ?? 0}" style="width:60px">
+        </div>
+        ${isKnockout ? `
+        <div style="flex:1;min-width:160px">
+          <label class="form-label" style="font-size:0.75rem">ET Winner (if draw)</label>
+          <select class="form-select" id="admin-pred-et" style="font-size:0.82rem">
+            <option value="">— none —</option>
+            ${fix ? `<option value="${fix.home_team}" ${pred.et_winner===fix.home_team?'selected':''}>${fix.home_team}</option>
+            <option value="${fix.away_team}" ${pred.et_winner===fix.away_team?'selected':''}>${fix.away_team}</option>` : ''}
+          </select>
+        </div>` : ''}
+      </div>
+      <button class="admin-save-btn" onclick="adminSavePredEntry('${userId}', ${matchId})">Save Prediction</button>
+      <span id="admin-pred-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:10px">✅ Saved!</span>
+    </div>`;
+}
+
+async function adminSavePredEntry(userId, matchId) {
+  const homeScore = parseInt(document.getElementById('admin-pred-home')?.value ?? 0);
+  const awayScore = parseInt(document.getElementById('admin-pred-away')?.value ?? 0);
+  const etWinner  = document.getElementById('admin-pred-et')?.value || null;
+  const stage     = matchId <= 72 ? 'group' : matchId <= 88 ? 'r32' : matchId <= 96 ? 'r16' : matchId <= 100 ? 'qf' : matchId <= 102 ? 'sf' : 'final';
+
+  const payload = { user_id: userId, match_id: matchId, home_score: homeScore, away_score: awayScore, et_winner: etWinner, stage };
+  const existing = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&match_id=eq.${matchId}&select=id`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+
+  let ok;
+  if (existing.length) {
+    ok = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions?user_id=eq.${userId}&match_id=eq.${matchId}`,
+      { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) }).then(r => r.ok);
+  } else {
+    ok = await fetch(`${SUPABASE_URL}/rest/v1/match_predictions`,
+      { method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) }).then(r => r.ok || r.status === 201);
+  }
+
+  const msg = document.getElementById('admin-pred-save-msg');
+  if (msg) { msg.style.display = ok ? 'inline' : 'none'; if (!ok) alert('Save failed'); setTimeout(() => msg.style.display = 'none', 2000); }
+}
+
+async function loadAdminBusterPicks() {
+  const userId = document.getElementById('admin-buster-user')?.value;
+  const el = document.getElementById('admin-buster-picks');
+  if (!el || !userId) return;
+
+  const existing = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${userId}&select=*`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  const picks = existing[0] || {};
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px">
+      ${BUSTER_POTS.map(pot => `
+        <div>
+          <label class="form-label" style="font-size:0.78rem">${pot.label}</label>
+          <select class="form-select" id="admin-pot${pot.pot}" style="font-size:0.82rem">
+            <option value="">— pick —</option>
+            ${pot.teams.map(t => `<option value="${t}" ${picks[`pot${pot.pot}_team`]===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>`).join('')}
+    </div>
+    <button class="admin-save-btn" onclick="adminSaveBusterPicks('${userId}')">Save Buster Picks</button>
+    <span id="admin-buster-save-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:10px">✅ Saved!</span>`;
+}
+
+async function adminSaveBusterPicks(userId) {
+  const picks = {};
+  for (let i = 1; i <= 6; i++) {
+    picks[`pot${i}_team`] = document.getElementById(`admin-pot${i}`)?.value || null;
+  }
+  picks.user_id = userId;
+
+  const existing = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${userId}&select=id`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+
+  let ok;
+  if (existing.length) {
+    ok = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks?user_id=eq.${userId}`,
+      { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify(picks) }).then(r => r.ok);
+  } else {
+    ok = await fetch(`${SUPABASE_URL}/rest/v1/buster_picks`,
+      { method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify(picks) }).then(r => r.ok || r.status === 201);
+  }
+
+  const msg = document.getElementById('admin-buster-save-msg');
+  if (msg) { msg.style.display = ok ? 'inline' : 'none'; if (!ok) alert('Save failed'); }
 }
 
 async function adminToggleLock(lock) {
