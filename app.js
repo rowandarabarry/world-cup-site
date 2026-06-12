@@ -1013,7 +1013,7 @@ async function switchAdminTab(tab) {
 
   try {
     if (tab === 'users') {
-      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,name,created_at&order=created_at`, { headers: sbHeaders }).then(r => r.json());
+      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,name,created_at,show_resubmit_message&order=created_at`, { headers: sbHeaders }).then(r => r.json());
       el.innerHTML = `
         <h2 class="section-title" style="margin:24px 0 16px">👥 <span>All Users</span></h2>
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:32px">
@@ -1029,6 +1029,10 @@ async function switchAdminTab(tab) {
                   <input class="form-input" id="newpw-${u.id}" placeholder="New password" style="width:130px;padding:6px 10px;font-size:0.8rem">
                   <button class="admin-save-btn" onclick="adminResetPassword('${u.id}','${u.username}')">Reset PW</button>
                   <span id="pw-msg-${u.id}" style="display:none;color:var(--teal);font-size:0.78rem">✅</span>
+                  <button class="admin-save-btn" onclick="adminToggleResubmit('${u.id}', ${!u.show_resubmit_message})"
+                    style="background:${u.show_resubmit_message ? '#e63200' : 'var(--teal)'}">
+                    ${u.show_resubmit_message ? '🔴 Msg ON' : 'Msg OFF'}
+                  </button>
                 </div>
               </div>
             </div>`).join('')}
@@ -1398,6 +1402,15 @@ async function autoUpdateTeamProgress() {
   } catch(e) {
     console.warn('Auto team progress update failed:', e);
   }
+}
+
+async function adminToggleResubmit(userId, enable) {
+  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ show_resubmit_message: enable })
+  });
+  switchAdminTab('users');
 }
 
 async function adminResetPassword(userId, username) {
@@ -1904,7 +1917,7 @@ function generateR16(r32Fixtures, r32Preds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
 
   /* Official FIFA R16 pairings per Article 12.7
@@ -1936,7 +1949,7 @@ function generateQF(r16Fixtures, r16Preds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
   return [
     { matchId:97,  home: winner(r16Fixtures[0]), away: winner(r16Fixtures[1]), stage:'qf', date:'Mon 13 Jul' },  /* W89 v W90 */
@@ -1959,7 +1972,7 @@ function generateSF(qfFixtures, qfPreds) {
     if (isNaN(hs) || isNaN(as_)) return `⏳ M${fix.matchId} winner`;
     if (hs > as_) return fix.home;
     if (hs < as_) return fix.away;
-    return p.etWinner || p.et_winner || fix.home || `Winner Match ${fix.matchId}`;
+    return p.etWinner || p.et_winner || `Winner Match ${fix.matchId}`;
   }
   return [
     { matchId:101, home: winner(qfFixtures[0]), away: winner(qfFixtures[1]), stage:'sf', date:'Fri 17 Jul' },  /* W97 v W98 */
@@ -2104,6 +2117,18 @@ async function renderPredictView(userId) {
     ${renderPredictionSection(finalFixtures, savedPreds, true)}`;
 }
 
+async function dismissResubmitMessage(userId) {
+  document.getElementById('resubmit-banner')?.remove();
+  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ show_resubmit_message: false })
+  });
+  /* Update session */
+  const session = getSession();
+  if (session) { session.show_resubmit_message = false; setSession(session); }
+}
+
 async function renderPredict() {
   await loadLockState();
   /* ── Check session ── */
@@ -2189,6 +2214,21 @@ async function renderPredict() {
 
     <div class="section">
       <div class="wrap">
+
+        <!-- RESUBMIT MESSAGE -->
+        ${user.show_resubmit_message ? `
+        <div style="background:#fff8e1;border:2px solid var(--gold);border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px" id="resubmit-banner">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div>
+              <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:#7a5800">⚠️ Action Required</div>
+              <p style="font-size:0.875rem;line-height:1.6;margin:0;color:#5a4000">
+                There was an issue with your predictions submission and some of your knockout round scores may not have saved correctly. Your points will not be affected — please review your knockout predictions and re-save any rounds that look incorrect. We're sorry for the inconvenience!
+              </p>
+            </div>
+            <button onclick="dismissResubmitMessage('${user.id}')" title="Dismiss"
+              style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#7a5800;flex-shrink:0;padding:0">×</button>
+          </div>
+        </div>` : ''}
 
         <!-- IMPORTANT NOTICES -->
         <div style="background:#fff3f0;border:2px solid #e63200;border-radius:var(--radius-md);padding:16px 20px;margin-bottom:20px">
@@ -2561,20 +2601,26 @@ function cascadeKnockouts() {
     return { matchId, match_id: matchId, homeScore:0, awayScore:0, home_score:0, away_score:0 };
   };
 
-  const r32Preds    = window._r32Fixtures.map(f => getPred(f.matchId));
-  const r16Fixtures = generateR16(window._r32Fixtures, r32Preds);
+  const hasSaved = (matchIds) => matchIds.some(id => savedMap[id] !== undefined);
+
+  const r32MatchIds  = window._r32Fixtures.map(f => f.matchId);
+  const r32Preds     = window._r32Fixtures.map(f => getPred(f.matchId));
+  const r16Fixtures  = generateR16(window._r32Fixtures, r32Preds);
   window._r16Fixtures = r16Fixtures;
 
-  const r16Preds    = r16Fixtures.map(f => getPred(f.matchId));
-  const qfFixtures  = generateQF(r16Fixtures, r16Preds);
+  const r16MatchIds  = r16Fixtures.map(f => f.matchId);
+  const r16Preds     = r16Fixtures.map(f => getPred(f.matchId));
+  const qfFixtures   = hasSaved(r32MatchIds) ? generateQF(r16Fixtures, r16Preds) : window._qfFixtures || generateQF(r16Fixtures, r16Preds.map(f => ({...f, homeScore:0, awayScore:0})));
   window._qfFixtures = qfFixtures;
 
-  const qfPreds     = qfFixtures.map(f => getPred(f.matchId));
-  const sfFixtures  = generateSF(qfFixtures, qfPreds);
+  const qfMatchIds   = qfFixtures.map(f => f.matchId);
+  const qfPreds      = qfFixtures.map(f => getPred(f.matchId));
+  const sfFixtures   = hasSaved(r16MatchIds) ? generateSF(qfFixtures, qfPreds) : window._sfFixtures || generateSF(qfFixtures, qfPreds.map(f => ({...f, homeScore:0, awayScore:0})));
   window._sfFixtures = sfFixtures;
 
+  const sfMatchIds      = sfFixtures.map(f => f.matchId);
   const sfPreds         = sfFixtures.map(f => getPred(f.matchId));
-  const finalFixtures   = generateFinal(sfFixtures, sfPreds);
+  const finalFixtures   = hasSaved(qfMatchIds) ? generateFinal(sfFixtures, sfPreds) : window._finalFixtures || generateFinal(sfFixtures, sfPreds.map(f => ({...f, homeScore:0, awayScore:0})));
   window._finalFixtures = finalFixtures;
 
   const locked = isPastCutoff();
