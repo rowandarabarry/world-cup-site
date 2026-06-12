@@ -2213,6 +2213,7 @@ async function renderPredict() {
   const savedPreds = await loadUserPredictions(user.id);
   const teams = await loadTeams();
   const results = await sbGet('results');
+  window._results = results; /* Set early so renderGroupMatchesByGroup can use it */
   const locked = isPastCutoff();
 
   /* Group stage fixtures from results table */
