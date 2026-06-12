@@ -1982,3 +1982,13 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
 }
 .lb-league-tab:hover { border-color: var(--teal); color: var(--teal-dark); }
 .lb-league-tab.active { background: var(--purple-dark); border-color: var(--purple-dark); color: #fff; }
+
+/* Resulted match cards in predictions - subtle lock indicator */
+.pred-match-resulted {
+  opacity: 0.75;
+  border-left: 3px solid #e63200 !important;
+}
+.pred-match-resulted .score-input:disabled {
+  background: #f0f0f0;
+  color: var(--text-muted);
+}
