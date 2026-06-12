@@ -1164,6 +1164,36 @@ async function switchAdminTab(tab) {
           <div id="admin-buster-picks" style="margin-top:14px"></div>
         </div>
 
+        <!-- Blog toggle -->
+        <div class="admin-blog-form" style="margin-bottom:28px;border:2px solid ${window._blogEnabled ? 'var(--teal)' : 'var(--border)'}">
+          <h3 style="margin-bottom:8px">Blog Visibility</h3>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">
+            ${window._blogEnabled ? 'Blog is visible in the navigation.' : 'Blog is hidden from navigation.'}
+          </p>
+          <button class="admin-save-btn" onclick="adminToggleBlog(${!window._blogEnabled})">
+            ${window._blogEnabled ? 'Hide Blog' : 'Show Blog'}
+          </button>
+          <span id="blog-toggle-msg" style="display:none;color:var(--teal);font-weight:600;margin-left:10px">✅ Done!</span>
+        </div>
+
+        <!-- Per-user unlock -->
+        <h2 class="section-title" style="margin:0 0 12px">Per-User <span>Unlock</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">Unlock predictions entry for a specific user without unlocking everyone.</p>
+        <div class="admin-blog-form" style="margin-bottom:28px">
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1;min-width:180px">
+              <label class="form-label">User</label>
+              <select class="form-select" id="per-user-unlock-select">
+                <option value="">— pick user —</option>
+                ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+              </select>
+            </div>
+            <button class="admin-save-btn" style="background:var(--teal)" onclick="adminPerUserUnlock()">Unlock for User</button>
+            <span id="per-unlock-msg" style="display:none;color:var(--teal);font-size:0.82rem">✅ Unlocked!</span>
+          </div>
+          <div id="per-user-unlocked-list" style="margin-top:12px"></div>
+        </div>
+
         <!-- Cancel all / reset buster -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px">
           <div class="admin-blog-form">
@@ -1219,13 +1249,14 @@ async function switchAdminTab(tab) {
         </div>
         <div id="admin-leagues-list"><p style="color:var(--text-muted);font-size:0.85rem">Loading leagues…</p></div>`;
 
-      /* Load leagues list */
+      /* Load leagues list and unlocked users */
       loadAdminLeaguesList();
+      loadPerUserUnlockedList();
 
     } else if (tab === 'blog') {
       const blogHtml = await renderAdminBlog(true);
       const reviewHtml = await renderReviewAdminForm();
-      el.innerHTML = blogHtml + '<h2 class="section-title" style="margin:40px 0 16px"><span>Tournament Review</span></h2><div class="admin-blog-form">' + reviewHtml + '</div>';
+      el.innerHTML = blogHtml;
 
     } else if (tab === 'feedback') {
       const allPostsRes = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=*&order=created_at.desc`, { headers: sbHeaders });
@@ -1595,6 +1626,8 @@ function flagCode(team) {
    ============================================================ */
 
 function isPastCutoff() {
+  const session = getSession();
+  if (session && window._unlockedUsers && window._unlockedUsers.includes(session.id)) return false;
   return new Date() > CUTOFF || window._competitionsLocked === true;
 }
 
@@ -1610,6 +1643,24 @@ async function loadLockState() {
       { headers: sbHeaders }
     ).then(r => r.json());
     window._competitionsLocked = res[0]?.value === 'true';
+    /* Load per-user unlocks */
+    const unlockRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users&select=value`,
+      { headers: sbHeaders }
+    ).then(r => r.json()).catch(() => []);
+    window._unlockedUsers = (unlockRes[0]?.value || '').split(',').filter(Boolean);
+  } catch(e) { window._competitionsLocked = false; }
+}
+
+async function loadSiteSettings() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/settings?select=key,value`,
+      { headers: sbHeaders }
+    ).then(r => r.json()).catch(() => []);
+    const map = {};
+    res.forEach(r => map[r.key] = r.value);
+    window._blogEnabled = map['blog_enabled'] !== 'false'; // default true
   } catch(e) { window._competitionsLocked = false; }
 }
 
@@ -2131,6 +2182,7 @@ async function dismissResubmitMessage(userId) {
 
 async function renderPredict() {
   await loadLockState();
+  await loadSiteSettings();
   /* ── Check session ── */
   const session = getSession();
   if (!session) {
@@ -4387,6 +4439,58 @@ async function adminSaveBusterPicks(userId) {
   if (msg) { msg.style.display = ok ? 'inline' : 'none'; if (!ok) alert('Save failed'); }
 }
 
+async function adminToggleBlog(enable) {
+  await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.blog_enabled`,
+    { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ value: enable ? 'true' : 'false' }) });
+  window._blogEnabled = enable;
+  const msg = document.getElementById('blog-toggle-msg');
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => { msg.style.display = 'none'; switchAdminTab('comps'); }, 1500); }
+}
+
+async function adminPerUserUnlock() {
+  const userId = document.getElementById('per-user-unlock-select')?.value;
+  if (!userId) return;
+  /* Store unlocked users as comma-separated list in settings */
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users&select=value`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  const current = res[0]?.value || '';
+  const ids = current ? current.split(',') : [];
+  if (!ids.includes(userId)) ids.push(userId);
+  await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users`,
+    { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ value: ids.join(',') }) });
+  const msg = document.getElementById('per-unlock-msg');
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2000); }
+  loadPerUserUnlockedList();
+}
+
+async function adminReLockUser(userId) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users&select=value`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  const current = res[0]?.value || '';
+  const ids = current.split(',').filter(id => id && id !== userId);
+  await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users`,
+    { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ value: ids.join(',') }) });
+  loadPerUserUnlockedList();
+}
+
+async function loadPerUserUnlockedList() {
+  const el = document.getElementById('per-user-unlocked-list');
+  if (!el) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.unlocked_users&select=value`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  const ids = (res[0]?.value || '').split(',').filter(Boolean);
+  if (!ids.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.82rem">No users currently unlocked.</p>'; return; }
+  const users = await fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${ids.join(',')})&select=id,username`, { headers: sbHeaders })
+    .then(r => r.json()).catch(() => []);
+  el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+    ${users.map(u => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:var(--teal);color:#fff;border-radius:999px;padding:4px 12px;font-size:0.78rem;font-weight:600">
+        ${u.username}
+        <button onclick="adminReLockUser('${u.id}')" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:0.9rem;padding:0;line-height:1">×</button>
+      </span>`).join('')}
+  </div>`;
+}
+
 async function adminToggleLock(lock) {
   const action = lock ? 'lock' : 'unlock';
   if (!confirm(`Are you sure you want to ${action} all competitions?`)) return;
@@ -4587,6 +4691,7 @@ async function renderBusterPicks() {
 
 async function renderBuster() {
   await loadLockState();
+  await loadSiteSettings();
   const session = getSession();
   const locked  = isPastCutoff();
 
