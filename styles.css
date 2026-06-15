@@ -1992,3 +1992,11 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
   background: #f0f0f0;
   color: var(--text-muted);
 }
+
+/* Groups table - updated columns W D L GD Pts, Pts first on mobile */
+@media (max-width: 600px) {
+  .group-table th:nth-child(5),
+  .group-table td:nth-child(5) {
+    display: none;
+  }
+}
