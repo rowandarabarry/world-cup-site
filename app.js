@@ -576,11 +576,30 @@ async function renderFixtures() {
       date:'Tue 1 Jul',   time:'22:00 IST', stadium:'BMO Field, Toronto',              group:'Group L', result:null },
   ];
 
-  /* Override hardcoded dates with correct dates from Supabase */
-  fixtures.forEach((f, i) => {
-    const matchId = i + 1;
-    if (dbDateMap[matchId]) {
-      const parts = dbDateMap[matchId].split(', ');
+  /* Override hardcoded dates with correct dates from Supabase - match by team names */
+  const norm = n => (n||'').toLowerCase()
+    .replace('korea republic','korea rep')
+    .replace('czechia','czech rep')
+    .replace("côte d'ivoire",'ivory coast')
+    .replace('côte d\\','ivory coast')
+    .replace('usa','united states')
+    .replace('türkiye','turkey')
+    .replace('ir iran','iran')
+    .replace('cabo verde','cape verde')
+    .replace('congo dr','dr congo')
+    .replace('bosnia & herz.','bosnia')
+    .replace('bosnia & herzegovina','bosnia');
+
+  fixtures.forEach(f => {
+    const h = norm(f.home);
+    const a = norm(f.away);
+    const match = dbResults.find(r => {
+      const rh = norm(r.home_team);
+      const ra = norm(r.away_team);
+      return (rh === h && ra === a) || (rh === a && ra === h);
+    });
+    if (match?.match_date) {
+      const parts = match.match_date.split(', ');
       f.date = parts[0];
       f.time = (parts[1] || '') + ' IST';
     }
