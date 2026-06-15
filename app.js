@@ -41,7 +41,7 @@ const STAGE_LABELS = {
   sf: '🌟 Semi Final', qf: '⚡ Quarter Final',
   r16: '🔟 Round of 16', best_third: '✔️ Best 3rd Place',
   group_second: '2️⃣ Group Runner-up', group_winner: '1️⃣ Group Winner',
-  eliminated: '❌ Eliminated'
+  eliminated: '—'
 };
 
 /* ── Helpers ── */
@@ -2278,9 +2278,18 @@ async function renderPredict() {
             class="comp-action-btn danger">
             🗑️ Reset My Predictions
           </button>` : ''}
+          <button onclick="toggleUsernameChange()" class="comp-action-btn">✏️ Username</button>
           <button onclick="compLogout()" class="comp-action-btn">
             👋 Log Out
           </button>
+        </div>
+        <div id="username-change-form" style="display:none;margin-top:10px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input class="form-input" id="new-username-input" placeholder="New username"
+              style="width:180px;padding:7px 12px;font-size:0.85rem">
+            <button class="comp-action-btn" onclick="saveNewUsername('${user.id}')">Save</button>
+            <span id="username-msg" style="display:none;font-size:0.82rem"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -2555,7 +2564,7 @@ function renderPredStandings(standings) {
           <div class="group-letter">${letter}</div>
         </div>
         <table class="group-table">
-          <thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+          <thead><tr><th>Team</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
           <tbody>
             ${teams.map(s => `
               <tr>
