@@ -317,7 +317,12 @@ async function renderTeam(code) {
 /* ============================================================
    FIXTURES PAGE
    ============================================================ */
-function renderFixtures() {
+async function renderFixtures() {
+  /* Fetch match_date from Supabase to override hardcoded dates */
+  const dbResults = await sbGet('results').catch(() => []);
+  const dbDateMap = {};
+  dbResults.forEach(r => { dbDateMap[r.match_id] = r.match_date; });
+
   /* 
     HOW TO ADD REAL FIXTURES:
     Each fixture object has:
@@ -570,6 +575,16 @@ function renderFixtures() {
       away:'Ghana',              awayFlag:'https://flagcdn.com/w40/gh.png',
       date:'Tue 1 Jul',   time:'22:00 IST', stadium:'BMO Field, Toronto',              group:'Group L', result:null },
   ];
+
+  /* Override hardcoded dates with correct dates from Supabase */
+  fixtures.forEach((f, i) => {
+    const matchId = i + 1;
+    if (dbDateMap[matchId]) {
+      const parts = dbDateMap[matchId].split(', ');
+      f.date = parts[0];
+      f.time = (parts[1] || '') + ' IST';
+    }
+  });
 
   const groups = [...new Set(fixtures.map(f => f.group))];
 
@@ -1510,7 +1525,7 @@ function flagCode(team) {
 
   try {
     if (params.has('about'))           { renderAbout();                        }
-    else if (params.has('fixtures'))   { renderFixtures();                     }
+    else if (params.has('fixtures'))   { await renderFixtures();                     }
     else if (params.has('groups'))     { await renderGroups();                 }
     else if (params.has('results'))    { await renderResults();                }
     else if (params.has('admin'))      { await renderAdmin();                  }
