@@ -742,8 +742,7 @@ async function renderGroups() {
           <thead>
             <tr>
               <th>Team</th>
-              <th>P</th><th>W</th><th>D</th><th>L</th>
-              <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+              <th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th>
             </tr>
           </thead>
           <tbody>
@@ -755,8 +754,7 @@ async function renderGroups() {
                     ${s.team.name}
                   </a>
                 </td>
-                <td class="pts-cell">${s.pts}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td><td>${s.p}</td>
-                <td>${s.gf}</td><td>${s.ga}</td>
+                <td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
                 <td>${s.gf-s.ga > 0 ? '+' : ''}${s.gf-s.ga}</td>
                 <td class="pts-cell">${s.pts}</td>
               </tr>`).join('')}
