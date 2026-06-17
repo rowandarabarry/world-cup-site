@@ -1116,7 +1116,7 @@ async function switchAdminTab(tab) {
           </div>`).join('')}
         ${played.length > 0 ? `
         <h2 class="section-title" style="margin-top:40px;margin-bottom:16px">Entered <span>Results</span></h2>
-        ${played.map(m => `
+        ${played.sort((a,b) => b.match_id - a.match_id).map(m => `
           <div class="admin-match-card admin-match-played">
             <div class="admin-match-teams">
               <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
@@ -1125,7 +1125,8 @@ async function switchAdminTab(tab) {
               <span class="admin-team-name">${m.away_team}</span>
               <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
             </div>
-            <div class="admin-match-meta">${m.group_name} · ${m.match_date} #${m.match_id}</div>
+            <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
+            <span style="font-size:0.75rem;font-weight:700;color:var(--teal);margin-right:8px">#${m.match_id}</span>
             <button class="admin-save-btn" onclick="makeMatchEditable(${m.match_id},'${m.home_team}','${m.away_team}',${m.home_score},${m.away_score},'${m.group_name}','${m.match_date}')" style="background:var(--teal-dark)">Update</button>
           </div>`).join('')}` : ''}`;
 
