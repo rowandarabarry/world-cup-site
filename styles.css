@@ -2012,3 +2012,23 @@ footer small { color: rgba(255,255,255,0.45); font-size: 0.85rem; }
     display: none;
   }
 }
+
+/* Groups table v2 — hide W D L on mobile, show only GD Pts */
+.group-table th:nth-child(2),
+.group-table td:nth-child(2),
+.group-table th:nth-child(3),
+.group-table td:nth-child(3),
+.group-table th:nth-child(4),
+.group-table td:nth-child(4) {
+  display: none;
+}
+@media (min-width: 601px) {
+  .group-table th:nth-child(2),
+  .group-table td:nth-child(2),
+  .group-table th:nth-child(3),
+  .group-table td:nth-child(3),
+  .group-table th:nth-child(4),
+  .group-table td:nth-child(4) {
+    display: table-cell;
+  }
+}
