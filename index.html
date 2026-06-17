@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=155" />
+  <link rel="stylesheet" href="styles.css?v=156" />
 </head>
 <body>
 
@@ -92,7 +92,7 @@
         const text = await res.text();
         const data = JSON.parse(text);
         if (data && data.count !== undefined) {
-          const count = parseInt(String(data.count).replace(/,/g, ''), 10);
+          const count = parseInt(String(data.count).replace(/\s/g, ''), 10);
           if (!isNaN(count)) document.getElementById('site-views').textContent = count.toLocaleString();
         }
       } catch(e) { /* silently fail until allowlist is set */ }
@@ -129,6 +129,6 @@
   </nav>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=155"></script>
+  <script src="app.js?v=156"></script>
 </body>
 </html>
