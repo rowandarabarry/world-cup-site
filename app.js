@@ -577,6 +577,9 @@ async function renderFixtures() {
   ];
 
   /* Override hardcoded dates with correct dates from Supabase - matched by matchId */
+  console.log('dbDateMap keys:', Object.keys(dbDateMap).slice(0,5));
+  console.log('first fixture matchId:', fixtures[0]?.matchId, typeof fixtures[0]?.matchId);
+  console.log('match 25 date from DB:', dbDateMap[25]);
   fixtures.forEach(f => {
     if (!f.matchId) return;
     const match = dbDateMap[f.matchId];
@@ -586,6 +589,7 @@ async function renderFixtures() {
       f.time = (parts[1] || '') + ' IST';
     }
   });
+  console.log('Mexico vs Korea Republic date after override:', fixtures.find(f=>f.matchId===25)?.date);
 
   const groups = [...new Set(fixtures.map(f => f.group))];
 
