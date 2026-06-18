@@ -321,7 +321,7 @@ async function renderFixtures() {
   /* Fetch match_date from Supabase to override hardcoded dates */
   const dbResults = await sbGet('results').catch(() => []);
   const dbDateMap = {};
-  dbResults.forEach(r => { dbDateMap[r.match_id] = r.match_date; });
+  dbResults.forEach(r => { dbDateMap[parseInt(r.match_id)] = r.match_date; });
 
   /* 
     HOW TO ADD REAL FIXTURES:
