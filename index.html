@@ -13,7 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=162" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="stylesheet" href="styles.css?v=165" />
 </head>
 <body>
 
@@ -41,7 +42,7 @@
           <button class="tab tab-drop-btn" data-group="zone">Rowan's Zone ▾</button>
           <div class="tab-dropdown-menu">
             <a class="tab-dropdown-item" href="./?review=1"   data-page="review">Tournament Review</a>
-            <a class="tab-dropdown-item" href="./?blog=1"     data-page="blog">Rowan's Blog</a>
+            <a class="tab-dropdown-item" href="./?blog=1"     data-page="blog" data-blog-nav>Rowan's Blog</a>
           </div>
         </div>
 
@@ -122,13 +123,13 @@
       <span class="nav-icon">⭐</span>
       <span>Review</span>
     </a>
-    <a class="bottom-nav-item" href="./?blog=1" data-page="blog">
+    <a class="bottom-nav-item" href="./?blog=1" data-page="blog" data-blog-nav>
       <span class="nav-icon">✍️</span>
       <span>Blog</span>
     </a>
   </nav>
 
   <script src="maps.js?v=1"></script>
-  <script src="app.js?v=162"></script>
+  <script src="app.js?v=165"></script>
 </body>
 </html>
