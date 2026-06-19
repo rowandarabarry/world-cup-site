@@ -577,9 +577,6 @@ async function renderFixtures() {
   ];
 
   /* Override hardcoded dates with correct dates from Supabase - matched by matchId */
-  console.log('dbDateMap keys:', Object.keys(dbDateMap).slice(0,5));
-  console.log('first fixture matchId:', fixtures[0]?.matchId, typeof fixtures[0]?.matchId);
-  console.log('match 25 date from DB:', dbDateMap[25]);
   fixtures.forEach(f => {
     if (!f.matchId) return;
     const match = dbDateMap[f.matchId];
@@ -589,7 +586,6 @@ async function renderFixtures() {
       f.time = (parts[1] || '') + ' IST';
     }
   });
-  console.log('Mexico vs Korea Republic date after override:', fixtures.find(f=>f.matchId===25)?.date);
 
   const groups = [...new Set(fixtures.map(f => f.group))];
 
@@ -1695,6 +1691,10 @@ async function loadSiteSettings() {
     const map = {};
     res.forEach(r => map[r.key] = r.value);
     window._blogEnabled = map['blog_enabled'] !== 'false'; // default true
+    /* Show/hide blog nav items */
+    document.querySelectorAll('[data-blog-nav]').forEach(el => {
+      el.style.display = window._blogEnabled ? '' : 'none';
+    });
   } catch(e) { window._competitionsLocked = false; }
 }
 
@@ -2412,6 +2412,47 @@ async function renderPredict() {
             Please pick exactly ${r32SpotsLeft} team${r32SpotsLeft > 1 ? 's' : ''}.
           </p>
         </div>` : ''}
+
+        <!-- PREDICTED STANDINGS -->
+        <div class="pred-section" style="margin-top:40px">
+          <div class="pred-section-collapsible" onclick="togglePredSection('standings')">
+            <h2 class="section-title" style="margin:0">Predicted <span>Standings</span></h2>
+            <span id="standings-toggle" style="font-size:1.2rem;color:var(--teal)">▼</span>
+          </div>
+          <div id="standings-body">
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
+              Based on your group stage predictions. Top 2 from each group qualify automatically. The 8 best 3rd place teams also progress.
+            </p>
+            <div class="groups-grid">
+              ${Object.entries(standings).sort(([a],[b]) => a.localeCompare(b)).map(([letter, teams]) => `
+                <div class="group-card">
+                  <div class="group-card-header">
+                    <div class="group-letter">${letter}</div>
+                  </div>
+                  <table class="group-table">
+                    <thead><tr>
+                      <th style="text-align:left">Team</th>
+                      <th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th>
+                    </tr></thead>
+                    <tbody>
+                      ${teams.map((s, i) => `
+                        <tr style="${i < 2 ? 'background:rgba(0,180,180,0.06)' : ''}">
+                          <td style="text-align:left;display:flex;align-items:center;gap:6px;padding:6px 8px">
+                            <span style="font-size:0.7rem;color:var(--text-muted);width:12px">${i+1}</span>
+                            <img src="${s.team?.flag || ''}" width="20" style="border-radius:2px">
+                            <span style="font-size:0.8rem;font-weight:${i < 2 ? '700' : '400'}">${s.team?.name || s.name || ''}</span>
+                            ${i < 2 ? '<span style="font-size:0.6rem;color:var(--teal);font-weight:700;margin-left:2px">✓</span>' : ''}
+                          </td>
+                          <td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+                          <td>${s.gf-s.ga >= 0 ? '+' : ''}${s.gf-s.ga}</td>
+                          <td class="pts-cell">${s.pts}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                  </table>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
 
         <!-- ROUND OF 32 -->
         <div class="pred-section" style="margin-top:40px">
