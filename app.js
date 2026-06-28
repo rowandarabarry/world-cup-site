@@ -1628,6 +1628,9 @@ function flagCode(team) {
 (async function init() {
   const params = new URLSearchParams(location.search);
 
+  /* Load site settings first so blog/notice flags are available */
+  await loadSiteSettings();
+
   try {
     if (params.has('about'))           { renderAbout();                        }
     else if (params.has('fixtures'))   { await renderFixtures();                     }
