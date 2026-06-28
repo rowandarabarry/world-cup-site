@@ -64,7 +64,14 @@ async function loadTeams() {
    HOME PAGE
    ============================================================ */
 function renderHome() {
+  const notice = window._siteNotice || '';
   app().innerHTML = `
+    ${notice ? `
+    <div id="site-notice-bar" style="background:var(--gold);color:var(--navy);padding:10px 20px;text-align:center;font-weight:700;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:12px">
+      <span>📢 ${notice}</span>
+      <button onclick="document.getElementById('site-notice-bar').style.display='none'"
+        style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--navy);padding:0;line-height:1">×</button>
+    </div>` : ''}
     <section class="hero hero-image animate-in">
       <div class="hero-image-wrap">
         <img class="hero-bg" src="images/banner.png" alt="FIFA World Cup 2026 banner">
@@ -1113,8 +1120,10 @@ async function switchAdminTab(tab) {
           </div>`).join('')}` : ''}`;
 
     } else if (tab === 'comps') {
-      const lockRes = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.competitions_locked&select=value`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
-      const isLocked = lockRes[0]?.value === 'true';
+      const lockRes = await fetch(`${SUPABASE_URL}/rest/v1/settings?select=key,value`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
+      const lockMap = {};
+      lockRes.forEach(r => lockMap[r.key] = r.value);
+      const isLocked = lockMap['competitions_locked'] === 'true';
       const users = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username&order=username`, { headers: sbHeaders }).then(r => r.json()).catch(() => []);
       const progress = await fetch(`${SUPABASE_URL}/rest/v1/team_progress?select=*&order=team_name`, { headers: sbHeaders }).then(r => r.json());
       const stages = [
@@ -1130,6 +1139,26 @@ async function switchAdminTab(tab) {
       ];
 
       el.innerHTML = `
+        <!-- Site Notice -->
+        <h2 class="section-title" style="margin:32px 0 12px">Site <span>Notice</span></h2>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:14px">Shows a gold banner at the top of the home page for all visitors.</p>
+        <div class="admin-blog-form" style="margin-bottom:28px;max-width:500px">
+          <div class="form-group">
+            <label class="form-label">Notice Text</label>
+            <input class="form-input" id="site-notice-text" placeholder="e.g. R32 is underway — check the results!"
+              value="${lockMap['site_notice'] || ''}">
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+            <button class="admin-save-btn" onclick="adminSaveSiteNotice(true)">Show Notice</button>
+            <button class="admin-save-btn" style="background:#e63200" onclick="adminSaveSiteNotice(false)">Hide Notice</button>
+            <span id="notice-msg" style="display:none;color:var(--teal);font-weight:600">✅ Saved!</span>
+          </div>
+          <p style="color:var(--text-muted);font-size:0.78rem;margin-top:8px">
+            Currently: <strong>${lockMap['site_notice_active'] === 'true' ? '🟢 Showing' : '⚫ Hidden'}</strong>
+            ${lockMap['site_notice'] ? ` — "${lockMap['site_notice']}"` : ''}
+          </p>
+        </div>
+
         <!-- Lock toggle -->
         <div class="admin-blog-form" style="margin:20px 0 28px;border:3px solid ${isLocked ? '#e63200' : 'var(--teal)'};background:${isLocked ? '#fff5f5' : '#f5ffff'}">
           <h3 style="color:${isLocked ? '#e63200' : 'var(--teal-dark)'}">
@@ -1767,6 +1796,7 @@ async function loadSiteSettings() {
     const map = {};
     res.forEach(r => map[r.key] = r.value);
     window._blogEnabled = map['blog_enabled'] !== 'false'; // default true
+    window._siteNotice = map['site_notice_active'] === 'true' ? (map['site_notice'] || '') : '';
     /* Show/hide blog nav items */
     document.querySelectorAll('[data-blog-nav]').forEach(el => {
       el.style.display = window._blogEnabled ? '' : 'none';
@@ -4681,6 +4711,17 @@ function adminConfirm(message, fn) {
 
 function adminConfirmLeague(leagueId, name) {
   adminConfirm(`Delete league "${name}" and remove all members?`, () => adminDeleteLeague(leagueId, name));
+}
+
+async function adminSaveSiteNotice(show) {
+  const text = document.getElementById('site-notice-text')?.value.trim() || '';
+  await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.site_notice`,
+    { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ value: text }) });
+  await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.site_notice_active`,
+    { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ value: show ? 'true' : 'false' }) });
+  window._siteNotice = show ? text : '';
+  const msg = document.getElementById('notice-msg');
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => { msg.style.display = 'none'; switchAdminTab('comps'); }, 1500); }
 }
 
 async function adminToggleLock(lock) {
