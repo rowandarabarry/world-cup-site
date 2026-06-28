@@ -1349,6 +1349,10 @@ async function saveResult(matchId) {
       document.getElementById(`match-${matchId}`).style.opacity = '0.6';
       /* Auto-update team progress for buster scoring */
       await autoUpdateTeamProgress();
+      /* Auto-update next round team names for knockout matches */
+      if (matchId >= 73) {
+        await autoUpdateNextRound(matchId, homeScore, awayScore);
+      }
     } else {
       throw new Error('Update failed');
     }
@@ -1356,6 +1360,78 @@ async function saveResult(matchId) {
     alert('Could not connect to server.');
     btn.textContent = 'Save Result';
     btn.disabled = false;
+  }
+}
+
+/* Auto-update next round team names when a knockout result is saved */
+async function autoUpdateNextRound(matchId, homeScore, awayScore) {
+  /* Get the match details to find the winner */
+  const matches = await sbGet('results');
+  const match = matches.find(r => r.match_id === matchId);
+  if (!match) return;
+
+  const winner = homeScore > awayScore ? match.home_team : match.away_team;
+
+  /* Map of match_id -> which next match it feeds and whether home or away */
+  const feedsInto = {
+    /* R32 -> R16 */
+    73: { next: 90, side: 'home' },
+    74: { next: 89, side: 'home' },
+    75: { next: 90, side: 'away' },
+    76: { next: 91, side: 'home' },
+    77: { next: 89, side: 'away' },
+    78: { next: 91, side: 'away' },
+    79: { next: 92, side: 'home' },
+    80: { next: 92, side: 'away' },
+    81: { next: 94, side: 'home' },
+    82: { next: 94, side: 'away' },
+    83: { next: 93, side: 'home' },
+    84: { next: 93, side: 'away' },
+    85: { next: 96, side: 'home' },
+    86: { next: 95, side: 'home' },
+    87: { next: 96, side: 'away' },
+    88: { next: 95, side: 'away' },
+    /* R16 -> QF */
+    89: { next: 97, side: 'home' },
+    90: { next: 97, side: 'away' },
+    91: { next: 99, side: 'home' },
+    92: { next: 99, side: 'away' },
+    93: { next: 98, side: 'home' },
+    94: { next: 98, side: 'away' },
+    95: { next: 100, side: 'home' },
+    96: { next: 100, side: 'away' },
+    /* QF -> SF */
+    97: { next: 101, side: 'home' },
+    98: { next: 101, side: 'away' },
+    99: { next: 102, side: 'home' },
+    100: { next: 102, side: 'away' },
+    /* SF -> Final + 3rd place */
+    101: { next: 104, side: 'home', loserNext: 103, loserSide: 'home' },
+    102: { next: 104, side: 'away', loserNext: 103, loserSide: 'away' },
+  };
+
+  const feed = feedsInto[matchId];
+  if (!feed) return;
+
+  /* Update winner into next match */
+  const updateData = {};
+  updateData[feed.side === 'home' ? 'home_team' : 'away_team'] = winner;
+  await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=eq.${feed.next}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify(updateData)
+  });
+
+  /* Update loser into 3rd place match if SF */
+  if (feed.loserNext) {
+    const loser = homeScore > awayScore ? match.away_team : match.home_team;
+    const loserData = {};
+    loserData[feed.loserSide === 'home' ? 'home_team' : 'away_team'] = loser;
+    await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=eq.${feed.loserNext}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(loserData)
+    });
   }
 }
 
