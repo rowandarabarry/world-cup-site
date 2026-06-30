@@ -904,30 +904,44 @@ async function renderResults() {
   app().innerHTML = `
     <div class="page-title-bar">
       <div class="wrap">
-        <h1 class="page-title">Match <span>Results</span></h1>
+        <h1 class="page-title">Results & <span>Fixtures</span></h1>
       </div>
     </div>
     <div class="section">
       <div class="wrap">
         <div id="results-content">
-          <p style="color:var(--text-muted)">Loading results…</p>
+          <p style="color:var(--text-muted)">Loading…</p>
         </div>
       </div>
     </div>`;
 
   try {
     const results = await sbGet('results');
-
-    /* Group by group */
-    const groups = {};
-    results.forEach(r => {
-      const g = r.group_name || 'Other';
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(r);
-    });
-
     const played = results.filter(r => r.status === 'Played');
     const upcoming = results.filter(r => r.status !== 'Played');
+
+    /* Sort by match_id for correct chronological order */
+    played.sort((a,b) => b.match_id - a.match_id); /* most recent first */
+    upcoming.sort((a,b) => a.match_id - b.match_id); /* soonest first */
+
+    const matchCard = (m) => `
+      <div class="fixture-card ${m.status === 'Played' ? 'fixture-played' : ''}">
+        <div class="fixture-team home">
+          <span>${m.home_team}</span>
+          <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" alt="${m.home_team}">
+        </div>
+        <div class="fixture-score">
+          ${m.status === 'Played'
+            ? `<div class="fixture-result">${m.home_score} – ${m.away_score}</div>`
+            : `<div class="fixture-vs">VS</div>`}
+          <div class="fixture-time">${m.match_date || ''}</div>
+          <div class="fixture-stadium" style="font-size:0.7rem;color:var(--text-muted)">${m.group_name || ''}</div>
+        </div>
+        <div class="fixture-team away">
+          <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" alt="${m.away_team}">
+          <span>${m.away_team}</span>
+        </div>
+      </div>`;
 
     document.getElementById('results-content').innerHTML = `
       <div class="results-summary">
@@ -935,30 +949,21 @@ async function renderResults() {
         <div class="rs-item"><strong>${upcoming.length}</strong> Remaining</div>
       </div>
 
-      ${Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([group, matches]) => `
+      ${upcoming.length ? `
         <div class="fixture-group">
-          <div class="fixture-group-title">${group}</div>
-          ${matches.map(m => `
-            <div class="fixture-card ${m.status === 'Played' ? 'fixture-played' : ''}">
-              <div class="fixture-team home">
-                <span>${m.home_team}</span>
-                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" alt="${m.home_team}">
-              </div>
-              <div class="fixture-score">
-                ${m.status === 'Played'
-                  ? `<div class="fixture-result">${m.home_score} – ${m.away_score}</div>`
-                  : `<div class="fixture-vs">VS</div>`}
-                <div class="fixture-time">${m.match_date}</div>
-              </div>
-              <div class="fixture-team away">
-                <img class="fixture-flag" src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" alt="${m.away_team}">
-                <span>${m.away_team}</span>
-              </div>
-            </div>`).join('')}
-        </div>`).join('')}`;
+          <div class="fixture-group-title">Upcoming Fixtures</div>
+          ${upcoming.map(matchCard).join('')}
+        </div>` : ''}
+
+      ${played.length ? `
+        <div class="fixture-group">
+          <div class="fixture-group-title">Results</div>
+          ${played.map(matchCard).join('')}
+        </div>` : ''}`;
+
   } catch(e) {
     document.getElementById('results-content').innerHTML =
-      `<p style="color:var(--text-muted)">Could not load results. Could not connect to database.</p>`;
+      '<p style="color:var(--text-muted)">Could not load results.</p>';
   }
 }
 
@@ -1092,12 +1097,23 @@ async function switchAdminTab(tab) {
             <div class="admin-match-teams">
               <img src="https://flagcdn.com/w40/${flagCode(m.home_team)}.png" class="fixture-flag" alt="">
               <span class="admin-team-name">${m.home_team}</span>
-              <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="${m.home_score ?? 0}">
+              <input type="number" min="0" max="20" class="score-input" id="home-${m.match_id}" value="${m.home_score ?? 0}"
+                ${m.match_id > 72 ? `oninput="checkPenaltyNeeded(${m.match_id})"` : ''}>
               <span class="admin-vs">–</span>
-              <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="${m.away_score ?? 0}">
+              <input type="number" min="0" max="20" class="score-input" id="away-${m.match_id}" value="${m.away_score ?? 0}"
+                ${m.match_id > 72 ? `oninput="checkPenaltyNeeded(${m.match_id})"` : ''}>
               <span class="admin-team-name">${m.away_team}</span>
               <img src="https://flagcdn.com/w40/${flagCode(m.away_team)}.png" class="fixture-flag" alt="">
             </div>
+            ${m.match_id > 72 && m.match_id !== 103 ? `
+            <div id="penalty-row-${m.match_id}" style="display:none;margin-top:10px;padding:10px;background:#fff8e1;border-radius:var(--radius-sm)">
+              <label class="form-label" style="font-size:0.78rem;color:#7a5800">Match level after 90 mins — who won on penalties?</label>
+              <select class="form-select" id="penalty-${m.match_id}" style="margin-top:4px">
+                <option value="">— select winner —</option>
+                <option value="${m.home_team}">${m.home_team}</option>
+                <option value="${m.away_team}">${m.away_team}</option>
+              </select>
+            </div>` : ''}
             <div class="admin-match-meta">${m.group_name} · ${m.match_date}</div>
             <span style="font-size:0.7rem;color:var(--text-muted);margin-right:8px">#${m.match_id}</span>
             <button class="admin-save-btn" onclick="saveResult(${m.match_id})">Save Result</button>
@@ -1336,19 +1352,39 @@ async function switchAdminTab(tab) {
 function makeMatchEditable(matchId, home, away, homeScore, awayScore, group, date) {
   const card = document.getElementById(`match-${matchId}`);
   if (!card) return;
+  const showPenalty = matchId > 72 && matchId !== 103 && homeScore === awayScore;
   card.innerHTML = `
     <div class="admin-match-teams">
       <img src="https://flagcdn.com/w40/${flagCode(home)}.png" class="fixture-flag" alt="">
       <span class="admin-team-name">${home}</span>
-      <input type="number" min="0" max="20" class="score-input" id="home-${matchId}" value="${homeScore}">
+      <input type="number" min="0" max="20" class="score-input" id="home-${matchId}" value="${homeScore}"
+        ${matchId > 72 ? `oninput="checkPenaltyNeeded(${matchId})"` : ''}>
       <span class="admin-vs">–</span>
-      <input type="number" min="0" max="20" class="score-input" id="away-${matchId}" value="${awayScore}">
+      <input type="number" min="0" max="20" class="score-input" id="away-${matchId}" value="${awayScore}"
+        ${matchId > 72 ? `oninput="checkPenaltyNeeded(${matchId})"` : ''}>
       <span class="admin-team-name">${away}</span>
       <img src="https://flagcdn.com/w40/${flagCode(away)}.png" class="fixture-flag" alt="">
     </div>
+    ${matchId > 72 && matchId !== 103 ? `
+    <div id="penalty-row-${matchId}" style="display:${showPenalty?'block':'none'};margin-top:10px;padding:10px;background:#fff8e1;border-radius:var(--radius-sm)">
+      <label class="form-label" style="font-size:0.78rem;color:#7a5800">Match level after 90 mins — who won on penalties?</label>
+      <select class="form-select" id="penalty-${matchId}" style="margin-top:4px">
+        <option value="">— select winner —</option>
+        <option value="${home}">${home}</option>
+        <option value="${away}">${away}</option>
+      </select>
+    </div>` : ''}
     <div class="admin-match-meta">${group} · ${date} #${matchId}</div>
     <button class="admin-save-btn" onclick="saveResult(${matchId})" style="background:var(--teal-dark)">Update Result</button>
     <span class="admin-saved" id="saved-${matchId}" style="display:none">✅ Saved!</span>`;
+}
+
+function checkPenaltyNeeded(matchId) {
+  const home = parseInt(document.getElementById(`home-${matchId}`)?.value ?? 0);
+  const away = parseInt(document.getElementById(`away-${matchId}`)?.value ?? 0);
+  const row = document.getElementById(`penalty-row-${matchId}`);
+  if (!row) return;
+  row.style.display = (home === away) ? 'block' : 'none';
 }
 
 async function saveResult(matchId) {
@@ -1362,6 +1398,16 @@ async function saveResult(matchId) {
     return;
   }
 
+  /* Check if penalty winner is needed for knockout matches level after 90 mins */
+  let penaltyWinner = null;
+  if (matchId > 72 && matchId !== 103 && homeScore === awayScore) {
+    penaltyWinner = document.getElementById(`penalty-${matchId}`)?.value;
+    if (!penaltyWinner) {
+      alert('Scores are level — please select who won on penalties before saving.');
+      return;
+    }
+  }
+
   const btn = document.querySelector(`#match-${matchId} .admin-save-btn`);
   btn.textContent = 'Saving…';
   btn.disabled = true;
@@ -1370,7 +1416,8 @@ async function saveResult(matchId) {
     const ok = await sbUpdate('results', matchId, {
       home_score: homeScore,
       away_score: awayScore,
-      status: 'Played'
+      status: 'Played',
+      ...(penaltyWinner ? { penalty_winner: penaltyWinner } : {})
     });
     if (ok) {
       document.getElementById(`saved-${matchId}`).style.display = 'inline';
@@ -1380,7 +1427,7 @@ async function saveResult(matchId) {
       await autoUpdateTeamProgress();
       /* Auto-update next round team names for knockout matches */
       if (matchId >= 73) {
-        await autoUpdateNextRound(matchId, homeScore, awayScore);
+        await autoUpdateNextRound(matchId, homeScore, awayScore, penaltyWinner);
       }
     } else {
       throw new Error('Update failed');
@@ -1393,13 +1440,13 @@ async function saveResult(matchId) {
 }
 
 /* Auto-update next round team names when a knockout result is saved */
-async function autoUpdateNextRound(matchId, homeScore, awayScore) {
+async function autoUpdateNextRound(matchId, homeScore, awayScore, penaltyWinner) {
   /* Get the match details to find the winner */
   const matches = await sbGet('results');
   const match = matches.find(r => r.match_id === matchId);
   if (!match) return;
 
-  const winner = homeScore > awayScore ? match.home_team : match.away_team;
+  const winner = penaltyWinner || (homeScore > awayScore ? match.home_team : match.away_team);
 
   /* Map of match_id -> which next match it feeds and whether home or away */
   const feedsInto = {
@@ -1453,7 +1500,9 @@ async function autoUpdateNextRound(matchId, homeScore, awayScore) {
 
   /* Update loser into 3rd place match if SF */
   if (feed.loserNext) {
-    const loser = homeScore > awayScore ? match.away_team : match.home_team;
+    const loser = penaltyWinner
+      ? (penaltyWinner === match.home_team ? match.away_team : match.home_team)
+      : (homeScore > awayScore ? match.away_team : match.home_team);
     const loserData = {};
     loserData[feed.loserSide === 'home' ? 'home_team' : 'away_team'] = loser;
     await fetch(`${SUPABASE_URL}/rest/v1/results?match_id=eq.${feed.loserNext}`, {
