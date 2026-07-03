@@ -1570,9 +1570,11 @@ async function autoUpdateTeamProgress() {
       { matchIds: [103,104],                                           stage: 'winner' },
     ];
 
+    /* Save group stage results before processing knockouts */
+    const groupStageResult = { ...teamStage };
+
     koStages.forEach(({ matchIds, stage }) => {
       played.filter(r => matchIds.includes(r.match_id)).forEach(r => {
-        /* Both teams reached this stage */
         const normName = n => ({'Bosnia & Herzegovina':'Bosnia & Herz.','USA':'United States'}[n] || n);
         const home = normName(r.home_team);
         const away = normName(r.away_team);
@@ -1581,13 +1583,30 @@ async function autoUpdateTeamProgress() {
           const curr = teamStage[name] || 'eliminated';
           if (stageOrder.indexOf(newStage) > stageOrder.indexOf(curr)) teamStage[name] = newStage;
         };
-        upgrade(home, stage);
-        upgrade(away, stage);
-        /* Winner goes to next stage, loser stays */
-        if (stage === 'final' || stage === 'winner') {
-          const winner = r.home_score > r.away_score ? home : r.home_score < r.away_score ? away : null;
-          if (winner) upgrade(winner, 'winner');
+
+        /* Determine winner — use penalty_winner if scores level */
+        let winner, loser;
+        if (r.penalty_winner) {
+          winner = normName(r.penalty_winner);
+          loser  = winner === home ? away : home;
+        } else if (r.home_score > r.away_score) {
+          winner = home; loser = away;
+        } else if (r.home_score < r.away_score) {
+          winner = away; loser = home;
+        } else {
+          winner = null; loser = null;
         }
+
+        if (r.match_id === 103) {
+          /* 3rd place match — both teams already at SF, no extra stage */
+          return;
+        }
+
+        if (winner) {
+          /* Only the winner gets the knockout stage bonus */
+          upgrade(winner, stage);
+        }
+        /* Loser keeps their group stage result — no action needed */
       });
     });
 
