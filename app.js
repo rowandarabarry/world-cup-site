@@ -1153,6 +1153,15 @@ async function switchAdminTab(tab) {
         { value:'final',        label:'Final'         },
         { value:'winner',       label:'Winner'        },
       ];
+      const groupStages = stages.slice(0, 4);
+      const koStages = [
+        { value:'',       label:'—'            },
+        { value:'r16',    label:'Round of 16'  },
+        { value:'qf',     label:'Quarter Final'},
+        { value:'sf',     label:'Semi Final'   },
+        { value:'final',  label:'Final'        },
+        { value:'winner', label:'Winner'       },
+      ];
 
       el.innerHTML = `
         <!-- Site Notice -->
@@ -1276,15 +1285,20 @@ async function switchAdminTab(tab) {
         <!-- Buster team progress -->
         <h2 class="section-title" style="margin-bottom:12px">🎲 <span>Buster Team Progress</span></h2>
         <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Update manually or let auto-scoring handle it. Click Save All when done.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:16px">
           ${progress.map(p => `
-            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;display:flex;align-items:center;gap:8px">
+            <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;display:flex;align-items:center;gap:6px">
               <img src="https://flagcdn.com/w20/${flagCode(p.team_name)}.png" width="20" style="flex-shrink:0">
-              <span style="font-size:0.78rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.team_name}</span>
-              <select class="form-select" id="prog-${p.team_name.replace(/[^a-z]/gi,'_')}"
-                style="flex:1;padding:4px 6px;font-size:0.72rem"
-                onchange="updateTeamProgress('${p.team_name}', this.value)">
-                ${stages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
+              <span style="font-size:0.75rem;font-weight:600;flex:1;min-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.team_name}</span>
+              <select class="form-select" id="grp-${p.team_name.replace(/[^a-z]/gi,'_')}"
+                style="padding:4px 4px;font-size:0.7rem;width:100px"
+                title="Group stage">
+                ${groupStages.map(s => `<option value="${s.value}" ${(p.group_stage||p.best_stage)===s.value?'selected':''}>${s.label}</option>`).join('')}
+              </select>
+              <select class="form-select" id="ko-${p.team_name.replace(/[^a-z]/gi,'_')}"
+                style="padding:4px 4px;font-size:0.7rem;width:100px"
+                title="Knockout stage">
+                ${koStages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
               </select>
             </div>`).join('')}
         </div>
@@ -1611,13 +1625,18 @@ async function autoUpdateTeamProgress() {
     });
 
     /* Batch update all team progress */
-    const updates = Object.entries(teamStage).map(([team_name, best_stage]) =>
-      fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(team_name)}`, {
+    const updates = Object.entries(teamStage).map(([team_name, best_stage]) => {
+      const groupStages = ['eliminated','group_second','best_third','group_winner'];
+      const isGroupStage = groupStages.includes(best_stage);
+      const body = isGroupStage
+        ? { group_stage: best_stage, best_stage: 'eliminated', updated_at: new Date().toISOString() }
+        : { best_stage, updated_at: new Date().toISOString() };
+      return fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(team_name)}`, {
         method: 'PATCH',
         headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ best_stage, updated_at: new Date().toISOString() })
-      })
-    );
+        body: JSON.stringify(body)
+      });
+    });
     await Promise.all(updates);
   } catch(e) {
     console.warn('Auto team progress update failed:', e);
@@ -5288,32 +5307,35 @@ async function renderAdminBuster() {
     { headers: sbHeaders }
   ).then(r => r.json()).catch(() => []);
 
-  const stages = [
-    { value:'eliminated',   label:'Eliminated' },
-    { value:'group_winner', label:'Group Winner' },
-    { value:'group_second', label:'Group Runner-up' },
-    { value:'best_third',   label:'Best 3rd Place' },
-    { value:'r16',          label:'Round of 16' },
-    { value:'qf',           label:'Quarter Final' },
-    { value:'sf',           label:'Semi Final' },
-    { value:'final',        label:'Finalist' },
-    { value:'winner',       label:'🏆 World Cup Winner' },
+  const groupStagesB = [
+    { value:'eliminated',   label:'Eliminated'   },
+    { value:'group_second', label:'Group 2nd'     },
+    { value:'best_third',   label:'Best 3rd'      },
+    { value:'group_winner', label:'Group Winner'  },
+  ];
+  const koStagesB = [
+    { value:'',       label:'—'            },
+    { value:'r16',    label:'Round of 16'  },
+    { value:'qf',     label:'Quarter Final'},
+    { value:'sf',     label:'Semi Final'   },
+    { value:'final',  label:'Final'        },
+    { value:'winner', label:'Winner'       },
   ];
 
   return `
     <h2 class="section-title" style="margin:40px 0 16px">🎲 <span>Buster — Team Progress</span></h2>
-    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:8px">Update stages manually or use the auto-calculation from results. Click Save All when done.</p>
-    <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:20px">
-      Update each team's furthest stage reached. Buster scores update automatically.
-    </p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px">
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:8px">Set group stage qualification and knockout progression separately. Click Save All when done.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:20px">
       ${progress.map(p => `
-        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;gap:8px">
-          <span style="font-weight:600;font-size:0.875rem;flex:1;color:var(--text-dark)">${p.team_name}</span>
-          <select class="form-select" id="prog-${p.team_name.replace(/[^a-z]/gi,'_')}"
-            style="flex:1;padding:6px 8px;font-size:0.78rem"
-            onchange="updateTeamProgress('${p.team_name}', this.value)">
-            ${stages.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;gap:6px">
+          <span style="font-weight:600;font-size:0.8rem;flex:1;color:var(--text-dark);min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.team_name}</span>
+          <select class="form-select" id="grp-${p.team_name.replace(/[^a-z]/gi,'_')}"
+            style="padding:4px 4px;font-size:0.7rem;width:110px" title="Group stage">
+            ${groupStagesB.map(s => `<option value="${s.value}" ${(p.group_stage||p.best_stage)===s.value?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+          <select class="form-select" id="ko-${p.team_name.replace(/[^a-z]/gi,'_')}"
+            style="padding:4px 4px;font-size:0.7rem;width:110px" title="Knockout stage">
+            ${koStagesB.map(s => `<option value="${s.value}" ${p.best_stage===s.value?'selected':''}>${s.label}</option>`).join('')}
           </select>
         </div>`).join('')}
     </div>
@@ -5328,13 +5350,18 @@ async function renderAdminBuster() {
 async function adminSaveAllBusterProgress() {
   const btn = $('buster-save-all-btn');
   if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
-  const selects = document.querySelectorAll('[id^="prog-"]');
-  const updates = Array.from(selects).map(sel => {
-    const teamName = sel.id.replace('prog-','').replace(/_/g,' ');
+
+  const koSelects = document.querySelectorAll('[id^="ko-"]');
+  const updates = Array.from(koSelects).map(sel => {
+    const key = sel.id.replace('ko-','');
+    const teamName = key.replace(/_/g,' ');
+    const grpSel = document.getElementById(`grp-${key}`);
+    const groupStage = grpSel?.value || 'eliminated';
+    const bestStage = sel.value || 'eliminated';
     return fetch(`${SUPABASE_URL}/rest/v1/team_progress?team_name=eq.${encodeURIComponent(teamName)}`, {
       method: 'PATCH',
       headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ best_stage: sel.value, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ group_stage: groupStage, best_stage: bestStage, updated_at: new Date().toISOString() })
     });
   });
   await Promise.all(updates);
