@@ -3222,6 +3222,7 @@ async function renderLeaderboard() {
             <th style="text-align:left;padding-left:16px">Pos</th>
             <th style="text-align:left">Player</th>
             <th>Match Pts</th>
+            <th>KO Bonus</th>
             <th>Total</th>
           </tr>
         </thead>
@@ -3231,6 +3232,7 @@ async function renderLeaderboard() {
               <td style="padding-left:16px;font-weight:700;color:${i===0?'var(--gold)':i===1?'#aaa':i===2?'#cd7f32':'var(--text-muted)'}">${i+1}</td>
               <td style="font-weight:600;text-align:left">${row.username || row.name || '—'}</td>
               <td>${row.match_pts}</td>
+              <td style="color:var(--teal)">${row.ko_bonus || 0}</td>
               <td class="pts-cell">${row.total_pts}</td>
             </tr>`).join('')}
         </tbody>
@@ -3558,17 +3560,24 @@ function renderScoring(which) {
           </div>
         </div>
         <div class="info-card" style="margin-bottom:20px">
-          <h3 style="margin-bottom:14px">Points per Team</h3>
-          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Only the highest stage reached is scored</p>
+          <h3 style="margin-bottom:14px">Group Stage Points</h3>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Points for how your team qualified from the group stage.</p>
           <div style="display:flex;flex-direction:column;gap:0">
             <div class="fact-row"><span class="fact-label">🥇 Group Winner</span><span class="fact-value" style="color:var(--teal)">8 pts</span></div>
             <div class="fact-row"><span class="fact-label">2️⃣ Group Runner-up</span><span class="fact-value" style="color:var(--teal)">4 pts</span></div>
             <div class="fact-row"><span class="fact-label">✔️ Best 3rd Place Qualifier</span><span class="fact-value" style="color:var(--teal)">2 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">10 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">20 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">30 pts</span></div>
-            <div class="fact-row"><span class="fact-label">Finalist</span><span class="fact-value" style="color:var(--teal)">40 pts</span></div>
-            <div class="fact-row"><span class="fact-label">🏆 World Cup Winner</span><span class="fact-value" style="color:var(--gold)">50 pts</span></div>
+            <div class="fact-row"><span class="fact-label">❌ Eliminated in group stage</span><span class="fact-value" style="color:var(--text-muted)">0 pts</span></div>
+          </div>
+        </div>
+        <div class="info-card" style="margin-bottom:20px">
+          <h3 style="margin-bottom:14px">Knockout Stage Points</h3>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">Added on top of group stage points for each knockout round your team reaches.</p>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div class="fact-row"><span class="fact-label">Round of 16</span><span class="fact-value" style="color:var(--teal)">+10 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Quarter Final</span><span class="fact-value" style="color:var(--teal)">+20 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Semi Final</span><span class="fact-value" style="color:var(--teal)">+30 pts</span></div>
+            <div class="fact-row"><span class="fact-label">Finalist</span><span class="fact-value" style="color:var(--teal)">+40 pts</span></div>
+            <div class="fact-row"><span class="fact-label">🏆 World Cup Winner</span><span class="fact-value" style="color:var(--gold)">+50 pts</span></div>
           </div>
         </div>
         <div class="info-card">
@@ -3579,7 +3588,8 @@ function renderScoring(which) {
             <li>If still tied — players share the position</li>
           </ol>
           <div style="background:#f0f0fa;border-radius:var(--radius-sm);padding:12px;margin-top:14px;font-size:0.82rem;color:var(--text-mid)">
-            <strong>Example total:</strong> SF (12) + QF (8) + R16 (5) + Best 3rd (1) = <strong style="color:var(--teal)">26 pts</strong>
+            <strong>Example:</strong> Group Winner (8) + Reaches QF (20) = <strong style="color:var(--teal)">28 pts</strong><br>
+            Group Runner-up (4) + Reaches R16 (10) = <strong style="color:var(--teal)">14 pts</strong>
           </div>
         </div>`}
       </div>
