@@ -167,21 +167,21 @@ async function renderHome() {
         ${top3[1] ? `<div style="text-align:center;flex:1">
           <div style="font-size:1.2rem">🥈</div>
           <div style="background:var(--navy);color:#fff;border-radius:6px 6px 0 0;padding:8px 4px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-size:0.6rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[1].username}</div>
+            <div style="font-size:0.6rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[1].username.length > 10 ? top3[1].username.slice(0,9)+"…" : top3[1].username}</div>
             <div style="color:var(--gold);font-size:0.75rem;font-weight:700">${ptsFn(top3[1])}</div>
           </div>
         </div>` : ''}
         ${top3[0] ? `<div style="text-align:center;flex:1">
           <div style="font-size:1.5rem">🥇</div>
           <div style="background:var(--gold);color:var(--navy);border-radius:6px 6px 0 0;padding:8px 4px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-size:0.65rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[0].username}</div>
+            <div style="font-size:0.65rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[0].username.length > 10 ? top3[0].username.slice(0,9)+"…" : top3[0].username}</div>
             <div style="font-size:0.85rem;font-weight:800">${ptsFn(top3[0])}</div>
           </div>
         </div>` : ''}
         ${top3[2] ? `<div style="text-align:center;flex:1">
           <div style="font-size:1rem">🥉</div>
           <div style="background:#8B6914;color:#fff;border-radius:6px 6px 0 0;padding:8px 4px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-size:0.6rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[2].username}</div>
+            <div style="font-size:0.6rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${top3[2].username.length > 10 ? top3[2].username.slice(0,9)+"…" : top3[2].username}</div>
             <div style="color:#ffd700;font-size:0.72rem;font-weight:700">${ptsFn(top3[2])}</div>
           </div>
         </div>` : ''}
@@ -3933,7 +3933,7 @@ async function loadBusterLeagueRows(tabId, leagueId) {
         <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
           <div style="font-size:2rem">🥈</div>
           <div style="background:var(--navy);color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[1].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[1].username.length > 10 ? top3[1].username.slice(0,9)+"…" : top3[1].username}</div>
             <div style="color:var(--gold);font-weight:700;font-size:1rem">${top3[1].total}</div>
           </div>
         </div>` : ''}
@@ -3941,7 +3941,7 @@ async function loadBusterLeagueRows(tabId, leagueId) {
         <div style="text-align:center;flex:1;max-width:140px;cursor:pointer">
           <div style="font-size:2.5rem">🥇</div>
           <div style="background:var(--gold);color:var(--navy);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.8rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[0].username}</div>
+            <div style="font-weight:800;font-size:0.8rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[0].username.length > 10 ? top3[0].username.slice(0,9)+"…" : top3[0].username}</div>
             <div style="font-weight:800;font-size:1.2rem">${top3[0].total}</div>
           </div>
         </div>` : ''}
@@ -3949,7 +3949,7 @@ async function loadBusterLeagueRows(tabId, leagueId) {
         <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
           <div style="font-size:1.8rem">🥉</div>
           <div style="background:#8B6914;color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:65px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[2].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[2].username.length > 10 ? top3[2].username.slice(0,9)+"…" : top3[2].username}</div>
             <div style="color:#ffd700;font-weight:700;font-size:1rem">${top3[2].total}</div>
           </div>
         </div>` : ''}
@@ -4062,7 +4062,7 @@ async function loadPredLeagueRows(tabId, leagueId) {
           style="cursor:pointer;text-align:center;flex:1;max-width:120px">
           <div style="font-size:2rem">🥈</div>
           <div style="background:var(--navy);color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[1].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[1].username.length > 10 ? top3[1].username.slice(0,9)+"…" : top3[1].username}</div>
             <div style="color:var(--gold);font-weight:700;font-size:1rem">${top3[1].total_pts}</div>
           </div>
         </div>` : ''}
@@ -4072,7 +4072,7 @@ async function loadPredLeagueRows(tabId, leagueId) {
           style="cursor:pointer;text-align:center;flex:1;max-width:140px">
           <div style="font-size:2.5rem">🥇</div>
           <div style="background:var(--gold);color:var(--navy);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.8rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[0].username}</div>
+            <div style="font-weight:800;font-size:0.8rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[0].username.length > 10 ? top3[0].username.slice(0,9)+"…" : top3[0].username}</div>
             <div style="font-weight:800;font-size:1.2rem">${top3[0].total_pts}</div>
           </div>
         </div>` : ''}
@@ -4082,7 +4082,7 @@ async function loadPredLeagueRows(tabId, leagueId) {
           style="cursor:pointer;text-align:center;flex:1;max-width:120px">
           <div style="font-size:1.8rem">🥉</div>
           <div style="background:#8B6914;color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:65px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[2].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[2].username.length > 10 ? top3[2].username.slice(0,9)+"…" : top3[2].username}</div>
             <div style="color:#ffd700;font-weight:700;font-size:1rem">${top3[2].total_pts}</div>
           </div>
         </div>` : ''}
