@@ -3929,27 +3929,30 @@ async function loadBusterLeagueRows(tabId, leagueId) {
     <div style="margin-bottom:32px">
       <h2 class="section-title" style="margin-bottom:20px;text-align:center">🏆 <span>Final Standings</span></h2>
       <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:24px">
+        <!-- 2nd place -->
         ${top3[1] ? `
-        <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
+        <div style="cursor:pointer;text-align:center;flex:1;max-width:120px">
           <div style="font-size:2rem">🥈</div>
           <div style="background:var(--navy);color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[1].username.length > 14 ? top3[1].username.slice(0,13)+"…" : top3[1].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;text-align:center">${top3[1].username.length > 14 ? top3[1].username.slice(0,13)+"…" : top3[1].username}</div>
             <div style="color:var(--gold);font-weight:700;font-size:1rem">${top3[1].total}</div>
           </div>
         </div>` : ''}
+        <!-- 1st place -->
         ${top3[0] ? `
-        <div style="text-align:center;flex:1;max-width:140px;cursor:pointer">
+        <div style="cursor:pointer;text-align:center;flex:1;max-width:140px">
           <div style="font-size:2.5rem">🥇</div>
           <div style="background:var(--gold);color:var(--navy);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.8rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[0].username.length > 14 ? top3[0].username.slice(0,13)+"…" : top3[0].username}</div>
+            <div style="font-weight:800;font-size:0.85rem;text-align:center">${top3[0].username.length > 14 ? top3[0].username.slice(0,13)+"…" : top3[0].username}</div>
             <div style="font-weight:800;font-size:1.2rem">${top3[0].total}</div>
           </div>
         </div>` : ''}
+        <!-- 3rd place -->
         ${top3[2] ? `
-        <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
+        <div style="cursor:pointer;text-align:center;flex:1;max-width:120px">
           <div style="font-size:1.8rem">🥉</div>
           <div style="background:#8B6914;color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:65px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-            <div style="font-weight:800;font-size:0.75rem;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center">${top3[2].username.length > 14 ? top3[2].username.slice(0,13)+"…" : top3[2].username}</div>
+            <div style="font-weight:800;font-size:0.75rem;text-align:center">${top3[2].username.length > 14 ? top3[2].username.slice(0,13)+"…" : top3[2].username}</div>
             <div style="color:#ffd700;font-weight:700;font-size:1rem">${top3[2].total}</div>
           </div>
         </div>` : ''}
