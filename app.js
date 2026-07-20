@@ -3861,12 +3861,44 @@ async function loadBusterLeagueRows(tabId, leagueId) {
     total: (r.pot1_pts||0)+(r.pot2_pts||0)+(r.pot3_pts||0)+(r.pot4_pts||0)+(r.pot5_pts||0)+(r.pot6_pts||0),
   })).sort((a,b) => b.total-a.total);
 
+  const top3 = rows.slice(0, 3);
   const teams = await loadTeams();
   const flagMap = {};
   teams.forEach(t => { flagMap[t.name] = t.flag; });
   const potLabel = n => ['Elite','Contenders','Challengers','Dark Horses','Underdogs','Minnows'][n-1] || `Pot ${n}`;
 
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+  el.innerHTML = `
+    <!-- PODIUM -->
+    <div style="margin-bottom:32px">
+      <h2 class="section-title" style="margin-bottom:20px;text-align:center">🏆 <span>Final Standings</span></h2>
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:24px">
+        ${top3[1] ? `
+        <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
+          <div style="font-size:2rem">🥈</div>
+          <div style="background:var(--navy);color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.85rem;word-break:break-word">${top3[1].username}</div>
+            <div style="color:var(--gold);font-weight:700;font-size:1rem">${top3[1].total}</div>
+          </div>
+        </div>` : ''}
+        ${top3[0] ? `
+        <div style="text-align:center;flex:1;max-width:140px;cursor:pointer">
+          <div style="font-size:2.5rem">🥇</div>
+          <div style="background:var(--gold);color:var(--navy);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.9rem;word-break:break-word">${top3[0].username}</div>
+            <div style="font-weight:800;font-size:1.2rem">${top3[0].total}</div>
+          </div>
+        </div>` : ''}
+        ${top3[2] ? `
+        <div style="text-align:center;flex:1;max-width:120px;cursor:pointer">
+          <div style="font-size:1.8rem">🥉</div>
+          <div style="background:#8B6914;color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:65px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.85rem;word-break:break-word">${top3[2].username}</div>
+            <div style="color:#ffd700;font-weight:700;font-size:1rem">${top3[2].total}</div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
     ${rows.map((row, i) => {
       const pots = [1,2,3,4,5,6].map(n => ({
         label: potLabel(n), team: row[`pot${n}_team`] || '—',
@@ -3959,7 +3991,48 @@ async function loadPredLeagueRows(tabId, leagueId) {
 
   if (!data.length) { el.innerHTML = '<p style="color:var(--text-muted)">No entries yet.</p>'; return; }
 
+  const top3 = data.slice(0, 3);
+  const rest = data.slice(3);
+
   el.innerHTML = `
+    <!-- PODIUM -->
+    <div style="margin-bottom:32px">
+      <h2 class="section-title" style="margin-bottom:20px;text-align:center">🏆 <span>Final Standings</span></h2>
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:24px">
+        <!-- 2nd place -->
+        ${top3[1] ? `
+        <div onclick="location.href='./?predict=1&view=${top3[1].user_id}'"
+          style="cursor:pointer;text-align:center;flex:1;max-width:120px">
+          <div style="font-size:2rem">🥈</div>
+          <div style="background:var(--navy);color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.85rem;word-break:break-word">${top3[1].username}</div>
+            <div style="color:var(--gold);font-weight:700;font-size:1rem">${top3[1].total_pts}</div>
+          </div>
+        </div>` : ''}
+        <!-- 1st place -->
+        ${top3[0] ? `
+        <div onclick="location.href='./?predict=1&view=${top3[0].user_id}'"
+          style="cursor:pointer;text-align:center;flex:1;max-width:140px">
+          <div style="font-size:2.5rem">🥇</div>
+          <div style="background:var(--gold);color:var(--navy);border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.9rem;word-break:break-word">${top3[0].username}</div>
+            <div style="font-weight:800;font-size:1.2rem">${top3[0].total_pts}</div>
+          </div>
+        </div>` : ''}
+        <!-- 3rd place -->
+        ${top3[2] ? `
+        <div onclick="location.href='./?predict=1&view=${top3[2].user_id}'"
+          style="cursor:pointer;text-align:center;flex:1;max-width:120px">
+          <div style="font-size:1.8rem">🥉</div>
+          <div style="background:#8B6914;color:#fff;border-radius:var(--radius-md) var(--radius-md) 0 0;padding:16px 8px;height:65px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
+            <div style="font-weight:800;font-size:0.85rem;word-break:break-word">${top3[2].username}</div>
+            <div style="color:#ffd700;font-weight:700;font-size:1rem">${top3[2].total_pts}</div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- FULL STANDINGS -->
     <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:16px">
       👆 Tap any player to see their full predictions
     </p>
@@ -3971,7 +4044,8 @@ async function loadPredLeagueRows(tabId, leagueId) {
               ${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
             </span>
             <span style="font-weight:700;flex:1">${row.username||'—'}</span>
-            <span class="pts-cell">${row.total_pts} pts</span>
+            <span style="color:var(--text-muted);font-size:0.8rem">${row.match_pts}+${row.ko_bonus}</span>
+            <span class="pts-cell" style="margin-left:8px">${row.total_pts} pts</span>
             <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px">→</span>
           </div>
         </div>`).join('')}
